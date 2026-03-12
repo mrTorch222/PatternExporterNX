@@ -1,5 +1,5 @@
-﻿using System.Globalization;
-using System.Windows;
+﻿using System.Windows;
+using FlatPatternExporter.Enums;
 using FlatPatternExporter.Services;
 using FlatPatternExporter.UI.Windows;
 
@@ -15,7 +15,7 @@ public partial class App
         base.OnStartup(e);
 
         // Load settings ONCE at application startup
-        var settings = SettingsManager.LoadSettings();
+        var settings = SettingsService.Instance.Settings;
 
         // Apply global settings (theme and language)
         ApplyTheme(settings.Interface.SelectedTheme);
@@ -27,11 +27,11 @@ public partial class App
         mainWindow.Show();
     }
 
-    private void ApplyTheme(string theme)
+    private void ApplyTheme(AppTheme theme)
     {
         try
         {
-            var themeFileName = theme == "Light"
+            var themeFileName = theme == AppTheme.Light
                 ? "ColorResources.xaml"
                 : "DarkTheme.xaml";
             var themeUri = new Uri($"Styles/{themeFileName}", UriKind.Relative);

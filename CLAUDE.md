@@ -67,7 +67,9 @@ FlatPatternExporter/
     ├── Services/                       # Вспомогательные сервисы
     │   ├── PropertyMetadataRegistry.cs # Центральный реестр метаданных
     │   ├── TokenService.cs             # Обработка токенов имен файлов
-    │   ├── SettingsManager.cs          # Персистентность настроек
+    │   ├── ISettingsService.cs         # Интерфейс сервиса настроек
+    │   ├── SettingsModels.cs           # Модели данных настроек
+    │   ├── SettingsService.cs          # Singleton-сервис персистентности настроек
     │   ├── TemplatePresetManager.cs    # Управление пресетами шаблонов
     │   ├── VersionInfoService.cs       # Получение версии приложения и коммитов
     │   ├── PropertyListManager.cs      # Управление списками свойств с фильтрацией
@@ -191,7 +193,7 @@ dotnet run --project FlatPatternExporter\FlatPatternExporter.csproj
 - `PopupNotificationService` - библиотека всплывающих уведомлений (namespace: WpfToolkit)
 
 **Enums/ - Перечисления (namespace: FlatPatternExporter.Enums):**
-- `CommonEnums` - базовые перечисления (ExportFolderType, ProcessingMethod, ProcessingStatus, AcadVersionType, DocumentType и др.)
+- `CommonEnums` - базовые перечисления (ExportFolderType, ProcessingMethod, ProcessingStatus, AcadVersionType, DocumentType, AppTheme и др.)
 
 **Models/ - Модели данных (namespace: FlatPatternExporter.Models):**
 - `LayerSettingsClasses` - модели настроек слоев (LayerSetting, LayerDefaults, валидаторы)
@@ -206,7 +208,9 @@ dotnet run --project FlatPatternExporter\FlatPatternExporter.csproj
 **Services/ - Вспомогательные сервисы (namespace: FlatPatternExporter.Services):**
 - `PropertyMetadataRegistry` - централизованный реестр метаданных свойств
 - `TokenService` - специализированная обработка токенов имен файлов
-- `SettingsManager` - персистентность настроек приложения
+- `ISettingsService` - интерфейс сервиса настроек с поддержкой Save/Reset/Export/Import
+- `SettingsModels` - record-модели данных настроек (ApplicationSettings, InterfaceSettings, DxfExportSettings и др.)
+- `SettingsService` - singleton-сервис персистентности настроек в JSON с потокобезопасным I/O
 - `TemplatePresetManager` - управление пресетами шаблонов
 - `VersionInfoService` - получение версии приложения и информации о коммитах
 - `PropertyListManager` - управление списками свойств с фильтрацией и состоянием
@@ -354,7 +358,7 @@ dotnet run --project FlatPatternExporter\FlatPatternExporter.csproj
 **Архитектура системы:**
 - `TemplatePresetManager` - инкапсулирует всю логику управления пресетами
 - `TemplatePreset` - модель данных для отдельного пресета (имя + шаблон)
-- Интеграция с `SettingsManager` для сохранения/загрузки в JSON
+- Интеграция с `SettingsService` для сохранения/загрузки в JSON
 
 **Функциональные возможности:**
 - Создание/удаление пресетов с валидацией имен и подтверждением
@@ -400,10 +404,14 @@ dotnet run --project FlatPatternExporter\FlatPatternExporter.csproj
 - Поддержка фонового режима обработки
 
 ### Система настроек пользователя
+- `SettingsService` — потокобезопасный singleton (паттерн double-checked locking, аналогично `LocalizationManager`)
+- `ISettingsService` — интерфейс с методами Save, Reset, Export, Import и событием `SettingsChanged`
+- Модели настроек — immutable record-типы в `SettingsModels.cs` (enum-сериализация через глобальный `JsonStringEnumConverter` в `SettingsService.JsonOptions`)
 - Автоматическое сохранение настроек в JSON файл при закрытии приложения
 - Восстановление пользовательских колонок и параметров при запуске
 - Расположение файла настроек: `%APPDATA%\FlatPatternExporter\settings.json`
 - Сохранение всех свойств iProperty без зависимости от видимых колонок UI
+- Тема оформления хранится как `AppTheme` enum (типобезопасно вместо строки)
 
 ### Архитектура UI - Система привязки данных
 Проект использует декларативную архитектуру WPF/MVVM:

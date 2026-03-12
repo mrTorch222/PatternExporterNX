@@ -72,6 +72,12 @@ public enum DocumentType
     Invalid
 }
 
+public enum AppTheme
+{
+    Light,
+    Dark
+}
+
 public enum BuildType
 {
     Deploy,

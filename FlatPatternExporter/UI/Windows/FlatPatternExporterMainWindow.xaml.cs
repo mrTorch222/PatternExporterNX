@@ -288,12 +288,120 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
     {
         try
         {
-            SettingsManager.ApplySettingsToMainWindow(settings, this);
+            // Interface settings
+            if (SettingsExpander is not null)
+                SettingsExpander.IsExpanded = settings.Interface.IsExpanded;
+
+            // Restore language selection in ComboBox (language already applied in App.xaml.cs)
+            var savedLanguage = SupportedLanguages.All
+                .FirstOrDefault(lang => lang.Code == settings.Interface.SelectedLanguage);
+            if (savedLanguage != null)
+                LanguageComboBox.SelectedItem = savedLanguage;
+
+            // Set ToggleButton state (theme already applied in App.xaml.cs)
+            if (ThemeToggleButton is not null)
+                ThemeToggleButton.IsChecked = settings.Interface.SelectedTheme == AppTheme.Dark;
+
+            // Component filter settings
+            ExcludeReferenceParts = settings.ComponentFilter.ExcludeReferenceParts;
+            ExcludePurchasedParts = settings.ComponentFilter.ExcludePurchasedParts;
+            ExcludePhantomParts = settings.ComponentFilter.ExcludePhantomParts;
+            IncludeLibraryComponents = settings.ComponentFilter.IncludeLibraryComponents;
+
+            // Organization settings
+            OrganizeByMaterial = settings.Organization.OrganizeByMaterial;
+            OrganizeByThickness = settings.Organization.OrganizeByThickness;
+
+            // Processing method
+            SelectedProcessingMethod = settings.SelectedProcessingMethod;
+
+            // DXF export settings (set backing field directly to avoid UI notification dialog)
+            _selectedAcadVersion = settings.DxfExport.SelectedAcadVersion;
+            OnPropertyChanged(nameof(SelectedAcadVersion));
+            OnPropertyChanged(nameof(IsOptimizeDxfEnabled));
+            MergeProfilesIntoPolyline = settings.DxfExport.MergeProfilesIntoPolyline;
+            RebaseGeometry = settings.DxfExport.RebaseGeometry;
+            TrimCenterlines = settings.DxfExport.TrimCenterlines;
+            OptimizeDxf = settings.DxfExport.OptimizeDxf;
+
+            // Spline settings
+            EnableSplineReplacement = settings.Spline.EnableSplineReplacement;
+            SelectedSplineReplacement = settings.Spline.SelectedSplineReplacement;
+            if (SplineToleranceTextBox is not null)
+                SplineToleranceTextBox.Text = settings.Spline.SplineTolerance;
+
+            // Export folder settings
+            SelectedExportFolder = settings.ExportFolder.SelectedExportFolder;
+            EnableSubfolder = settings.ExportFolder.EnableSubfolder;
+            if (SubfolderNameTextBox is not null)
+                SubfolderNameTextBox.Text = settings.ExportFolder.SubfolderName;
+            FixedFolderPath = settings.ExportFolder.FixedFolderPath;
+
+            // File name settings
+            EnableFileNameConstructor = settings.FileName.EnableFileNameConstructor;
+            _tokenService.FileNameTemplate = settings.FileName.FileNameTemplate;
+            PresetManager.LoadPresets(settings.FileName.TemplatePresets, settings.FileName.SelectedTemplatePresetIndex);
+
+            // Excel/CSV export settings
+            CsvDelimiter = settings.ExcelExport.CsvDelimiter;
+            DefaultExportFormat = settings.ExcelExport.DefaultExportFormat;
+            ExcelExportFileNameType = settings.ExcelExport.ExcelExportFileNameType;
+
+            // Update settings
+            AutoUpdateCheck = settings.Update.AutoUpdateCheck;
+
+            // User-defined properties
+            PropertyMetadataRegistry.UserDefinedProperties.Clear();
+            foreach (var userProperty in settings.Interface.UserDefinedProperties)
+            {
+                if (!string.IsNullOrWhiteSpace(userProperty))
+                    PropertyMetadataRegistry.AddUserDefinedProperty(userProperty);
+            }
+
+            // Property substitutions
+            PropertyMetadataRegistry.PropertySubstitutions.Clear();
+            foreach (var kvp in settings.Interface.PropertySubstitutions)
+                PropertyMetadataRegistry.PropertySubstitutions[kvp.Key] = kvp.Value;
+
+            foreach (var property in PresetIProperties)
+            {
+                if (PropertyMetadataRegistry.PropertySubstitutions.TryGetValue(property.InventorPropertyName, out var substitution))
+                    property.SubstitutionValue = substitution;
+            }
+
+            // Restore columns
+            if (settings.Interface.ColumnOrder.Count > 0)
+            {
+                var presetLookup = PresetIProperties.ToLookup(p => p.InventorPropertyName);
+                foreach (var internalName in settings.Interface.ColumnOrder.Where(name => !string.IsNullOrWhiteSpace(name)))
+                {
+                    var propertyDef = PropertyMetadataRegistry.GetPropertyByInternalName(internalName);
+                    if (propertyDef == null)
+                        continue;
+
+                    if (PropertyMetadataRegistry.IsUserDefinedProperty(internalName))
+                        AddUserDefinedIPropertyColumn(propertyDef.InventorPropertyName ?? internalName);
+                    else
+                        if (presetLookup[internalName].FirstOrDefault() is { } presetProperty)
+                            AddIPropertyColumn(presetProperty);
+                }
+            }
+
+            // Layer settings
+            var layerSettingsLookup = LayerSettings.ToLookup(ls => ls.DisplayName);
+            foreach (var settingData in settings.LayerSettings)
+            {
+                if (layerSettingsLookup[settingData.DisplayName].FirstOrDefault() is { } layerSetting)
+                {
+                    layerSetting.IsChecked = settingData.IsChecked;
+                    layerSetting.CustomName = settingData.CustomName;
+                    layerSetting.SelectedColor = settingData.SelectedColor;
+                    layerSetting.SelectedLineType = settingData.SelectedLineType;
+                }
+            }
 
             if (AutoUpdateCheck)
-            {
                 _ = CheckForUpdatesAsync();
-            }
         }
         catch (Exception ex)
         {
@@ -354,14 +462,122 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
     {
         try
         {
-            var settings = SettingsManager.CreateSettingsFromMainWindow(this);
-            SettingsManager.SaveSettings(settings);
+            var settings = CollectSettings();
+            SettingsService.Instance.Save(settings);
         }
         catch (Exception ex)
         {
             CustomMessageBox.Show(_localizationManager.GetString("Error_SettingsSave", ex.Message), _localizationManager.GetString("Error_Title"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+    }
+
+    private ApplicationSettings CollectSettings()
+    {
+        var columnsInDisplayOrder = PartsDataGrid.Columns
+            .Where(c => c.SortMemberPath is string { Length: > 0 })
+            .OrderBy(c => c.DisplayIndex)
+            .Select(c => c.SortMemberPath)
+            .Where(internalName => !string.IsNullOrEmpty(internalName))
+            .ToList();
+
+        var templatePresets = PresetManager.GetPresetData().ToList();
+
+        var layerSettings = LayerSettings
+            .Where(ls => ls.HasChanges())
+            .Select(layerSetting => new LayerSettingData
+            {
+                DisplayName = layerSetting.DisplayName,
+                IsChecked = layerSetting.IsChecked,
+                CustomName = layerSetting.CustomName,
+                SelectedColor = layerSetting.SelectedColor,
+                SelectedLineType = layerSetting.SelectedLineType
+            })
+            .ToList();
+
+        var userDefinedProperties = PropertyMetadataRegistry.UserDefinedProperties
+            .Select(p => p.InventorPropertyName ?? "")
+            .Where(name => !string.IsNullOrEmpty(name))
+            .ToList();
+
+        var propertySubstitutions = PresetIProperties
+            .Where(p => !string.IsNullOrEmpty(p.SubstitutionValue))
+            .ToDictionary(p => p.InventorPropertyName, p => p.SubstitutionValue);
+
+        return new ApplicationSettings
+        {
+            Interface = new InterfaceSettings
+            {
+                ColumnOrder = [..columnsInDisplayOrder],
+                UserDefinedProperties = userDefinedProperties,
+                PropertySubstitutions = propertySubstitutions,
+                IsExpanded = SettingsExpander?.IsExpanded ?? false,
+                SelectedLanguage = LocalizationManager.Instance.CurrentCulture.Name,
+                SelectedTheme = ThemeToggleButton?.IsChecked == true ? AppTheme.Dark : AppTheme.Light
+            },
+
+            ComponentFilter = new ComponentFilterSettings
+            {
+                ExcludeReferenceParts = ExcludeReferenceParts,
+                ExcludePurchasedParts = ExcludePurchasedParts,
+                ExcludePhantomParts = ExcludePhantomParts,
+                IncludeLibraryComponents = IncludeLibraryComponents
+            },
+
+            Organization = new OrganizationSettings
+            {
+                OrganizeByMaterial = OrganizeByMaterial,
+                OrganizeByThickness = OrganizeByThickness
+            },
+
+            SelectedProcessingMethod = SelectedProcessingMethod,
+
+            DxfExport = new DxfExportSettings
+            {
+                SelectedAcadVersion = SelectedAcadVersion,
+                MergeProfilesIntoPolyline = MergeProfilesIntoPolyline,
+                RebaseGeometry = RebaseGeometry,
+                TrimCenterlines = TrimCenterlines,
+                OptimizeDxf = OptimizeDxf
+            },
+
+            Spline = new SplineSettings
+            {
+                EnableSplineReplacement = EnableSplineReplacement,
+                SelectedSplineReplacement = SelectedSplineReplacement,
+                SplineTolerance = SplineToleranceTextBox?.Text ?? SplineSettings.DefaultSplineTolerance
+            },
+
+            ExportFolder = new ExportFolderSettings
+            {
+                SelectedExportFolder = SelectedExportFolder,
+                EnableSubfolder = EnableSubfolder,
+                SubfolderName = SubfolderNameTextBox?.Text ?? "",
+                FixedFolderPath = FixedFolderPath
+            },
+
+            FileName = new FileNameSettings
+            {
+                EnableFileNameConstructor = EnableFileNameConstructor,
+                FileNameTemplate = _tokenService.FileNameTemplate,
+                TemplatePresets = templatePresets,
+                SelectedTemplatePresetIndex = PresetManager.GetSelectedPresetIndex()
+            },
+
+            ExcelExport = new ExcelExportSettings
+            {
+                CsvDelimiter = CsvDelimiter,
+                DefaultExportFormat = DefaultExportFormat,
+                ExcelExportFileNameType = ExcelExportFileNameType
+            },
+
+            Update = new UpdateSettings
+            {
+                AutoUpdateCheck = AutoUpdateCheck
+            },
+
+            LayerSettings = layerSettings
+        };
     }
 
     public ObservableCollection<LayerSetting> LayerSettings { get; set; }
@@ -494,22 +710,17 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
     public AcadVersionType SelectedAcadVersion
     {
         get => _selectedAcadVersion;
-        set => SetAcadVersion(value, suppressMessage: false);
-    }
-
-    internal void SetAcadVersion(AcadVersionType value, bool suppressMessage)
-    {
-        if (_selectedAcadVersion != value)
+        set
         {
-            _selectedAcadVersion = value;
-            OnPropertyChanged(nameof(SelectedAcadVersion));
-            OnPropertyChanged(nameof(IsOptimizeDxfEnabled));
-
-            if (!AcadVersionMapping.SupportsOptimization(_selectedAcadVersion))
+            if (_selectedAcadVersion != value)
             {
-                OptimizeDxf = false;
-                if (!suppressMessage)
+                _selectedAcadVersion = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsOptimizeDxfEnabled));
+
+                if (!AcadVersionMapping.SupportsOptimization(_selectedAcadVersion))
                 {
+                    OptimizeDxf = false;
                     var ver = AcadVersionMapping.GetDisplayName(_selectedAcadVersion);
                     CustomMessageBox.Show(
                         _localizationManager.GetString("Info_VersionNotSupported", ver),

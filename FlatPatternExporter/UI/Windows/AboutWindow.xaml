@@ -112,6 +112,8 @@
             </Border>
 
                 <StackPanel x:Name="RightPanel" Grid.Column="1" VerticalAlignment="Top">
+                <TextBlock Text="{extensions:Localize App_Name}" Style="{StaticResource BaseTextBlockStyle}" FontWeight="Bold"/>
+                <TextBlock Text="{extensions:Localize Text_ForkAttribution}" Style="{StaticResource BaseTextBlockStyle}" TextWrapping="Wrap" Margin="{StaticResource BottomSmallMarginThickness}"/>
                 <GroupBox Header="{extensions:Localize Header_ProgramVersion}" Margin="{StaticResource VerticalSmallMarginThickness}">
                 <StackPanel Margin="{StaticResource SectionContentMarginThickness}">
                     <DockPanel>

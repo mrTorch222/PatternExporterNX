@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -10,8 +10,8 @@ namespace FlatPatternExporter.Services;
 public class GitHubUpdateService
 {
     private const string GitHubApiBaseUrl = "https://api.github.com";
-    private const string RepositoryOwner = "isinicyn";
-    private const string RepositoryName = "FlatPatternExporter";
+    private const string RepositoryOwner = "mrTorch222";
+    private const string RepositoryName = "PatternExporterNX";
 
     private readonly HttpClient _httpClient;
     public string? LastError { get; private set; }
@@ -19,7 +19,7 @@ public class GitHubUpdateService
     public GitHubUpdateService()
     {
         _httpClient = new HttpClient();
-        _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("FlatPatternExporter", "2.0"));
+        _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("PatternExporterNX", "2.0"));
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         _httpClient.Timeout = TimeSpan.FromSeconds(30);
     }

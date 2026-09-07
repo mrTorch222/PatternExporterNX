@@ -147,7 +147,7 @@
     <value>Версия программы</value>
   </data>
   <data name="Header_Author" xml:space="preserve">
-    <value>Автор</value>
+    <value>Автор исходного проекта</value>
   </data>
   <data name="Header_TemplatePresets" xml:space="preserve">
     <value>Пресеты шаблонов</value>
@@ -963,7 +963,7 @@
     <value>Лицензия:</value>
   </data>
   <data name="Text_LicenseValue" xml:space="preserve">
-    <value>Свободная</value>
+    <value>MIT License</value>
   </data>
   <data name="Header_License" xml:space="preserve">
     <value>Лицензия</value>
@@ -1938,5 +1938,11 @@
   </data>
   <data name="Notification_UpToDate" xml:space="preserve">
     <value>Версия актуальна!</value>
+  </data>
+  <data name="App_Name" xml:space="preserve">
+    <value>PatternExporterNX</value>
+  </data>
+  <data name="Text_ForkAttribution" xml:space="preserve">
+    <value>Независимый форк isinicyn/FlatPatternExporter. Сопровождение форка: mrTorch222. Репозиторий: github.com/mrTorch222/PatternExporterNX.</value>
   </data>
 </root>

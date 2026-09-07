@@ -147,7 +147,7 @@
     <value>Program Version</value>
   </data>
   <data name="Header_Author" xml:space="preserve">
-    <value>Author</value>
+    <value>Original project author</value>
   </data>
   <data name="Header_TemplatePresets" xml:space="preserve">
     <value>Template Presets</value>
@@ -963,7 +963,7 @@ Execution time: {3}</value>
     <value>License:</value>
   </data>
   <data name="Text_LicenseValue" xml:space="preserve">
-    <value>Free</value>
+    <value>MIT License</value>
   </data>
   <data name="Header_License" xml:space="preserve">
     <value>License</value>
@@ -1938,5 +1938,11 @@ Possible solutions:
   </data>
   <data name="Notification_UpToDate" xml:space="preserve">
     <value>You're up to date!</value>
+  </data>
+  <data name="App_Name" xml:space="preserve">
+    <value>PatternExporterNX</value>
+  </data>
+  <data name="Text_ForkAttribution" xml:space="preserve">
+    <value>Independent fork of isinicyn/FlatPatternExporter. Fork maintainer: mrTorch222. Repository: github.com/mrTorch222/PatternExporterNX.</value>
   </data>
 </root>

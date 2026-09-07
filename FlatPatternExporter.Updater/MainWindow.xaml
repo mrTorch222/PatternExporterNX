@@ -4,7 +4,7 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:controls="clr-namespace:FlatPatternExporter.UI.Controls"
         shell:WindowChrome.WindowChrome="{StaticResource CustomWindowChrome}"
-        Title="FlatPatternExporter - Updater"
+        Title="PatternExporterNX - Updater"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Width="550"
@@ -20,7 +20,7 @@
             </Grid.RowDefinitions>
 
             <controls:CustomTitleBar Grid.Row="0"
-                                     Title="FlatPatternExporter - Updater"
+                                     Title="PatternExporterNX - Updater"
                                      ShowMinimizeButton="False"
                                      ShowMaximizeButton="False"/>
 

@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 
 namespace FlatPatternExporter.Updater;
@@ -12,7 +12,7 @@ public partial class App : Application
         if (e.Args.Length != 3)
         {
             MessageBox.Show(
-                "Usage: FlatPatternExporter.Updater.exe <ProcessId> <UpdateFilesDirectory> <TargetExecutablePath>",
+                "Usage: PatternExporterNX.Updater.exe <ProcessId> <UpdateFilesDirectory> <TargetExecutablePath>",
                 "Invalid Arguments",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);

@@ -1,4 +1,4 @@
-{
+﻿{
     "version": "2.0.0",
     "tasks": [
         {
@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/FlatPatternExporter.sln",
+                "${workspaceFolder}/PatternExporterNX.sln",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -23,7 +23,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/FlatPatternExporter.sln",
+                "${workspaceFolder}/PatternExporterNX.sln",
                 "--configuration",
                 "Release",
                 "/property:GenerateFullPaths=true",
@@ -41,7 +41,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/FlatPatternExporter.sln",
+                "${workspaceFolder}/PatternExporterNX.sln",
                 "--configuration",
                 "Release",
                 "--arch",
@@ -59,7 +59,7 @@
             "type": "process",
             "args": [
                 "clean",
-                "${workspaceFolder}/FlatPatternExporter.sln"
+                "${workspaceFolder}/PatternExporterNX.sln"
             ],
             "group": "build",
             "presentation": {

@@ -1,5 +1,11 @@
 # CLAUDE.md
 
+## Идентичность проекта
+
+PatternExporterNX — независимый MIT-форк `isinicyn/FlatPatternExporter`. Автор исходного проекта: Sinicyn Ivan Victorovich. Сопровождение форка: mrTorch222, https://github.com/mrTorch222/PatternExporterNX. Сохраняйте `LICENSE.txt` без изменений и включайте его вместе с `NOTICE.md` во все дистрибутивы.
+
+Продукт и исполняемые файлы: `PatternExporterNX` и `PatternExporterNX.Updater`. Каталоги проектов, пространства имен `FlatPatternExporter` и путь `%AppData%\FlatPatternExporter\settings.json` сохранены для совместимости. Целевая версия CAD для развития форка — Inventor 2027; переход interop и приемка описаны в `IMPLEMENTATION_PLAN.md`, состояние проверки — в `FORK_BASELINE.md`.
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 **Важно:** Указывай только основные сведения о проекте без описаний того, что добавлено, удалено или улучшено.
@@ -20,7 +26,7 @@ FlatPatternExporter/
 ├── CLAUDE.md                           # Инструкции для Claude
 ├── LICENSE.txt                         # Лицензия
 ├── README.md                           # Документация проекта
-├── FlatPatternExporter.sln             # Файл решения Visual Studio
+├── PatternExporterNX.sln             # Файл решения Visual Studio
 ├── HELP/                               # Временные файлы справки
 ├── FlatPatternExporter.Updater/        # Проект апдейтера (WPF)
 │   ├── FlatPatternExporter.Updater.csproj
@@ -136,9 +142,9 @@ FlatPatternExporter/
         └── PublishProfiles/
 ```
 
-Это C# WPF приложение, которое является дополнением для Autodesk Inventor:
+Это отдельное C# WPF приложение, подключающееся к запущенному Autodesk Inventor через COM API:
 
-- **FlatPatternExporter** - Приложение для экспорта разверток деталей из листового металла с интегрированным функционалом управления слоями
+- **PatternExporterNX** - Приложение для экспорта разверток деталей из листового металла с интегрированным функционалом управления слоями
 
 Приложение построено с использованием:
 - .NET 8.0 Windows Desktop
@@ -151,10 +157,10 @@ FlatPatternExporter/
 ### Сборка проекта
 ```bash
 # Собрать решение
-dotnet build FlatPatternExporter.sln --configuration Release
+dotnet build PatternExporterNX.sln --configuration Release
 
 # Собрать конкретную конфигурацию для x64
-dotnet build FlatPatternExporter.sln --configuration Release --arch x64
+dotnet build PatternExporterNX.sln --configuration Release --arch x64
 ```
 
 ### Запуск приложения
@@ -166,7 +172,7 @@ dotnet run --project FlatPatternExporter\FlatPatternExporter.csproj
 ## Архитектура
 
 ### Зависимости проекта
-- Autodesk Inventor Interop: `C:\Program Files\Autodesk\Inventor 2026\Bin\Public Assemblies\Autodesk.Inventor.Interop.dll`
+- Autodesk Inventor Interop (унаследованная ссылка, переход на Inventor 2027 запланирован): `C:\Program Files\Autodesk\Inventor 2026\Bin\Public Assemblies\Autodesk.Inventor.Interop.dll`
 - netDxf.netstandard (v3.0.1) для работы с DXF файлами
 - Svg.Skia (v3.0.6) для конвертации SVG в PNG/BitmapImage
 - ClosedXML (v0.105.0) для экспорта данных в Excel

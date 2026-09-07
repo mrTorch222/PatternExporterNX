@@ -11,7 +11,7 @@
         xmlns:extensions="clr-namespace:FlatPatternExporter.Extensions"
         shell:WindowChrome.WindowChrome="{StaticResource CustomWindowChrome}"
         PreviewMouseLeftButtonDown="MainWindow_PreviewMouseLeftButtonDown"
-        Title="FPEx"
+        Title="{extensions:Localize App_Name}"
         MinHeight="600" MinWidth="1745"
         WindowStartupLocation="CenterScreen" SnapsToDevicePixels="True"
         Background="{DynamicResource BackgroundPrimaryBrush}"
@@ -30,7 +30,7 @@
         <!-- Row 0: Custom title bar -->
         <local:CustomTitleBar x:Name="TitleBar"
                               Grid.Row="0"
-                              Title="Flat Pattern Exporter 2026"
+                              Title="{extensions:Localize App_Name}"
                               Icon="/FPExport.ico"
                               TitleAlignment="Center"
                               ReserveUpdateButtonSpace="True"

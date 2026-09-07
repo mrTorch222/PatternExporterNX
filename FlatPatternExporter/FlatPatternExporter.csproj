@@ -14,10 +14,15 @@
 
     <!-- Application metadata -->
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Company>Sinicyn Ivan Victorovich</Company>
-    <Product>FlatPatternExporter</Product>
+    <Company>mrTorch222</Company>
+    <Authors>Sinicyn Ivan Victorovich; mrTorch222 (fork maintainer)</Authors>
+    <AssemblyName>PatternExporterNX</AssemblyName>
+    <RootNamespace>FlatPatternExporter</RootNamespace>
+    <RepositoryUrl>https://github.com/mrTorch222/PatternExporterNX</RepositoryUrl>
+    <Description>Independent fork of isinicyn/FlatPatternExporter, maintained by mrTorch222.</Description>
+    <Product>PatternExporterNX</Product>
     <Copyright>Copyright © 2025 Sinicyn Ivan Victorovich</Copyright>
-    <AssemblyTitle>Flat Pattern Exporter for Autodesk Inventor</AssemblyTitle>
+    <AssemblyTitle>PatternExporterNX for Autodesk Inventor</AssemblyTitle>
     <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
 
@@ -97,6 +102,7 @@
 
   <ItemGroup>
     <Reference Include="Autodesk.Inventor.Interop">
+      <Private>false</Private>
       <HintPath>C:\Program Files\Autodesk\Inventor 2026\Bin\Public Assemblies\Autodesk.Inventor.Interop.dll</HintPath>
     </Reference>
   </ItemGroup>

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using FlatPatternExporter.Enums;
@@ -77,8 +77,8 @@ public class UpdateManager
             var buildSuffix = BuildTypeMapping.GetArchiveSuffix(buildType);
             var version = release.Version;
 
-            var updaterAssetName = $"FlatPatternExporter.Updater-v{version}-x64.zip";
-            var mainAppAssetName = $"FlatPatternExporter-v{version}-x64-{buildSuffix}.zip";
+            var updaterAssetName = $"PatternExporterNX.Updater-v{version}-x64.zip";
+            var mainAppAssetName = $"PatternExporterNX-v{version}-x64-{buildSuffix}.zip";
 
             var updaterAsset = release.Assets.FirstOrDefault(a =>
                 a.Name.Equals(updaterAssetName, StringComparison.OrdinalIgnoreCase));
@@ -91,7 +91,7 @@ public class UpdateManager
                 throw new FileNotFoundException($"Required archive not found in release: {missingAsset}");
             }
 
-            var tempPath = Path.Combine(Path.GetTempPath(), "FlatPatternExporter_Update");
+            var tempPath = Path.Combine(Path.GetTempPath(), "PatternExporterNX_Update");
 
             if (Directory.Exists(tempPath))
             {
@@ -136,12 +136,12 @@ public class UpdateManager
             File.Delete(updaterZipPath);
             File.Delete(mainAppZipPath);
 
-            var updaterExePath = Path.Combine(updaterExtractPath, "FlatPatternExporter.Updater.exe");
+            var updaterExePath = Path.Combine(updaterExtractPath, "PatternExporterNX.Updater.exe");
             return File.Exists(updaterExePath) ? mainAppExtractPath : null;
         }
         catch
         {
-            var tempPath = Path.Combine(Path.GetTempPath(), "FlatPatternExporter_Update");
+            var tempPath = Path.Combine(Path.GetTempPath(), "PatternExporterNX_Update");
             CleanupTempDirectory(tempPath);
             return null;
         }
@@ -151,7 +151,7 @@ public class UpdateManager
     {
         var currentExecutable = Environment.ProcessPath ?? string.Empty;
         var tempPath = Path.GetDirectoryName(updateFilesPath) ?? string.Empty;
-        var updaterPath = Path.Combine(tempPath, "updater", "FlatPatternExporter.Updater.exe");
+        var updaterPath = Path.Combine(tempPath, "updater", "PatternExporterNX.Updater.exe");
 
         if (!File.Exists(updaterPath))
         {

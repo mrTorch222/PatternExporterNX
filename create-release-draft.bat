@@ -1,8 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
+set GH_REPO=mrTorch222/PatternExporterNX
 
 echo ========================================
-echo FlatPatternExporter - Release Draft Creator
+echo PatternExporterNX - Release Draft Creator
 echo ========================================
 echo.
 
@@ -68,7 +69,7 @@ echo.
 :: Verify archive version matches calculated version
 echo [INFO] Verifying archive versions...
 set ARCHIVE_VERSION_MISMATCH=0
-for %%f in (Release\FlatPatternExporter-v*.zip) do (
+for %%f in (Release\PatternExporterNX-v*.zip) do (
     set ARCHIVE_NAME=%%~nf
     for /f "tokens=2 delims=-" %%v in ("!ARCHIVE_NAME!") do (
         set ARCHIVE_VERSION=%%v
@@ -219,7 +220,11 @@ set NOTES_FILE=%TEMP%\release_notes_%VERSION%.md
 (
 echo ## Release Notes
 echo.
-echo Please add release notes here.
+echo PatternExporterNX is an independent MIT-licensed fork of https://github.com/isinicyn/FlatPatternExporter.
+echo Original author: Sinicyn Ivan Victorovich. Fork maintainer: mrTorch222.
+echo LICENSE.txt and NOTICE.md are included in each archive.
+echo.
+echo Please add release notes and verification results here.
 echo.
 echo ### Archives
 echo.

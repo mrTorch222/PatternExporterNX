@@ -2,11 +2,11 @@
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 
-:: FlatPatternExporter Publish Script
+:: PatternExporterNX Publish Script
 :: This script automates project publishing for various deployment scenarios
 
 echo =====================================
-echo FlatPatternExporter - Publish Script
+echo PatternExporterNX - Publish Script
 echo =====================================
 echo.
 
@@ -122,16 +122,19 @@ set stagingFolder=Release\staging
 if not exist "%stagingFolder%" mkdir "%stagingFolder%"
 
 :: Copy Updater exe to staging directory
-copy "FlatPatternExporter.Updater\bin\publish\portable\FlatPatternExporter.Updater.exe" "%stagingFolder%\" /Y >nul 2>&1
+copy "FlatPatternExporter.Updater\bin\publish\portable\PatternExporterNX.Updater.exe" "%stagingFolder%\" /Y >nul 2>&1
 if not errorlevel 1 echo [SUCCESS] Updater copied
 
+call :CopyNotices
+if errorlevel 1 exit /b 1
+
 :: Create zip archive
-set archiveName=FlatPatternExporter.Updater-v%BUILD_VERSION%-x64.zip
+set archiveName=PatternExporterNX.Updater-v%BUILD_VERSION%-x64.zip
 set archivePath=Release\%archiveName%
 
 if exist "%archivePath%" del "%archivePath%" >nul 2>&1
 
-powershell -NoProfile -Command "Compress-Archive -Path '%stagingFolder%\*.exe' -DestinationPath '%archivePath%' -CompressionLevel Optimal" >nul 2>&1
+powershell -NoProfile -Command "Compress-Archive -Path '%stagingFolder%\*' -DestinationPath '%archivePath%' -CompressionLevel Optimal" >nul 2>&1
 
 if not errorlevel 1 (
     echo [SUCCESS] Updater Portable archive created: %archiveName%
@@ -141,7 +144,7 @@ if not errorlevel 1 (
 
     echo.
     echo [INFO] Archive ready: Release\%archiveName%
-    echo [INFO] Files in archive: FlatPatternExporter.Updater.exe
+    echo [INFO] Files in archive: PatternExporterNX.Updater.exe
 ) else (
     echo [ERROR] Failed to create updater archive
 )
@@ -187,7 +190,7 @@ if not exist "%stagingFolder%" mkdir "%stagingFolder%"
 :: Copy files based on profile
 if "%sourceFolder%"=="portable" (
     :: For Portable profile copy only .exe files ^(SingleFile^)
-    copy "FlatPatternExporter\bin\publish\%sourceFolder%\FlatPatternExporter.exe" "%stagingFolder%\" /Y >nul 2>&1
+    copy "FlatPatternExporter\bin\publish\%sourceFolder%\PatternExporterNX.exe" "%stagingFolder%\" /Y >nul 2>&1
     if not errorlevel 1 echo [SUCCESS] Main application copied ^(SingleFile^)
 ) else (
     :: For Deploy and FrameworkDependent copy all files
@@ -203,9 +206,12 @@ echo [SUCCESS] Build type marker created: %targetFolder%
 set archiveSuffix=%targetFolder%
 if "%targetFolder%"=="FrameworkDependent" set archiveSuffix=FrameworkDependent
 
+call :CopyNotices
+if errorlevel 1 exit /b 1
+
 :: Create zip archive
 echo [ARCHIVE] Creating zip archive...
-set archiveName=FlatPatternExporter-v%BUILD_VERSION%-x64-%archiveSuffix%.zip
+set archiveName=PatternExporterNX-v%BUILD_VERSION%-x64-%archiveSuffix%.zip
 set archivePath=Release\%archiveName%
 
 if exist "%archivePath%" del "%archivePath%" >nul 2>&1
@@ -226,6 +232,16 @@ if not errorlevel 1 (
 
 echo.
 goto :eof
+
+:CopyNotices
+for %%f in (LICENSE.txt NOTICE.md) do (
+    copy "%%f" "%stagingFolder%\" /Y >nul
+    if errorlevel 1 (
+        echo [ERROR] Cannot include required notice: %%f
+        exit /b 1
+    )
+)
+exit /b 0
 
 :End
 echo.

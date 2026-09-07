@@ -1,11 +1,11 @@
-{
+﻿{
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "FlatPatternExporter Debug",
+            "name": "PatternExporterNX Debug",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceFolder}/FlatPatternExporter/bin/Debug/net8.0-windows10.0.26100.0/win-x64/FlatPatternExporter.exe",
+            "program": "${workspaceFolder}/FlatPatternExporter/bin/Debug/net8.0-windows10.0.26100.0/win-x64/PatternExporterNX.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
@@ -13,10 +13,10 @@
             "preLaunchTask": "build"
         },
         {
-            "name": "FlatPatternExporter Release",
+            "name": "PatternExporterNX Release",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceFolder}/FlatPatternExporter/bin/Release/net8.0-windows10.0.26100.0/win-x64/FlatPatternExporter.exe",
+            "program": "${workspaceFolder}/FlatPatternExporter/bin/Release/net8.0-windows10.0.26100.0/win-x64/PatternExporterNX.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
@@ -24,10 +24,10 @@
             "preLaunchTask": "build-release"
         },
         {
-            "name": "FlatPatternExporter Debug (DLL)",
+            "name": "PatternExporterNX Debug (DLL)",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceFolder}/FlatPatternExporter/bin/Debug/net8.0-windows10.0.26100.0/win-x64/FlatPatternExporter.dll",
+            "program": "${workspaceFolder}/FlatPatternExporter/bin/Debug/net8.0-windows10.0.26100.0/win-x64/PatternExporterNX.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
@@ -35,10 +35,10 @@
             "preLaunchTask": "build"
         },
         {
-            "name": "FlatPatternExporter Release (DLL)",
+            "name": "PatternExporterNX Release (DLL)",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceFolder}/FlatPatternExporter/bin/Release/net8.0-windows10.0.26100.0/win-x64/FlatPatternExporter.dll",
+            "program": "${workspaceFolder}/FlatPatternExporter/bin/Release/net8.0-windows10.0.26100.0/win-x64/PatternExporterNX.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",

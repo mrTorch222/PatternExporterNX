@@ -279,15 +279,12 @@ public class DxfExporter
                         }
 
                         oDataIO.WriteDataToFile(dxfOptions, filePath);
-                        exportSuccess = true;
-
-                        if (exportOptions.OptimizeDxf && exportSuccess)
+                        DxfPostProcessor.Process(filePath, new DxfPostProcessOptions
                         {
-                            if (AcadVersionMapping.SupportsOptimization(exportOptions.SelectedAcadVersion))
-                            {
-                                DxfOptimizer.OptimizeDxfFile(filePath, exportOptions.SelectedAcadVersion);
-                            }
-                        }
+                            OptimizeVersion = exportOptions.OptimizeDxf,
+                            TargetVersion = exportOptions.SelectedAcadVersion
+                        });
+                        exportSuccess = true;
                     }
                     catch (Exception ex)
                     {

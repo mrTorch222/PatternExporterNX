@@ -9,6 +9,8 @@
     <UseWPF>true</UseWPF>
     <ApplicationIcon>FPExport.ico</ApplicationIcon>
     <LangVersion>12.0</LangVersion>
+    <InventorInstallDir Condition="'$(InventorInstallDir)' == ''">$(ProgramW6432)\Autodesk\Inventor 2027</InventorInstallDir>
+    <InventorInteropPath>$(InventorInstallDir)\Bin\Public Assemblies\Autodesk.Inventor.Interop.dll</InventorInteropPath>
 
     <StartupObject>FlatPatternExporter.App</StartupObject>
 
@@ -103,10 +105,13 @@
   <ItemGroup>
     <Reference Include="Autodesk.Inventor.Interop">
       <Private>false</Private>
-      <HintPath>C:\Program Files\Autodesk\Inventor 2026\Bin\Public Assemblies\Autodesk.Inventor.Interop.dll</HintPath>
+      <HintPath>$(InventorInteropPath)</HintPath>
     </Reference>
   </ItemGroup>
-
+  <Target Name="ValidateInventorInterop" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="!Exists('$(InventorInteropPath)')"
+           Text="Inventor 2027 interop was not found at '$(InventorInteropPath)'. Install Autodesk Inventor 2027 or set -p:InventorInstallDir=&quot;C:\path\to\Inventor 2027&quot;." />
+  </Target>
   
 
 </Project>

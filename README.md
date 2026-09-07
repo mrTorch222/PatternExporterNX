@@ -11,7 +11,7 @@
 - Репозиторий форка / Fork: [mrTorch222/PatternExporterNX](https://github.com/mrTorch222/PatternExporterNX).
 - Ошибки и предложения по форку / Fork issues: [Issues](https://github.com/mrTorch222/PatternExporterNX/issues).
 - Подготовлены новое имя приложения и выпусков, сведения об авторстве и канал обновлений форка.
-- Inventor 2027, FitPoints, длина реза и единицы документа — **планируемые доработки**, см. [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). Их реализация и приемка не заявляются завершенными.
+- Сборка переведена на Inventor 2027. FitPoints, длина реза и единицы документа — **планируемые доработки**, см. [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). Их реализация и приемка не заявляются завершенными.
 - Ограничения исходной сборки и ручной проверки: [FORK_BASELINE.md](FORK_BASELINE.md).
 
 ## Overview
@@ -32,8 +32,8 @@ The upstream project documents development with assistance from [Claude Code](ht
 
 ## System Requirements
 - Windows 10/11 x64
-- .NET 8.0 Desktop Runtime (or Visual Studio 2022 with .NET workload for development)
-- Autodesk Inventor installed locally. The fork targets Inventor 2027 as its development goal; the inherited interop reference still points to Inventor 2026 pending the planned migration. No Inventor compatibility testing of this fork has been completed
+- .NET 8.0 Desktop Runtime; development uses .NET SDK 8.0.424 x64 (pinned in `global.json`) and Visual Studio Code or Visual Studio 2022
+- Autodesk Inventor 2027 installed locally; build and external interop loading are verified. End-to-end export and cutting-software acceptance remain pending
 - Git in `PATH` if you want build numbers populated by the MSBuild `SetVersionInfo` target
 - ApprenticeServer (optional) – recommended for faster thumbnail generation; Windows Shell API is used automatically if ApprenticeServer is unavailable
 
@@ -49,7 +49,7 @@ The solution and output executable use the new product name. Source directories 
 ### Build with Visual Studio
 1. Install Visual Studio 2022 with the `.NET desktop development` workload.
 2. Open `PatternExporterNX.sln` and restore NuGet packages (`netDxf.netstandard`, `Svg.Skia`, `Microsoft-WindowsAPICodePack-Shell`, `ClosedXML`, `stdole`).
-3. Ensure the reference to `Autodesk.Inventor.Interop.dll` in `FlatPatternExporter/FlatPatternExporter.csproj` points to your Inventor installation (update the `HintPath` if necessary).
+3. Install Inventor 2027 in its default location or pass `-p:InventorInstallDir="C:\path\to\Inventor 2027"` to MSBuild.
 4. Set the solution platform to `x64` (runtime identifier `win-x64`) and build.
 5. Start Autodesk Inventor, open the target assembly or part, then run the application from Visual Studio (`F5`).
 
@@ -58,7 +58,7 @@ The solution and output executable use the new product name. Source directories 
 dotnet restore PatternExporterNX.sln --source https://api.nuget.org/v3/index.json
 dotnet build PatternExporterNX.sln -c Release -p:Platform=x64 --no-restore
 ```
-Use a .NET 8 SDK that supports the inherited `net8.0-windows10.0.26100.0` target. SDK 8.0.204 fails with NETSDK1140 on this machine. The inherited Inventor interop `HintPath` must match a local installation; the configurable Inventor 2027 reference is planned. Autodesk interop is marked `Private=false` and must not be copied into the repository or distributed with the application.
+The solution uses .NET SDK 8.0.424 (`global.json`), C# 12 and `net8.0-windows10.0.26100.0`. `NuGet.Config` provides nuget.org without changing global NuGet settings. `InventorInstallDir` defaults to `%ProgramW6432%\Autodesk\Inventor 2027`; MSBuild reports a clear error if interop is absent. At runtime, interop is loaded from the `InventorInstallDir` environment variable, the Inventor 2027 installation registry entry, or the default install directory. A command-line MSBuild property applies only to the build; use the environment variable for a custom runtime location. Autodesk interop remains `Private=false` and is not redistributed.
 
 ### Portable build / publish
 Use the included publish profiles under `FlatPatternExporter/Properties/PublishProfiles` or run:
@@ -136,7 +136,7 @@ See [PUBLISH.md](PUBLISH.md) for detailed publishing documentation.
 
 ## Troubleshooting
 - **Cannot connect to Inventor**: ensure Inventor is running under the same user and that COM registration is intact. The app displays localized error messages when the connection fails.
-- **Missing Autodesk interop**: verify the path to `Autodesk.Inventor.Interop.dll` matches your Inventor version. Different installations (e.g., 2024/2025/2026) store the assembly in version-specific folders.
+- **Missing Autodesk interop**: verify that Inventor 2027 is installed and `InventorInstallDir` points to its installation root. The runtime resolves the local interop instead of requiring a redistributed DLL.
 - **Duplicate part numbers**: review the conflict analyzer panel after scanning. Resolve naming conflicts in Inventor or adjust token templates before exporting.
 - **Incorrect DXF output**: experiment with spline replacement, geometry rebasing, and layer presets. Use the DXF preview column to confirm results quickly.
 - **Thumbnail generation**: the application automatically handles thumbnail retrieval using a dual-method approach. If ApprenticeServer (Inventor's lightweight document reader) is unavailable, the app seamlessly falls back to Windows Shell API. No manual configuration is required—thumbnails will be generated using the best available method.

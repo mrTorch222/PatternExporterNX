@@ -1,0 +1,108 @@
+{
+  "rectangle-hole-m.dxf": {
+    "headers": {
+      "$ACADVER": "AC1015",
+      "$MEASUREMENT": "1",
+      "$INSUNITS": "6"
+    },
+    "entities": {
+      "CIRCLE": 1,
+      "LINE": 4
+    },
+    "layers": {
+      "IV_INTERIOR_PROFILES": 1,
+      "IV_OUTER_PROFILE": 4
+    },
+    "coordinate_ranges": {
+      "x": [
+        0.0,
+        0.1
+      ],
+      "y": [
+        0.0,
+        0.05
+      ],
+      "z": [
+        0.0,
+        0.0
+      ]
+    },
+    "splines": [],
+    "cut_length_dxf_units": 0.3628318530717959,
+    "cut_length_mm": 362.8318530717959
+  },
+  "rectangle-hole-mm.dxf": {
+    "headers": {
+      "$ACADVER": "AC1015",
+      "$MEASUREMENT": "1",
+      "$INSUNITS": "4"
+    },
+    "entities": {
+      "CIRCLE": 1,
+      "LINE": 4
+    },
+    "layers": {
+      "IV_INTERIOR_PROFILES": 1,
+      "IV_OUTER_PROFILE": 4
+    },
+    "coordinate_ranges": {
+      "x": [
+        0.0,
+        100.0
+      ],
+      "y": [
+        0.0,
+        50.0
+      ],
+      "z": [
+        0.0,
+        0.0
+      ]
+    },
+    "splines": [],
+    "cut_length_dxf_units": 362.8318530717959,
+    "cut_length_mm": 362.8318530717959
+  },
+  "spline-control-mm.dxf": {
+    "headers": {
+      "$ACADVER": "AC1015",
+      "$MEASUREMENT": "1",
+      "$INSUNITS": "4"
+    },
+    "entities": {
+      "CIRCLE": 1,
+      "LINE": 3,
+      "SPLINE": 1
+    },
+    "layers": {
+      "IV_INTERIOR_PROFILES": 1,
+      "IV_OUTER_PROFILE": 4
+    },
+    "coordinate_ranges": {
+      "x": [
+        0.0,
+        100.0
+      ],
+      "y": [
+        0.0,
+        70.0
+      ],
+      "z": [
+        0.0,
+        0.0
+      ]
+    },
+    "splines": [
+      {
+        "8": "IV_OUTER_PROFILE",
+        "70": "8",
+        "71": "3",
+        "72": "8",
+        "73": "4",
+        "74": "0"
+      }
+    ],
+    "cut_length_dxf_units": 368.7524881775025,
+    "cut_length_mm": 368.7524881775025
+  }
+}

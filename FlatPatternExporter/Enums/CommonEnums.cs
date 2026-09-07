@@ -21,7 +21,8 @@ public enum ProcessingMethod
 public enum SplineReplacementType
 {
     Lines = 0,            // Lines
-    Arcs = 1              // Arcs
+    Arcs = 1,             // Arcs
+    FitPoints = 2         // Fit-point spline
 }
 
 public enum CsvDelimiterType
@@ -119,6 +120,7 @@ public static class SplineReplacementMapping
     {
         SplineReplacementType.Lines => LocalizationManager.Instance.GetString("SplineReplacement_Lines"),
         SplineReplacementType.Arcs => LocalizationManager.Instance.GetString("SplineReplacement_Arcs"),
+        SplineReplacementType.FitPoints => LocalizationManager.Instance.GetString("SplineReplacement_FitPoints"),
         _ => type.ToString()
     };
 }

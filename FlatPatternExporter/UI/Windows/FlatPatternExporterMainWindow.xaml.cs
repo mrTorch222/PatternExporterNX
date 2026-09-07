@@ -2651,6 +2651,9 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
     private DataGridTextColumn CreateTextColumn(string header, string bindingPath, bool isSortable = true)
     {
         var binding = new Binding(bindingPath);
+        var metadata = PropertyMetadataRegistry.GetPropertyByInternalName(bindingPath);
+        if (metadata is { RequiresRounding: true })
+            binding.StringFormat = $"F{metadata.RoundingDecimals}";
 
         return new DataGridTextColumn
         {

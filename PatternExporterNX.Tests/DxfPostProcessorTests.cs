@@ -1,5 +1,7 @@
-using FlatPatternExporter.Enums;
+﻿using FlatPatternExporter.Enums;
 using FlatPatternExporter.Utilities;
+using netDxf;
+using netDxf.Entities;
 
 namespace PatternExporterNX.Tests;
 
@@ -7,6 +9,8 @@ public sealed class DxfPostProcessorTests
 {
     private static readonly string Fixture = Path.GetFullPath(Path.Combine(
         AppContext.BaseDirectory, "..", "..", "..", "..", "TestData", "Baseline", "Inventor2027", "rectangle-hole-mm.dxf"));
+    private static readonly string SplineFixture = Path.GetFullPath(Path.Combine(
+        AppContext.BaseDirectory, "..", "..", "..", "..", "TestData", "Baseline", "Inventor2027", "spline-control-mm.dxf"));
 
     [Fact]
     public void Process_PreservesHeaderCoordinatesAndEntities()
@@ -50,10 +54,60 @@ public sealed class DxfPostProcessorTests
         Assert.Contains("AC1032", File.ReadAllText(path));
     }
 
-    private static string CopyFixture()
+    [Fact]
+    public void Process_ConvertsControlPointSplineToFitPointSplineWithinTolerance()
+    {
+        const double tolerance = 0.01;
+        var path = CopyFixture(SplineFixture);
+        var before = DxfDocument.Load(path)!;
+        var source = Assert.Single(before.Entities.Splines);
+        var sourceLayer = source.Layer.Name;
+        var sourceColor = source.Color;
+
+        var result = DxfPostProcessor.Process(path, new DxfPostProcessOptions
+        {
+            ConvertSplinesToFitPoints = true,
+            SplineTolerance = tolerance
+        });
+
+        var after = DxfDocument.Load(path)!;
+        var converted = Assert.Single(after.Entities.Splines);
+        Assert.NotEmpty(converted.FitPoints);
+        Assert.Equal(sourceLayer, converted.Layer.Name);
+        Assert.Equal(sourceColor, converted.Color);
+        Assert.Equal(1, result.ConvertedSplineCount);
+        Assert.InRange(result.MaximumSplineDeviation, 0, tolerance);
+    }
+
+    [Fact]
+    public void Process_ConvertsPeriodicSplineWithoutOpeningCurve()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"periodic-{Guid.NewGuid():N}.dxf");
+        var document = new DxfDocument();
+        document.Entities.Add(new Spline(
+            [
+                new Vector3(0, 0, 0),
+                new Vector3(10, 0, 0),
+                new Vector3(10, 10, 0),
+                new Vector3(0, 10, 0)
+            ], null, 3, true));
+        Assert.True(document.Save(path));
+
+        DxfPostProcessor.Process(path, new DxfPostProcessOptions
+        {
+            ConvertSplinesToFitPoints = true,
+            SplineTolerance = 0.05
+        });
+
+        var converted = Assert.Single(DxfDocument.Load(path)!.Entities.Splines);
+        Assert.NotEmpty(converted.FitPoints);
+        Assert.True(converted.IsClosed);
+    }
+
+    private static string CopyFixture(string? fixture = null)
     {
         var path = Path.Combine(Path.GetTempPath(), $"post-process-{Guid.NewGuid():N}.dxf");
-        File.Copy(Fixture, path);
+        File.Copy(fixture ?? Fixture, path);
         return path;
     }
 

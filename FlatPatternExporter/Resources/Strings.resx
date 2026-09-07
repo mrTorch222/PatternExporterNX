@@ -1120,6 +1120,9 @@ The following characters are not allowed in layer names:
   <data name="SplineReplacement_Arcs" xml:space="preserve">
     <value>Arcs</value>
   </data>
+  <data name="SplineReplacement_FitPoints" xml:space="preserve">
+    <value>Fit-point splines</value>
+  </data>
   <data name="Layer_OuterProfile" xml:space="preserve">
     <value>Outer Profile</value>
   </data>
@@ -1945,4 +1948,19 @@ Possible solutions:
   <data name="Text_ForkAttribution" xml:space="preserve">
     <value>Independent fork of isinicyn/FlatPatternExporter. Fork maintainer: mrTorch222. Repository: github.com/mrTorch222/PatternExporterNX.</value>
   </data>
+  <data name="Property_DocumentUnits_DisplayName" xml:space="preserve"><value>Document units</value></data>
+  <data name="Property_DocumentUnits_ColumnHeader" xml:space="preserve"><value>Document units</value></data>
+  <data name="Property_DocumentUnits_Category" xml:space="preserve"><value>System</value></data>
+  <data name="Property_CutLengthMm_DisplayName" xml:space="preserve"><value>Cut length, mm</value></data>
+  <data name="Property_CutLengthMm_ColumnHeader" xml:space="preserve"><value>Cut length, mm</value></data>
+  <data name="Property_CutLengthMm_Category" xml:space="preserve"><value>System</value></data>
+  <data name="Property_CutLengthM_DisplayName" xml:space="preserve"><value>Cut length, m</value></data>
+  <data name="Property_CutLengthM_ColumnHeader" xml:space="preserve"><value>Cut length, m</value></data>
+  <data name="Property_CutLengthM_Category" xml:space="preserve"><value>System</value></data>
+  <data name="Unit_Millimeter" xml:space="preserve"><value>mm</value></data>
+  <data name="Unit_Meter" xml:space="preserve"><value>m</value></data>
+  <data name="Unit_Centimeter" xml:space="preserve"><value>cm</value></data>
+  <data name="Unit_Inch" xml:space="preserve"><value>in</value></data>
+  <data name="Unit_Foot" xml:space="preserve"><value>ft</value></data>
+  <data name="Unit_Unknown" xml:space="preserve"><value>Unknown</value></data>
 </root>

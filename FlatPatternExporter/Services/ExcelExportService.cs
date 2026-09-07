@@ -73,7 +73,16 @@ public class ExcelExportService
                     }
                     else
                     {
-                        worksheet.Cell(row, col + 1).Value = value?.ToString() ?? string.Empty;
+                        if (value is double number)
+                        {
+                            worksheet.Cell(row, col + 1).Value = number;
+                            var metadata = PropertyMetadataRegistry.GetPropertyByInternalName(column.SortMemberPath);
+                            if (metadata is { RequiresRounding: true })
+                                worksheet.Cell(row, col + 1).Style.NumberFormat.Format =
+                                    metadata.RoundingDecimals == 0 ? "0" : $"0.{new string('0', metadata.RoundingDecimals)}";
+                        }
+                        else
+                            worksheet.Cell(row, col + 1).Value = value?.ToString() ?? string.Empty;
                     }
                 }
             }
@@ -116,6 +125,8 @@ public class ExcelExportService
                     {
                         return "[IMAGE]";
                     }
+                    if (value is double)
+                        return PropertyMetadataRegistry.FormatValue(column.SortMemberPath, value);
                     return value?.ToString() ?? string.Empty;
                 }
                 return string.Empty;

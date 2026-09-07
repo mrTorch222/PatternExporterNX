@@ -11,7 +11,7 @@
 - Репозиторий форка / Fork: [mrTorch222/PatternExporterNX](https://github.com/mrTorch222/PatternExporterNX).
 - Ошибки и предложения по форку / Fork issues: [Issues](https://github.com/mrTorch222/PatternExporterNX/issues).
 - Подготовлены новое имя приложения и выпусков, сведения об авторстве и канал обновлений форка.
-- Сборка переведена на Inventor 2027. FitPoints, длина реза и единицы документа — **планируемые доработки**, см. [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). Их реализация и приемка не заявляются завершенными.
+- Сборка переведена на Inventor 2027. Реализованы FitPoints, диагностическая колонка единиц документа и длина реза в мм/м; импорт в конкретную программу резки еще требует внешней приемки, см. [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 - Ограничения исходной сборки и ручной проверки: [FORK_BASELINE.md](FORK_BASELINE.md).
 
 ## Overview
@@ -33,7 +33,7 @@ The upstream project documents development with assistance from [Claude Code](ht
 ## System Requirements
 - Windows 10/11 x64
 - .NET 8.0 Desktop Runtime; development uses .NET SDK 8.0.424 x64 (pinned in `global.json`) and Visual Studio Code or Visual Studio 2022
-- Autodesk Inventor 2027 installed locally; build and external interop loading are verified. End-to-end export and cutting-software acceptance remain pending
+- Autodesk Inventor 2027 installed locally; build, external interop loading and DXF export are verified. Cutting-software acceptance remains pending
 - Git in `PATH` if you want build numbers populated by the MSBuild `SetVersionInfo` target
 - ApprenticeServer (optional) – recommended for faster thumbnail generation; Windows Shell API is used automatically if ApprenticeServer is unavailable
 
@@ -110,8 +110,9 @@ See [PUBLISH.md](PUBLISH.md) for detailed publishing documentation.
 ### Export Options at a Glance
 - **Component filters**: exclude reference, purchased, phantom, and library parts from the export queue.
 - **Organization**: create material/thickness subfolders or route files to a custom project/workspace directory.
-- **DXF formatting**: merge profiles into polylines, rebase geometry to origin, trim centerlines, and post-process DXFs with `Utilities/DxfOptimizer`.
-- **Spline handling**: replace splines with lines or arcs and control tolerance.
+- **DXF formatting**: merge profiles into polylines, rebase geometry to origin, trim centerlines, and atomically post-process DXFs with `Utilities/DxfPostProcessor`.
+- **Spline handling**: replace splines with lines or arcs, or preserve SPLINE entities while converting control points to fit points with a checked tolerance.
+- **Diagnostics and metrics**: select document-unit and cut-length columns; cut length uses enabled outer/interior profile layers and is shown in millimeters or meters without changing DXF scale or headers.
 - **Layer presets**: toggle individual layers, assign custom names, colors, and line types; save presets for later reuse.
 - **File naming**: compose file names with tokens such as `{PartNumber}`, `{Material}`, `{Thickness}`, model states, user-defined properties, or `{CUSTOM:text}` segments.
 

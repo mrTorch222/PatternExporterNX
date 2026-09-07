@@ -138,6 +138,31 @@ public static class PropertyMetadataRegistry
             ColumnTemplate = "EditableQuantityTemplate",
             IsTokenizable = true
         },
+        ["DocumentUnits"] = new PropertyDefinition
+        {
+            InternalName = "DocumentUnits",
+            LocalizationKeyPrefix = "Property_DocumentUnits",
+            Type = PropertyType.System,
+            IsTokenizable = false
+        },
+        ["CutLengthMm"] = new PropertyDefinition
+        {
+            InternalName = "CutLengthMm",
+            LocalizationKeyPrefix = "Property_CutLengthMm",
+            Type = PropertyType.System,
+            RequiresRounding = true,
+            RoundingDecimals = 2,
+            IsTokenizable = false
+        },
+        ["CutLengthM"] = new PropertyDefinition
+        {
+            InternalName = "CutLengthM",
+            LocalizationKeyPrefix = "Property_CutLengthM",
+            Type = PropertyType.System,
+            RequiresRounding = true,
+            RoundingDecimals = 3,
+            IsTokenizable = false
+        },
 
         // ===== Document properties (not iProperty) =====
         ["FileName"] = new PropertyDefinition

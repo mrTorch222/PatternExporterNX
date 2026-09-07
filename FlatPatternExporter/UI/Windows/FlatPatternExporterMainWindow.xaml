@@ -199,6 +199,7 @@
                                         </ComboBox.ItemTemplate>
                                         <enums:SplineReplacementType>Lines</enums:SplineReplacementType>
                                         <enums:SplineReplacementType>Arcs</enums:SplineReplacementType>
+                                        <enums:SplineReplacementType>FitPoints</enums:SplineReplacementType>
                                     </ComboBox>
 
                                     <Label Grid.Row="2" Grid.Column="0"

@@ -1120,6 +1120,9 @@
   <data name="SplineReplacement_Arcs" xml:space="preserve">
     <value>Дуги</value>
   </data>
+  <data name="SplineReplacement_FitPoints" xml:space="preserve">
+    <value>Сплайны по точкам аппроксимации</value>
+  </data>
   <data name="Layer_OuterProfile" xml:space="preserve">
     <value>Внешний профиль</value>
   </data>
@@ -1945,4 +1948,19 @@
   <data name="Text_ForkAttribution" xml:space="preserve">
     <value>Независимый форк isinicyn/FlatPatternExporter. Сопровождение форка: mrTorch222. Репозиторий: github.com/mrTorch222/PatternExporterNX.</value>
   </data>
+  <data name="Property_DocumentUnits_DisplayName" xml:space="preserve"><value>Единицы документа</value></data>
+  <data name="Property_DocumentUnits_ColumnHeader" xml:space="preserve"><value>Единицы документа</value></data>
+  <data name="Property_DocumentUnits_Category" xml:space="preserve"><value>Системные</value></data>
+  <data name="Property_CutLengthMm_DisplayName" xml:space="preserve"><value>Длина реза, мм</value></data>
+  <data name="Property_CutLengthMm_ColumnHeader" xml:space="preserve"><value>Длина реза, мм</value></data>
+  <data name="Property_CutLengthMm_Category" xml:space="preserve"><value>Системные</value></data>
+  <data name="Property_CutLengthM_DisplayName" xml:space="preserve"><value>Длина реза, м</value></data>
+  <data name="Property_CutLengthM_ColumnHeader" xml:space="preserve"><value>Длина реза, м</value></data>
+  <data name="Property_CutLengthM_Category" xml:space="preserve"><value>Системные</value></data>
+  <data name="Unit_Millimeter" xml:space="preserve"><value>мм</value></data>
+  <data name="Unit_Meter" xml:space="preserve"><value>м</value></data>
+  <data name="Unit_Centimeter" xml:space="preserve"><value>см</value></data>
+  <data name="Unit_Inch" xml:space="preserve"><value>дюйм</value></data>
+  <data name="Unit_Foot" xml:space="preserve"><value>фут</value></data>
+  <data name="Unit_Unknown" xml:space="preserve"><value>Неизвестно</value></data>
 </root>

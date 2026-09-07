@@ -85,7 +85,7 @@ FlatPatternExporter/
     │   └── UpdateManager.cs            # Управление процессом обновления
     │
     ├── Utilities/                      # Утилиты
-    │   ├── DxfOptimizer.cs             # Оптимизация DXF файлов
+    │   ├── DxfPostProcessor.cs         # Единая атомарная обработка DXF
     │   └── VersionComparer.cs          # Сравнение версий приложения
     │
     ├── UI/                             # Пользовательский интерфейс
@@ -225,7 +225,7 @@ dotnet run --project FlatPatternExporter\FlatPatternExporter.csproj
 - `ExcelExportService` - экспорт данных DataGrid в Excel (XLSX) и CSV форматы с поддержкой изображений
 
 **Utilities/ - Утилиты (namespace: FlatPatternExporter.Utilities):**
-- `DxfOptimizer` - оптимизация DXF файлов для различных версий AutoCAD
+- `DxfPostProcessor` - преобразование сплайнов, расчет длины и оптимизация версии DXF за один проход
 
 **UI/ - Интерфейс пользователя:**
 - **Windows/ (namespace: FlatPatternExporter.UI.Windows)**: основные окна приложения

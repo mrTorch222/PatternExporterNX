@@ -1,9 +1,10 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows.Media.Imaging;
 using FlatPatternExporter.Enums;
 using FlatPatternExporter.Services;
+using FlatPatternExporter.Utilities;
 
 namespace FlatPatternExporter.Models;
 
@@ -14,6 +15,7 @@ public class PartData : INotifyPropertyChanged
     private bool isOverridden;
     private bool isMultiplied;
     private BitmapImage? dxfPreview;
+    private double? cutLengthMm;
     private Enums.ProcessingStatus processingStatusEnum = Enums.ProcessingStatus.NotProcessed;
     private Dictionary<string, string> userDefinedProperties = [];
     private readonly Dictionary<string, bool> _isExpressionFlags = [];
@@ -29,6 +31,7 @@ public class PartData : INotifyPropertyChanged
     private void OnLanguageChanged(object? sender, EventArgs e)
     {
         OnPropertyChanged(nameof(ProcessingStatus));
+        OnPropertyChanged(nameof(DocumentUnits));
     }
 
     public string FileName { get; set; } = "";
@@ -73,6 +76,20 @@ public class PartData : INotifyPropertyChanged
     public string Appearance { get; set; } = "";
     public string Density { get; set; } = "";
     public string LastUpdatedWith { get; set; } = "";
+    public DocumentLengthUnit DocumentLengthUnit { get; set; } = DocumentLengthUnit.Unknown;
+    public string DocumentUnits => LengthUnitConverter.GetDisplayName(DocumentLengthUnit);
+    public double? CutLengthMm
+    {
+        get => cutLengthMm;
+        set
+        {
+            if (cutLengthMm == value) return;
+            cutLengthMm = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CutLengthM));
+        }
+    }
+    public double? CutLengthM => CutLengthMm / 1000.0;
 
     public int OriginalQuantity { get; set; }
 

@@ -1,9 +1,10 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using FlatPatternExporter.Models;
 using FlatPatternExporter.Services;
+using FlatPatternExporter.Utilities;
 using Inventor;
 
 namespace FlatPatternExporter.Core;
@@ -60,13 +61,22 @@ public class PartDataReader
         return partData;
     }
 
-    private static void ReadAllPropertiesFromPart(PartDocument _, PartData partData, PropertyManager mgr)
+    private static void ReadAllPropertiesFromPart(PartDocument partDoc, PartData partData, PropertyManager mgr)
     {
         partData.FileName = mgr.GetFileName();
         partData.FullFileName = mgr.GetFullFileName();
         partData.ModelState = mgr.GetModelState();
         partData.HasFlatPattern = mgr.HasFlatPattern();
         partData.Thickness = mgr.GetThickness();
+        partData.DocumentLengthUnit = partDoc.UnitsOfMeasure.LengthUnits switch
+        {
+            UnitsTypeEnum.kMillimeterLengthUnits => DocumentLengthUnit.Millimeter,
+            UnitsTypeEnum.kMeterLengthUnits => DocumentLengthUnit.Meter,
+            UnitsTypeEnum.kCentimeterLengthUnits => DocumentLengthUnit.Centimeter,
+            UnitsTypeEnum.kInchLengthUnits => DocumentLengthUnit.Inch,
+            UnitsTypeEnum.kFootLengthUnits => DocumentLengthUnit.Foot,
+            _ => DocumentLengthUnit.Unknown
+        };
 
         SetExpressionStatesForAllProperties(partData, mgr);
 

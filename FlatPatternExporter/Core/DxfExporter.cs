@@ -169,6 +169,7 @@ public class DxfExporter
         foreach (var partData in partsDataList)
         {
             partData.ProcessingStatusEnum = ProcessingStatus.Pending;
+            partData.CutLengthMm = null;
         }
 
         try
@@ -279,11 +280,20 @@ public class DxfExporter
                         }
 
                         oDataIO.WriteDataToFile(dxfOptions, filePath);
-                        DxfPostProcessor.Process(filePath, new DxfPostProcessOptions
+                        var postProcessResult = DxfPostProcessor.Process(filePath, new DxfPostProcessOptions
                         {
                             OptimizeVersion = exportOptions.OptimizeDxf,
-                            TargetVersion = exportOptions.SelectedAcadVersion
+                            TargetVersion = exportOptions.SelectedAcadVersion,
+                            ConvertSplinesToFitPoints = exportOptions.EnableSplineReplacement &&
+                                exportOptions.SelectedSplineReplacement == SplineReplacementType.FitPoints,
+                            SplineTolerance = exportOptions.EnableSplineReplacement &&
+                                exportOptions.SelectedSplineReplacement == SplineReplacementType.FitPoints
+                                    ? ParseSplineTolerance(exportOptions.SplineTolerance)
+                                    : 0.01,
+                            CuttingLayers = GetCuttingLayers(exportOptions.LayerSettings),
+                            DocumentUnit = partData.DocumentLengthUnit
                         });
+                        partData.CutLengthMm = postProcessResult.CutLengthMm;
                         exportSuccess = true;
                     }
                     catch (Exception ex)
@@ -353,6 +363,8 @@ public class DxfExporter
                 sb.Append($"&SimplifySplines=True&SplineTolerance={splineTolerance}");
             else if (exportOptions.SelectedSplineReplacement == SplineReplacementType.Arcs)
                 sb.Append($"&SimplifySplines=True&SimplifyAsTangentArcs=True&SplineTolerance={splineTolerance}");
+            else
+                sb.Append("&SimplifySplines=False");
         }
         else
         {
@@ -368,6 +380,22 @@ public class DxfExporter
 
         return sb.ToString();
     }
+
+    private static double ParseSplineTolerance(string value)
+    {
+        if (double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out var tolerance) ||
+            double.TryParse(value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out tolerance))
+            return tolerance;
+
+        throw new FormatException($"Invalid spline tolerance: '{value}'.");
+    }
+
+    private static IReadOnlySet<string> GetCuttingLayers(IEnumerable<LayerSetting> layerSettings) =>
+        layerSettings
+            .Where(layer => layer.DisplayName is "OuterProfileLayer" or "InteriorProfilesLayer")
+            .Where(layer => !layer.CanBeHidden || layer.IsChecked)
+            .Select(layer => string.IsNullOrWhiteSpace(layer.CustomName) ? layer.LayerName : layer.CustomName)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     private bool IsFileLocked(string filePath, ExportOptions exportOptions, CancellationToken cancellationToken)
     {

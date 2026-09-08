@@ -19,6 +19,7 @@ using FlatPatternExporter.Models;
 using FlatPatternExporter.Services;
 using FlatPatternExporter.UI.Controls;
 using FlatPatternExporter.UI.Models;
+using FlatPatternExporter.Utilities;
 using Inventor;
 using Binding = System.Windows.Data.Binding;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
@@ -278,6 +279,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
         {
             UpdateButtonTexts();
             UpdatePresetPropertiesLocalization();
+            RebuildBendAnnotationTemplateTokens();
         };
 
         TokenService!.PropertyChanged += TokenService_PropertyChanged;
@@ -289,6 +291,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
 
         // Initialize data in TokenService
         _tokenService.UpdatePartsData(_partsData);
+        RebuildBendAnnotationTemplateTokens();
 
         // Subscribe to UpdateButtonClick event
         TitleBar.UpdateButtonClick += TitleBar_UpdateButtonClick;
@@ -303,9 +306,6 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
         try
         {
             // Interface settings
-            if (SettingsExpander is not null)
-                SettingsExpander.IsExpanded = settings.Interface.IsExpanded;
-
             // Restore language selection in ComboBox (language already applied in App.xaml.cs)
             var savedLanguage = SupportedLanguages.All
                 .FirstOrDefault(lang => lang.Code == settings.Interface.SelectedLanguage);
@@ -531,7 +531,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                 ColumnOrder = [.. columnsInDisplayOrder],
                 UserDefinedProperties = userDefinedProperties,
                 PropertySubstitutions = propertySubstitutions,
-                IsExpanded = SettingsExpander?.IsExpanded ?? false,
+                IsExpanded = true,
                 SelectedLanguage = LocalizationManager.Instance.CurrentCulture.Name,
                 SelectedTheme = SelectedTheme
             },
@@ -927,8 +927,20 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
     public string BendAnnotationTemplate
     {
         get => _bendAnnotationTemplate;
-        set { _bendAnnotationTemplate = value; OnPropertyChanged(); }
+        set
+        {
+            _bendAnnotationTemplate = value ?? string.Empty;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(BendAnnotationPreview));
+            RebuildBendAnnotationTemplateTokens();
+        }
     }
+
+    public string BendAnnotationPreview => string.IsNullOrEmpty(BendAnnotationTemplate)
+        ? string.Empty
+        : DxfPostProcessor.FormatBendAnnotation(
+            BendAnnotationTemplate,
+            new BendAnnotationSource(100, 90, 2.5, true));
 
     public string BendAnnotationFontFamily
     {
@@ -946,6 +958,77 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
     {
         get => _convertBendAnnotationsToCurves;
         set { _convertBendAnnotationsToCurves = value; OnPropertyChanged(); }
+    }
+
+    private void AddBendAnnotationToken_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button { Tag: string token }) BendAnnotationTemplate += token;
+    }
+
+    private void AddBendAnnotationCustomText_Click(object sender, RoutedEventArgs e) =>
+        AppendBendAnnotationCustomText();
+
+    private void BendAnnotationCustomTextBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        AppendBendAnnotationCustomText();
+        e.Handled = true;
+    }
+
+    private void AddBendAnnotationSymbol_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button { Tag: string symbol }) BendAnnotationTemplate += symbol;
+    }
+
+    private void AppendBendAnnotationCustomText()
+    {
+        if (BendAnnotationCustomTextBox is null || string.IsNullOrEmpty(BendAnnotationCustomTextBox.Text)) return;
+        BendAnnotationTemplate += BendAnnotationCustomTextBox.Text;
+        BendAnnotationCustomTextBox.Clear();
+    }
+
+    private void RebuildBendAnnotationTemplateTokens()
+    {
+        if (BendAnnotationTokenContainer is null) return;
+        BendAnnotationTokenContainer.Children.Clear();
+
+        const string tokenPattern = @"\{(?:Direction|Angle|Radius|Length)\}";
+        var position = 0;
+        foreach (Match match in Regex.Matches(BendAnnotationTemplate, tokenPattern, RegexOptions.IgnoreCase))
+        {
+            if (match.Index > position)
+                AddBendAnnotationTemplateBlock(position, match.Index - position, true);
+            AddBendAnnotationTemplateBlock(match.Index, match.Length, false);
+            position = match.Index + match.Length;
+        }
+
+        if (position < BendAnnotationTemplate.Length)
+            AddBendAnnotationTemplateBlock(position, BendAnnotationTemplate.Length - position, true);
+    }
+
+    private void AddBendAnnotationTemplateBlock(int startIndex, int length, bool customText)
+    {
+        var sourceText = BendAnnotationTemplate.Substring(startIndex, length);
+        var displayText = customText
+            ? sourceText.Replace(" ", "␣")
+            : _localizationManager.GetString($"BendToken_{sourceText.Trim('{', '}')}");
+        var border = new System.Windows.Controls.Border
+        {
+            Style = FindResource("TokenBlockStyle") as Style,
+            Tag = customText ? "CustomText" : null,
+            ToolTip = sourceText,
+            Child = new TextBlock
+            {
+                Text = displayText,
+                Style = FindResource("TokenTextStyle") as Style
+            }
+        };
+        border.MouseDown += (_, args) =>
+        {
+            if (args.ClickCount != 2) return;
+            BendAnnotationTemplate = BendAnnotationTemplate.Remove(startIndex, length);
+        };
+        BendAnnotationTokenContainer.Children.Add(border);
     }
 
     public AppTheme SelectedTheme

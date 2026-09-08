@@ -2041,4 +2041,13 @@ Possible solutions:
   <data name="BendAnnotation_Font" xml:space="preserve"><value>Font</value></data>
   <data name="BendAnnotation_Height" xml:space="preserve"><value>Height</value></data>
   <data name="BendAnnotation_ConvertToCurves" xml:space="preserve"><value>Convert text to curves</value></data>
+  <data name="BendAnnotation_Tab" xml:space="preserve"><value>Bend text</value></data>
+  <data name="BendAnnotation_Characteristics" xml:space="preserve"><value>Bend characteristics</value></data>
+  <data name="BendAnnotation_RemoveHint" xml:space="preserve"><value>Double-click a block to remove it.</value></data>
+  <data name="BendToken_Direction" xml:space="preserve"><value>Direction</value></data>
+  <data name="BendToken_Angle" xml:space="preserve"><value>Angle</value></data>
+  <data name="BendToken_Radius" xml:space="preserve"><value>Radius</value></data>
+  <data name="BendToken_Length" xml:space="preserve"><value>Bend length</value></data>
+  <data name="Theme_KeyColor" xml:space="preserve"><value>Theme accent color</value></data>
+  <data name="BendAnnotation_Enable" xml:space="preserve"><value>Add bend annotations to DXF</value></data>
 </root>

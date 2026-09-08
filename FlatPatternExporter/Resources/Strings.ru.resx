@@ -2041,4 +2041,13 @@
   <data name="BendAnnotation_Font" xml:space="preserve"><value>Шрифт</value></data>
   <data name="BendAnnotation_Height" xml:space="preserve"><value>Высота</value></data>
   <data name="BendAnnotation_ConvertToCurves" xml:space="preserve"><value>Преобразовать текст в кривые</value></data>
+  <data name="BendAnnotation_Tab" xml:space="preserve"><value>Надписи гибов</value></data>
+  <data name="BendAnnotation_Characteristics" xml:space="preserve"><value>Характеристики гиба</value></data>
+  <data name="BendAnnotation_RemoveHint" xml:space="preserve"><value>Двойной щелчок по блоку удаляет его.</value></data>
+  <data name="BendToken_Direction" xml:space="preserve"><value>Направление</value></data>
+  <data name="BendToken_Angle" xml:space="preserve"><value>Угол</value></data>
+  <data name="BendToken_Radius" xml:space="preserve"><value>Радиус</value></data>
+  <data name="BendToken_Length" xml:space="preserve"><value>Длина гиба</value></data>
+  <data name="Theme_KeyColor" xml:space="preserve"><value>Ключевой цвет темы</value></data>
+  <data name="BendAnnotation_Enable" xml:space="preserve"><value>Добавлять надписи гибов в DXF</value></data>
 </root>

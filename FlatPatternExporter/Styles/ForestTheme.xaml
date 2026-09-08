@@ -11,6 +11,8 @@
     <SolidColorBrush x:Key="BorderSecondaryBrush" Color="#345443"/>
     <SolidColorBrush x:Key="AccentBrush" Color="#45B97C"/>
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#70D69B"/>
+    <SolidColorBrush x:Key="TokenCustomBorderBrush" Color="#45B97C"/>
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#30865A"/>
     <SolidColorBrush x:Key="HoverBackgroundBrush" Color="#294A3A"/>
     <SolidColorBrush x:Key="SelectionBackgroundBrush" Color="#356149"/>
 </ResourceDictionary>

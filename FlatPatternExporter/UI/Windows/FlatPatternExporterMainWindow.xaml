@@ -43,14 +43,14 @@
                     <Button Style="{StaticResource TitleBarIconButtonStyle}"
                             Tag="{StaticResource InfoIconGeometry}"
                             Click="AboutButton_Click"/>
-                    <ComboBox Width="105" Margin="4,0"
+                    <ComboBox Width="130" Margin="4,0"
                               SelectedValue="{Binding SelectedTheme, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}"
                               SelectedValuePath="Tag">
-                        <ComboBoxItem Content="{extensions:Localize Theme_Light}" Tag="{x:Static enums:AppTheme.Light}"/>
-                        <ComboBoxItem Content="{extensions:Localize Theme_Dark}" Tag="{x:Static enums:AppTheme.Dark}"/>
-                        <ComboBoxItem Content="{extensions:Localize Theme_Ocean}" Tag="{x:Static enums:AppTheme.Ocean}"/>
-                        <ComboBoxItem Content="{extensions:Localize Theme_Forest}" Tag="{x:Static enums:AppTheme.Forest}"/>
-                        <ComboBoxItem Content="{extensions:Localize Theme_Graphite}" Tag="{x:Static enums:AppTheme.Graphite}"/>
+                        <ComboBoxItem Tag="{x:Static enums:AppTheme.Light}"><StackPanel Orientation="Horizontal"><Border Width="10" Height="10" CornerRadius="5" Background="#0078D4" Margin="0,0,6,0" ToolTip="{extensions:Localize Theme_KeyColor}"/><TextBlock Text="{extensions:Localize Theme_Light}"/></StackPanel></ComboBoxItem>
+                        <ComboBoxItem Tag="{x:Static enums:AppTheme.Dark}"><StackPanel Orientation="Horizontal"><Border Width="10" Height="10" CornerRadius="5" Background="#0E639C" Margin="0,0,6,0" ToolTip="{extensions:Localize Theme_KeyColor}"/><TextBlock Text="{extensions:Localize Theme_Dark}"/></StackPanel></ComboBoxItem>
+                        <ComboBoxItem Tag="{x:Static enums:AppTheme.Ocean}"><StackPanel Orientation="Horizontal"><Border Width="10" Height="10" CornerRadius="5" Background="#29A9E8" Margin="0,0,6,0" ToolTip="{extensions:Localize Theme_KeyColor}"/><TextBlock Text="{extensions:Localize Theme_Ocean}"/></StackPanel></ComboBoxItem>
+                        <ComboBoxItem Tag="{x:Static enums:AppTheme.Forest}"><StackPanel Orientation="Horizontal"><Border Width="10" Height="10" CornerRadius="5" Background="#45B97C" Margin="0,0,6,0" ToolTip="{extensions:Localize Theme_KeyColor}"/><TextBlock Text="{extensions:Localize Theme_Forest}"/></StackPanel></ComboBoxItem>
+                        <ComboBoxItem Tag="{x:Static enums:AppTheme.Graphite}"><StackPanel Orientation="Horizontal"><Border Width="10" Height="10" CornerRadius="5" Background="#D18B47" Margin="0,0,6,0" ToolTip="{extensions:Localize Theme_KeyColor}"/><TextBlock Text="{extensions:Localize Theme_Graphite}"/></StackPanel></ComboBoxItem>
                     </ComboBox>
                 </StackPanel>
             </local:CustomTitleBar.ContentArea>
@@ -106,9 +106,11 @@
         </Grid>
 
         <!-- Row 2: Settings -->
-        <Expander x:Name="SettingsExpander" Grid.Row="1" Margin="{StaticResource StandardPaddingThickness}" Padding="{StaticResource UniformSmallPaddingThickness}" Header="{extensions:Localize Header_Settings}" IsExpanded="False" FlowDirection="RightToLeft"
-                  Style="{StaticResource SquareExpanderStyle}">
-            <TabControl FlowDirection="LeftToRight">
+        <Border Grid.Row="1" Margin="{StaticResource StandardPaddingThickness}"
+                Padding="{StaticResource UniformSmallPaddingThickness}"
+                BorderBrush="{DynamicResource BorderPrimaryBrush}" BorderThickness="1"
+                CornerRadius="{StaticResource StandardCornerRadiusValue}">
+            <TabControl>
                 <TabItem Header="{extensions:Localize Header_Main}">
             <WrapPanel Orientation="Horizontal" Margin="{StaticResource UniformStandardMarginThickness}">
                         <GroupBox Header="{extensions:Localize Header_ComponentProcessing}" Margin="{StaticResource RightStandardMarginThickness}">
@@ -407,27 +409,100 @@
                             <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="{StaticResource VerticalSeparatorCenteredMarginThickness}">
                                 <TextBlock Text="{extensions:Localize BendAnnotation_Header}" FontWeight="SemiBold" Margin="0,0,0,5"/>
                                 <local:LayerSettingControl DataContext="{Binding LayerSettings[16]}" Pseudonym="BendAnnotation"/>
-                                <TextBlock Text="{extensions:Localize BendAnnotation_Template}" Margin="0,6,0,3"/>
-                                <TextBox Text="{Binding BendAnnotationTemplate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                <TextBlock Text="{extensions:Localize BendAnnotation_TokensHint}" Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,3,0,6"/>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{extensions:Localize BendAnnotation_Font}" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                    <ComboBox Width="155" IsEditable="True" ItemsSource="{Binding AvailableFontFamilies}"
-                                              Text="{Binding BendAnnotationFontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                                    <TextBlock Text="{extensions:Localize BendAnnotation_Height}" VerticalAlignment="Center" Margin="10,0,5,0"/>
-                                    <ComboBox Width="65" IsEditable="True" Text="{Binding BendAnnotationTextHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                        <ComboBoxItem Content="1"/><ComboBoxItem Content="1.5"/><ComboBoxItem Content="2"/>
-                                        <ComboBoxItem Content="2.5"/><ComboBoxItem Content="3"/><ComboBoxItem Content="4"/>
-                                        <ComboBoxItem Content="5"/><ComboBoxItem Content="7"/><ComboBoxItem Content="10"/>
-                                    </ComboBox>
-                                </StackPanel>
-                                <CheckBox Content="{extensions:Localize BendAnnotation_ConvertToCurves}"
-                                          IsChecked="{Binding ConvertBendAnnotationsToCurves, Mode=TwoWay}" Margin="0,7,0,0"/>
                             </StackPanel>
                             <Separator Grid.Row="0" Grid.Column="0" Style="{StaticResource VerticalSeparatorStyle}" HorizontalAlignment="Right" Margin="{StaticResource VerticalSmallMarginThickness}"/>
                             <Separator Grid.Row="0" Grid.Column="1" Style="{StaticResource VerticalSeparatorStyle}" HorizontalAlignment="Right" Margin="{StaticResource VerticalSmallMarginThickness}"/>
                         </Grid>
                     </GroupBox>
+                </TabItem>
+                <TabItem Header="{extensions:Localize BendAnnotation_Tab}">
+                    <Grid Margin="{StaticResource UniformStandardMarginThickness}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*" MinWidth="420"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="2*" MinWidth="600"/>
+                        </Grid.ColumnDefinitions>
+
+                        <CheckBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"
+                                  Content="{extensions:Localize BendAnnotation_Enable}"
+                                  IsChecked="{Binding LayerSettings[16].IsChecked, Mode=TwoWay}"
+                                  Margin="0,0,0,10"/>
+
+                        <GroupBox Grid.Row="1" Grid.Column="0" Header="{extensions:Localize Header_DataSources}"
+                                  IsEnabled="{Binding LayerSettings[16].IsChecked}" Margin="{StaticResource RightSmallMarginThickness}">
+                            <StackPanel Margin="{StaticResource SectionContentMarginThickness}">
+                                <TextBlock Text="{extensions:Localize BendAnnotation_Characteristics}" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                <WrapPanel>
+                                    <Button Content="{extensions:Localize BendToken_Direction}" Tag="{}{Direction}" Click="AddBendAnnotationToken_Click" Style="{StaticResource InteractiveActionButtonStyle}"/>
+                                    <Button Content="{extensions:Localize BendToken_Angle}" Tag="{}{Angle}" Click="AddBendAnnotationToken_Click" Style="{StaticResource InteractiveActionButtonStyle}"/>
+                                    <Button Content="{extensions:Localize BendToken_Radius}" Tag="{}{Radius}" Click="AddBendAnnotationToken_Click" Style="{StaticResource InteractiveActionButtonStyle}"/>
+                                    <Button Content="{extensions:Localize BendToken_Length}" Tag="{}{Length}" Click="AddBendAnnotationToken_Click" Style="{StaticResource InteractiveActionButtonStyle}"/>
+                                </WrapPanel>
+
+                                <TextBlock Text="{extensions:Localize Text_CustomTextAndSymbols}" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox x:Name="BendAnnotationCustomTextBox" Width="190" KeyDown="BendAnnotationCustomTextBox_KeyDown"/>
+                                    <Button Content="{extensions:Localize Button_Add}" Click="AddBendAnnotationCustomText_Click"
+                                            Style="{StaticResource InteractiveActionButtonStyle}" Margin="{StaticResource LeftSmallMarginThickness}"/>
+                                </StackPanel>
+                                <WrapPanel Margin="0,6,0,0">
+                                    <Button Content="␣" Tag=" " Click="AddBendAnnotationSymbol_Click" Style="{StaticResource SymbolButtonStyle}"/>
+                                    <Button Content="°" Tag="°" Click="AddBendAnnotationSymbol_Click" Style="{StaticResource SymbolButtonStyle}"/>
+                                    <Button Content="R" Tag="R" Click="AddBendAnnotationSymbol_Click" Style="{StaticResource SymbolButtonStyle}"/>
+                                    <Button Content="L" Tag="L" Click="AddBendAnnotationSymbol_Click" Style="{StaticResource SymbolButtonStyle}"/>
+                                    <Button Content="-" Tag="-" Click="AddBendAnnotationSymbol_Click" Style="{StaticResource SymbolButtonStyle}"/>
+                                    <Button Content="/" Tag="/" Click="AddBendAnnotationSymbol_Click" Style="{StaticResource SymbolButtonStyle}"/>
+                                    <Button Content="(" Tag="(" Click="AddBendAnnotationSymbol_Click" Style="{StaticResource SymbolButtonStyle}"/>
+                                    <Button Content=")" Tag=")" Click="AddBendAnnotationSymbol_Click" Style="{StaticResource SymbolButtonStyle}"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GridSplitter Grid.Row="1" Grid.Column="1" Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                                      Background="{DynamicResource StatusBarBackgroundBrush}" Margin="{StaticResource GridSplitterMarginThickness}"/>
+
+                        <GroupBox Grid.Row="1" Grid.Column="2" Header="{extensions:Localize Header_TemplateAndPreview}"
+                                  IsEnabled="{Binding LayerSettings[16].IsChecked}" Margin="{StaticResource LeftSmallMarginThickness}">
+                            <StackPanel Margin="{StaticResource SectionContentMarginThickness}">
+                                <TextBlock Text="{extensions:Localize BendAnnotation_Template}" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                <Border Background="{DynamicResource BackgroundPrimaryBrush}"
+                                        BorderBrush="{DynamicResource BorderPrimaryBrush}" BorderThickness="1"
+                                        CornerRadius="{StaticResource StandardCornerRadiusValue}" MinHeight="44" Padding="4">
+                                    <WrapPanel x:Name="BendAnnotationTokenContainer" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="{extensions:Localize BendAnnotation_RemoveHint}" Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,8"/>
+
+                                <TextBlock Text="{extensions:Localize Text_Preview}" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                <Border Background="{DynamicResource PreviewValidBackgroundBrush}"
+                                        BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1"
+                                        CornerRadius="{StaticResource StandardCornerRadiusValue}" MinHeight="32" Padding="8">
+                                    <TextBlock Text="{Binding BendAnnotationPreview}" Style="{StaticResource FileNamePreviewTextStyle}"/>
+                                </Border>
+
+                                <WrapPanel Margin="0,12,0,0">
+                                    <StackPanel Margin="0,0,14,0">
+                                        <TextBlock Text="{extensions:Localize BendAnnotation_Font}"/>
+                                        <ComboBox Width="190" IsEditable="True" ItemsSource="{Binding AvailableFontFamilies}"
+                                                  Text="{Binding BendAnnotationFontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="{extensions:Localize BendAnnotation_Height}"/>
+                                        <ComboBox Width="85" IsEditable="True" Text="{Binding BendAnnotationTextHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                            <ComboBoxItem Content="1"/><ComboBoxItem Content="1.5"/><ComboBoxItem Content="2"/>
+                                            <ComboBoxItem Content="2.5"/><ComboBoxItem Content="3"/><ComboBoxItem Content="4"/>
+                                            <ComboBoxItem Content="5"/><ComboBoxItem Content="7"/><ComboBoxItem Content="10"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                </WrapPanel>
+                                <CheckBox Content="{extensions:Localize BendAnnotation_ConvertToCurves}"
+                                          IsChecked="{Binding ConvertBendAnnotationsToCurves, Mode=TwoWay}" Margin="0,10,0,0"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </Grid>
                 </TabItem>
                 <TabItem Header="{extensions:Localize Header_FileName}">
                     <Grid Margin="{StaticResource UniformStandardMarginThickness}">
@@ -782,7 +857,7 @@
                     </WrapPanel>
                 </TabItem>
             </TabControl>
-        </Expander>
+        </Border>
 
         <!-- Row 3: Search panel and multiplier -->
         <Grid Grid.Row="2" Margin="{StaticResource OuterBottomMarginThickness}">

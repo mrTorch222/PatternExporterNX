@@ -10,8 +10,6 @@ using FlatPatternExporter.UI.Windows;
 using Inventor;
 using Microsoft.WindowsAPICodePack.Shell;
 using Svg.Skia;
-using IOFile = System.IO.File;
-using IOPath = System.IO.Path;
 
 namespace FlatPatternExporter.Core;
 
@@ -134,16 +132,6 @@ public class ThumbnailGenerator
 
         try
         {
-            var renderedThumbnail = await RenderThumbnailViaInventorAsync(document, dispatcher);
-            if (renderedThumbnail is not null) return renderedThumbnail;
-        }
-        catch
-        {
-            // Last fallback: ask Windows for its cached file thumbnail.
-        }
-
-        try
-        {
             return await GetThumbnailViaShellAsync(document, dispatcher);
         }
         catch (Exception ex)
@@ -189,40 +177,6 @@ public class ThumbnailGenerator
         return tcs.Task;
     }
 
-    private static async Task<BitmapImage?> RenderThumbnailViaInventorAsync(PartDocument document, Dispatcher dispatcher)
-    {
-        BitmapImage? bitmap = null;
-        await dispatcher.InvokeAsync(() =>
-        {
-            var temporaryFile = IOPath.Combine(IOPath.GetTempPath(), $"PatternExporterNX-{Guid.NewGuid():N}.png");
-            var application = (Inventor.Application)document.Parent;
-            var activeDocument = application.ActiveDocument;
-            Inventor.View? view = null;
-
-            try
-            {
-                view = document.Views.Add();
-                view.Visible = false;
-                var camera = view.Camera;
-                camera.ViewOrientationType = ViewOrientationTypeEnum.kIsoTopRightViewOrientation;
-                camera.Fit();
-                camera.Apply();
-                view.Update();
-                view.SaveAsBitmap(temporaryFile, 256, 256);
-                bitmap = LoadBitmapImage(temporaryFile);
-            }
-            finally
-            {
-                view?.Close();
-                if (activeDocument is not null && application.ActiveDocument != activeDocument)
-                    activeDocument.Activate();
-                if (IOFile.Exists(temporaryFile)) IOFile.Delete(temporaryFile);
-            }
-        });
-
-        return bitmap;
-    }
-
     private static BitmapImage? ConvertPictureToBitmapImage(stdole.IPictureDisp thumbnail)
     {
         using var image = IPictureDispConverter.PictureDispToImage(thumbnail);
@@ -235,17 +189,6 @@ public class ThumbnailGenerator
         var bitmap = new BitmapImage();
         bitmap.BeginInit();
         bitmap.StreamSource = memoryStream;
-        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-        bitmap.EndInit();
-        bitmap.Freeze();
-        return bitmap;
-    }
-
-    private static BitmapImage LoadBitmapImage(string filePath)
-    {
-        var bitmap = new BitmapImage();
-        bitmap.BeginInit();
-        bitmap.UriSource = new Uri(filePath, UriKind.Absolute);
         bitmap.CacheOption = BitmapCacheOption.OnLoad;
         bitmap.EndInit();
         bitmap.Freeze();

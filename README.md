@@ -24,7 +24,7 @@ PatternExporterNX is a standalone WPF utility that connects to a running Autodes
 - Exports DXF files with customizable layer mapping, AutoCAD version targeting, polylines merging, spline replacement, geometry rebasing, and optional DXF optimization.
 - Builds file names from tokenized templates (including custom text and user-defined iProperties) and organizes output by material, thickness, or custom subfolders.
 - Generates thumbnails for parts and exported DXF previews to aid validation. Uses a dual-method approach: ApprenticeServer API (primary, faster) with automatic fallback to Windows Shell API if ApprenticeServer is unavailable.
-- If a saved IPT has no embedded thumbnail, renders `Part Img` through an isolated Inventor view; DXF export creates a missing sheet-metal Flat Pattern in memory before calling `FlatPattern.DataIO.WriteDataToFile`.
+- Reads `Part Img` from saved-file thumbnail data without opening a new Inventor view; DXF export creates a missing sheet-metal Flat Pattern in memory before calling `FlatPattern.DataIO.WriteDataToFile`.
 - Persists UI layout, column order, presets, themes, and localization preferences in `%AppData%\FlatPatternExporter\settings.json`.
 - Provides a separate Frame Generator tab that finds unique frame-member IPT documents recursively, counts their occurrences, reads `G_L` in millimeters, exports them with Inventor's IGES translator, and writes the resulting BOM to Excel or CSV.
 - Ships with English and Russian UI resources plus a light/dark theme switcher.
@@ -37,7 +37,7 @@ The upstream project documents development with assistance from [Claude Code](ht
 - .NET 8.0 Desktop Runtime; development uses .NET SDK 8.0.424 x64 (pinned in `global.json`) and Visual Studio Code or Visual Studio 2022
 - Autodesk Inventor 2027 installed locally; build, external interop loading and DXF export are verified. Cutting-software acceptance remains pending
 - Git in `PATH` if you want build numbers populated by the MSBuild `SetVersionInfo` target
-- ApprenticeServer (optional) – recommended for faster thumbnail generation; Windows Shell API is used automatically if ApprenticeServer is unavailable
+- Standalone ApprenticeServer (optional) – recommended for reliable saved-file thumbnails; Inventor 2026 and later require the separately installed, Windows-registered Apprentice Server for external applications. Windows Shell API is used automatically if it is unavailable.
 
 ## Getting Started
 Clone the fork and choose the workflow that fits your environment.
@@ -152,7 +152,7 @@ Frame detection follows Inventor's Frame Generator document interest identifier,
 - **Missing Autodesk interop**: verify that Inventor 2027 is installed and `InventorInstallDir` points to its installation root. The runtime resolves the local interop instead of requiring a redistributed DLL.
 - **Duplicate part numbers**: review the conflict analyzer panel after scanning. Resolve naming conflicts in Inventor or adjust token templates before exporting.
 - **Incorrect DXF output**: experiment with spline replacement, geometry rebasing, and layer presets. Use the DXF preview column to confirm results quickly.
-- **Thumbnail generation**: the application automatically handles thumbnail retrieval using a dual-method approach. If ApprenticeServer (Inventor's lightweight document reader) is unavailable, the app seamlessly falls back to Windows Shell API. No manual configuration is required—thumbnails will be generated using the best available method.
+- **Thumbnail generation**: the application reads the document's saved thumbnail, then tries standalone ApprenticeServer and Windows Shell. It never creates a new Inventor view during scanning. If the optional standalone ApprenticeServer is unavailable and Windows has no cached IPT thumbnail, `Part Img` remains empty.
 
 ## License
 

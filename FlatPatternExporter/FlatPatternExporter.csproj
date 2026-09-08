@@ -20,6 +20,7 @@
     <Authors>Sinicyn Ivan Victorovich; mrTorch222 (fork maintainer)</Authors>
     <AssemblyName>PatternExporterNX</AssemblyName>
     <RootNamespace>FlatPatternExporter</RootNamespace>
+    <ProductEdition Condition="'$(ProductEdition)' == ''">Combined</ProductEdition>
     <RepositoryUrl>https://github.com/mrTorch222/PatternExporterNX</RepositoryUrl>
     <Description>Independent fork of isinicyn/FlatPatternExporter, maintained by mrTorch222.</Description>
     <Product>PatternExporterNX</Product>
@@ -27,6 +28,21 @@
     <AssemblyTitle>PatternExporterNX for Autodesk Inventor</AssemblyTitle>
     <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ProductEdition)' == 'SheetMetal'">
+    <DefineConstants>$(DefineConstants);PATTERN_EXPORTER_SHEET_METAL</DefineConstants>
+    <AssemblyName>PatternExporterNX.SheetMetal</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ProductEdition)' == 'Frame'">
+    <DefineConstants>$(DefineConstants);PATTERN_EXPORTER_FRAME</DefineConstants>
+    <AssemblyName>PatternExporterNX.Frame</AssemblyName>
+  </PropertyGroup>
+
+  <Target Name="ValidateProductEdition" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(ProductEdition)' != 'Combined' and '$(ProductEdition)' != 'SheetMetal' and '$(ProductEdition)' != 'Frame'"
+           Text="ProductEdition must be Combined, SheetMetal, or Frame." />
+  </Target>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>full</DebugType>

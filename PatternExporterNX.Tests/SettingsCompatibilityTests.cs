@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using FlatPatternExporter.Enums;
+using FlatPatternExporter.Features.Frame.Services;
 using FlatPatternExporter.Services;
 
 namespace PatternExporterNX.Tests;

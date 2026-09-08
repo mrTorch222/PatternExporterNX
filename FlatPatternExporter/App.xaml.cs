@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using FlatPatternExporter.Enums;
+using FlatPatternExporter.Features;
 using FlatPatternExporter.Services;
 using FlatPatternExporter.UI.Windows;
 
@@ -22,7 +23,7 @@ public partial class App
         ApplyLanguage(settings.Interface.SelectedLanguage);
 
         // Create and show main window with settings
-        var mainWindow = new FlatPatternExporterMainWindow();
+        var mainWindow = new FlatPatternExporterMainWindow(ProductFeatureProfile.Current);
         mainWindow.ApplySettings(settings);
         mainWindow.Show();
     }

@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using ClosedXML.Excel;
-using FlatPatternExporter.Models;
+using FlatPatternExporter.Features.Frame.Models;
+using FlatPatternExporter.Features.Frame.Services;
 using FlatPatternExporter.Services;
 
 namespace PatternExporterNX.Tests;

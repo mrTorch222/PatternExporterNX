@@ -2,9 +2,10 @@
 using System.IO;
 using System.Text;
 using ClosedXML.Excel;
-using FlatPatternExporter.Models;
+using FlatPatternExporter.Features.Frame.Models;
+using FlatPatternExporter.Services;
 
-namespace FlatPatternExporter.Services;
+namespace FlatPatternExporter.Features.Frame.Services;
 
 public static class FrameBomExportService
 {

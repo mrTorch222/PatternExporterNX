@@ -9,6 +9,7 @@
         xmlns:services="clr-namespace:FlatPatternExporter.Services"
         xmlns:converters="clr-namespace:FlatPatternExporter.Converters"
         xmlns:extensions="clr-namespace:FlatPatternExporter.Extensions"
+        xmlns:frame="clr-namespace:FlatPatternExporter.Features.Frame.UI"
         shell:WindowChrome.WindowChrome="{StaticResource CustomWindowChrome}"
         PreviewMouseLeftButtonDown="MainWindow_PreviewMouseLeftButtonDown"
         Title="{extensions:Localize App_Name}"
@@ -49,8 +50,8 @@
             </local:CustomTitleBar.ContentArea>
         </local:CustomTitleBar>
 
-        <TabControl Grid.Row="1" Grid.RowSpan="4">
-            <TabItem Header="{extensions:Localize MainTab_FlatPatterns}">
+        <TabControl x:Name="FeatureTabControl" Grid.Row="1" Grid.RowSpan="4">
+            <TabItem x:Name="SheetMetalTab" Header="{extensions:Localize MainTab_FlatPatterns}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -1031,8 +1032,8 @@
         </StatusBar>
                 </Grid>
             </TabItem>
-            <TabItem Header="{extensions:Localize MainTab_FrameGenerator}">
-                <local:FrameExporterControl x:Name="FrameExporter"/>
+            <TabItem x:Name="FrameTab" Header="{extensions:Localize MainTab_FrameGenerator}">
+                <frame:FrameExporterControl x:Name="FrameExporter"/>
             </TabItem>
         </TabControl>
     </Grid>

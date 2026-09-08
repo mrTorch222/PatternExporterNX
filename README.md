@@ -60,6 +60,15 @@ The solution and output executable use the new product name. Source directories 
 dotnet restore PatternExporterNX.sln --source https://api.nuget.org/v3/index.json
 dotnet build PatternExporterNX.sln -c Release -p:Platform=x64 --no-restore
 ```
+
+The application can also be built as either future product branch while sharing the same codebase:
+
+```powershell
+dotnet build FlatPatternExporter/FlatPatternExporter.csproj -c Release -p:ProductEdition=SheetMetal
+dotnet build FlatPatternExporter/FlatPatternExporter.csproj -c Release -p:ProductEdition=Frame
+```
+
+`SheetMetal` exposes only the flat-pattern workspace and produces `PatternExporterNX.SheetMetal.exe`; `Frame` exposes only the Frame Generator workspace and produces `PatternExporterNX.Frame.exe`. The default `Combined` edition keeps both tabs. Each edition preserves the hidden module's saved settings, which allows the sheet-metal and frame branches to diverge without corrupting a shared user configuration.
 The solution uses .NET SDK 9.0.317 (`global.json`), C# 12 and `net8.0-windows10.0.26100.0`. `NuGet.Config` provides nuget.org without changing global NuGet settings. `InventorInstallDir` defaults to `%ProgramW6432%\Autodesk\Inventor 2027`; MSBuild reports a clear error if interop is absent. At runtime, interop is loaded from the `InventorInstallDir` environment variable, the Inventor 2027 installation registry entry, or the default install directory. A command-line MSBuild property applies only to the build; use the environment variable for a custom runtime location. Autodesk interop remains `Private=false` and is not redistributed.
 
 ### Portable build / publish
@@ -139,6 +148,7 @@ Frame detection follows Inventor's Frame Generator document interest identifier,
 
 ## Project Layout
 - `FlatPatternExporter/`
+  - `Features/Frame/` – isolated Frame Generator models, Inventor scanner, exporters, naming services, and UI.
   - `Core/` – Inventor integration, document scanning, caching, DXF export, thumbnail generation.
   - `Services/` – property metadata registry, token engine, settings persistence, version info, localization.
   - `UI/` – WPF windows, controls, helpers, and view models for the main user experience.

@@ -14,6 +14,7 @@ using System.Windows.Media.Media3D;
 using System.Windows.Threading;
 using FlatPatternExporter.Core;
 using FlatPatternExporter.Enums;
+using FlatPatternExporter.Features;
 using FlatPatternExporter.Models;
 using FlatPatternExporter.Services;
 using FlatPatternExporter.UI.Controls;
@@ -30,6 +31,8 @@ namespace FlatPatternExporter.UI.Windows;
 
 public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChanged
 {
+    private readonly ProductFeatureProfile _featureProfile;
+
     // Inventor API
     private readonly InventorManager _inventorManager = new();
     private Document? _lastScannedDocument;
@@ -186,8 +189,13 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
         return templates;
     }
 
-    public FlatPatternExporterMainWindow()
+    public FlatPatternExporterMainWindow() : this(ProductFeatureProfile.Current)
     {
+    }
+
+    public FlatPatternExporterMainWindow(ProductFeatureProfile featureProfile)
+    {
+        _featureProfile = featureProfile;
         // Initialize services before InitializeComponent to prevent NullReferenceException
         _inventorManager.InitializeInventor();
         _documentScanner = new Core.DocumentScanner(_inventorManager);
@@ -196,7 +204,9 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
         _excelExportService = new ExcelExportService(_inventorManager, _partDataReader);
 
         InitializeComponent();
-        FrameExporter.Initialize(_inventorManager);
+        ConfigureFeatureTabs();
+        if (_featureProfile.FrameEnabled)
+            FrameExporter.Initialize(_inventorManager);
 
         // Initialize theme toggle button from ContentArea StackPanel
         if (TitleBar.ContentArea is StackPanel stackPanel)
@@ -357,7 +367,8 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
 
             // Update settings
             AutoUpdateCheck = settings.Update.AutoUpdateCheck;
-            FrameExporter.ApplySettings(settings.FrameExport);
+            if (_featureProfile.FrameEnabled)
+                FrameExporter.ApplySettings(settings.FrameExport);
 
             // User-defined properties
             PropertyMetadataRegistry.UserDefinedProperties.Clear();
@@ -513,7 +524,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             .Where(p => !string.IsNullOrEmpty(p.SubstitutionValue))
             .ToDictionary(p => p.InventorPropertyName, p => p.SubstitutionValue);
 
-        return new ApplicationSettings
+        var collected = new ApplicationSettings
         {
             Interface = new InterfaceSettings
             {
@@ -595,6 +606,18 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
 
             LayerSettings = layerSettings
         };
+
+        return ApplicationSettingsFeatureGuard.PreserveDisabledFeatures(
+            collected,
+            SettingsService.Instance.Settings,
+            _featureProfile);
+    }
+
+    private void ConfigureFeatureTabs()
+    {
+        SheetMetalTab.Visibility = _featureProfile.SheetMetalEnabled ? Visibility.Visible : Visibility.Collapsed;
+        FrameTab.Visibility = _featureProfile.FrameEnabled ? Visibility.Visible : Visibility.Collapsed;
+        FeatureTabControl.SelectedItem = _featureProfile.SheetMetalEnabled ? SheetMetalTab : FrameTab;
     }
 
     public ObservableCollection<LayerSetting> LayerSettings { get; set; }
@@ -1833,6 +1856,8 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
 
     private async void MainWindow_KeyDown(object sender, KeyEventArgs e)
     {
+        if (!_featureProfile.SheetMetalEnabled) return;
+
         // Check if there's a handler for the pressed key
         if (_hotKeyActions.TryGetValue(e.Key, out var action))
         {

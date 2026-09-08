@@ -1,5 +1,5 @@
-﻿using FlatPatternExporter.Models;
-using FlatPatternExporter.Services;
+﻿using FlatPatternExporter.Features.Frame.Models;
+using FlatPatternExporter.Features.Frame.Services;
 
 namespace PatternExporterNX.Tests;
 

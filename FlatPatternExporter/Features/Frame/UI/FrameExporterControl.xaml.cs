@@ -4,13 +4,15 @@ using System.Windows;
 using System.Windows.Controls;
 using FlatPatternExporter.Core;
 using FlatPatternExporter.Enums;
-using FlatPatternExporter.Models;
+using FlatPatternExporter.Features.Frame.Core;
+using FlatPatternExporter.Features.Frame.Models;
+using FlatPatternExporter.Features.Frame.Services;
 using FlatPatternExporter.Services;
 using FlatPatternExporter.UI.Windows;
 using Inventor;
 using IOPath = System.IO.Path;
 
-namespace FlatPatternExporter.UI.Controls;
+namespace FlatPatternExporter.Features.Frame.UI;
 
 public partial class FrameExporterControl : System.Windows.Controls.UserControl
 {

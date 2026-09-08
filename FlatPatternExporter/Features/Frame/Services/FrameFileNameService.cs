@@ -1,9 +1,9 @@
 ﻿using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
-using FlatPatternExporter.Models;
+using FlatPatternExporter.Features.Frame.Models;
 
-namespace FlatPatternExporter.Services;
+namespace FlatPatternExporter.Features.Frame.Services;
 
 public static partial class FrameFileNameService
 {

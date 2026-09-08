@@ -1,12 +1,13 @@
 ﻿using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using FlatPatternExporter.Models;
+using FlatPatternExporter.Features.Frame.Models;
 using FlatPatternExporter.Services;
 using Inventor;
 using IOPath = System.IO.Path;
+using PropertyManager = FlatPatternExporter.Core.PropertyManager;
 
-namespace FlatPatternExporter.Core;
+namespace FlatPatternExporter.Features.Frame.Core;
 
 public sealed class FrameMemberScanner
 {

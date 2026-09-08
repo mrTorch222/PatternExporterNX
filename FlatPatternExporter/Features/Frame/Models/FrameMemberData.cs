@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using FlatPatternExporter.Enums;
 using FlatPatternExporter.Services;
 
-namespace FlatPatternExporter.Models;
+namespace FlatPatternExporter.Features.Frame.Models;
 
 public sealed class FrameMemberData : INotifyPropertyChanged
 {

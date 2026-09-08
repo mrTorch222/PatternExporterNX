@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="FlatPatternExporter.UI.Controls.FrameExporterControl"
+﻿<UserControl x:Class="FlatPatternExporter.Features.Frame.UI.FrameExporterControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:extensions="clr-namespace:FlatPatternExporter.Extensions"

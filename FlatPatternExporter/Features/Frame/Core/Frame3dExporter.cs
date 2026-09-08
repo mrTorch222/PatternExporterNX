@@ -1,14 +1,16 @@
 ﻿using System.IO;
+using FlatPatternExporter.Core;
 using FlatPatternExporter.Enums;
 using System.Globalization;
 using System.Text;
-using FlatPatternExporter.Models;
+using FlatPatternExporter.Features.Frame.Models;
+using FlatPatternExporter.Features.Frame.Services;
 using FlatPatternExporter.Services;
 using Inventor;
 using IOFile = System.IO.File;
 using IOPath = System.IO.Path;
 
-namespace FlatPatternExporter.Core;
+namespace FlatPatternExporter.Features.Frame.Core;
 
 public sealed class Frame3dExporter(InventorManager inventorManager)
 {

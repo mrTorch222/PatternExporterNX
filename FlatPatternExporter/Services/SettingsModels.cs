@@ -1,4 +1,5 @@
 ﻿using FlatPatternExporter.Enums;
+using FlatPatternExporter.Features.Frame.Services;
 using FlatPatternExporter.Models;
 
 namespace FlatPatternExporter.Services;

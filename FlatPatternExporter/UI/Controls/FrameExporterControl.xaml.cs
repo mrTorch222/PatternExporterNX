@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using FlatPatternExporter.Core;
+using FlatPatternExporter.Enums;
 using FlatPatternExporter.Models;
 using FlatPatternExporter.Services;
 using FlatPatternExporter.UI.Windows;
@@ -42,6 +43,8 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         GeometryTypeComboBox.SelectedIndex = ClampIndex(settings.GeometryType, GeometryTypeComboBox.Items.Count, 0);
         SolidFaceTypeComboBox.SelectedIndex = ClampIndex(settings.SolidFaceType, SolidFaceTypeComboBox.Items.Count, 1);
         SurfaceTypeComboBox.SelectedIndex = ClampIndex(settings.SurfaceType, SurfaceTypeComboBox.Items.Count, 1);
+        ExportFormatComboBox.SelectedIndex = ClampIndex((int)settings.ExportFormat, ExportFormatComboBox.Items.Count, 0);
+        UpdateFormatControls();
         UpdatePreview();
     }
 
@@ -51,7 +54,8 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         FileNameTemplate = NameTemplateTextBox.Text,
         GeometryType = GeometryTypeComboBox.SelectedIndex,
         SolidFaceType = SolidFaceTypeComboBox.SelectedIndex,
-        SurfaceType = SurfaceTypeComboBox.SelectedIndex
+        SurfaceType = SurfaceTypeComboBox.SelectedIndex,
+        ExportFormat = (FrameExportFormat)ExportFormatComboBox.SelectedIndex
     };
 
     private async void ScanFrameButton_Click(object sender, RoutedEventArgs e)
@@ -92,7 +96,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         }
     }
 
-    private async void ExportIgesButton_Click(object sender, RoutedEventArgs e)
+    private async void Export3dButton_Click(object sender, RoutedEventArgs e)
     {
         if (_isBusy || _inventorManager is null || _members.Count == 0) return;
 
@@ -112,8 +116,9 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
                 NameTemplateTextBox.Text,
                 GeometryTypeComboBox.SelectedIndex,
                 SolidFaceTypeComboBox.SelectedIndex,
-                SurfaceTypeComboBox.SelectedIndex);
-            var exporter = new FrameIgesExporter(_inventorManager);
+                SurfaceTypeComboBox.SelectedIndex,
+                (FrameExportFormat)ExportFormatComboBox.SelectedIndex);
+            var exporter = new Frame3dExporter(_inventorManager);
             var result = await Task.Run(() => exporter.Export(_members, _documents, options));
             StatusTextBlock.Text = _localization.GetString("Frame_StatusExportComplete", result.ExportedCount, result.Errors.Count);
             if (result.Errors.Count > 0) ShowError(result.Errors[0]);
@@ -178,21 +183,44 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
 
     private void NameTemplateTextBox_TextChanged(object sender, TextChangedEventArgs e) => UpdatePreview();
 
+    private void ExportFormatComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        UpdateFormatControls();
+        UpdatePreview();
+    }
+
     private void FrameMembersGrid_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdatePreview();
 
     private void UpdatePreview()
     {
         if (NamePreviewTextBlock is null || NameTemplateTextBox is null) return;
         var member = FrameMembersGrid?.SelectedItem as FrameMemberData ?? _members.FirstOrDefault();
-        NamePreviewTextBlock.Text = member is null ? "" : FrameFileNameService.Resolve(NameTemplateTextBox.Text, member) + ".igs";
+        NamePreviewTextBlock.Text = member is null
+            ? ""
+            : FrameFileNameService.Resolve(NameTemplateTextBox.Text, member) + GetSelectedExtension();
     }
+
+    private void UpdateFormatControls()
+    {
+        if (IgesOptionsPanel is null || ExportFormatComboBox is null) return;
+        IgesOptionsPanel.IsEnabled = ExportFormatComboBox.SelectedIndex == (int)FrameExportFormat.Iges;
+    }
+
+    private string GetSelectedExtension() => (FrameExportFormat)Math.Max(0, ExportFormatComboBox?.SelectedIndex ?? 0) switch
+    {
+        FrameExportFormat.Iges => ".igs",
+        FrameExportFormat.Step => ".stp",
+        FrameExportFormat.Sat => ".sat",
+        FrameExportFormat.Stl => ".stl",
+        _ => ".igs"
+    };
 
     private void SetDefaultOutputFolder(AssemblyDocument assemblyDocument)
     {
         if (!string.IsNullOrWhiteSpace(OutputFolderTextBox.Text)) return;
         var assemblyPath = assemblyDocument.FullFileName;
         var parentFolder = string.IsNullOrWhiteSpace(assemblyPath) ? null : IOPath.GetDirectoryName(assemblyPath);
-        OutputFolderTextBox.Text = IOPath.Combine(parentFolder ?? IOPath.GetTempPath(), "IGES");
+        OutputFolderTextBox.Text = IOPath.Combine(parentFolder ?? IOPath.GetTempPath(), "3D");
     }
 
     private void SetBusy(bool isBusy)
@@ -204,7 +232,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     private void UpdateButtons()
     {
         ScanFrameButton.IsEnabled = !_isBusy;
-        ExportIgesButton.IsEnabled = !_isBusy && _members.Count > 0;
+        Export3dButton.IsEnabled = !_isBusy && _members.Count > 0;
         ExportBomButton.IsEnabled = !_isBusy && _members.Count > 0;
     }
 

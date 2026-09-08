@@ -110,6 +110,10 @@ public class PartData : INotifyPropertyChanged
         }
     }
     public double? CutLengthM => CutLengthMm / 1000.0;
+    public int? BendCount { get; set; }
+    public double? LongestBendLengthMm { get; set; }
+    public int? BendsUpCount { get; set; }
+    public int? BendsDownCount { get; set; }
 
     public int OriginalQuantity { get; set; }
 

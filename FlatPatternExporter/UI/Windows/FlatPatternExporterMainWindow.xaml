@@ -732,6 +732,21 @@
                                           IsChecked="{Binding AutoUpdateCheck, Mode=TwoWay}"/>
                             </StackPanel>
                         </GroupBox>
+
+                        <GroupBox Header="{extensions:Localize Header_FlatPatternOrientation}" Margin="{StaticResource RightStandardMarginThickness}">
+                            <StackPanel Margin="{StaticResource SectionContentMarginThickness}">
+                                <TextBlock Text="{extensions:Localize Label_TopSideMode}" Margin="0,0,0,4"/>
+                                <ComboBox Width="190"
+                                          SelectedValuePath="Tag"
+                                          SelectedValue="{Binding TopSideMode, Mode=TwoWay}">
+                                    <ComboBoxItem Content="{extensions:Localize TopSide_AsModeled}" Tag="{x:Static enums:FlatPatternTopSideMode.AsModeled}"/>
+                                    <ComboBoxItem Content="{extensions:Localize TopSide_MostBendsUp}" Tag="{x:Static enums:FlatPatternTopSideMode.MostBendsUp}"/>
+                                    <ComboBoxItem Content="{extensions:Localize TopSide_MostBendsDown}" Tag="{x:Static enums:FlatPatternTopSideMode.MostBendsDown}"/>
+                                </ComboBox>
+                                <TextBlock Text="{extensions:Localize TopSide_Hint}" Foreground="{DynamicResource TextMutedBrush}"
+                                           TextWrapping="Wrap" MaxWidth="260" Margin="0,5,0,0"/>
+                            </StackPanel>
+                        </GroupBox>
                     </WrapPanel>
                 </TabItem>
             </TabControl>

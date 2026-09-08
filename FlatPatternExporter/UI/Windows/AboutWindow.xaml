@@ -37,12 +37,14 @@
 
             <!-- Left border -->
             <Border Grid.Column="0"
-                    MaxHeight="{Binding ElementName=RightPanel, Path=ActualHeight}"
+                    Width="430"
+                    MaxHeight="250"
+                    VerticalAlignment="Top"
                     Padding="0,4,5,4"
                     x:Name="ImageContainer">
                 <Border.Resources>
                     <BitmapImage x:Key="OriginalImage"
-                                 UriSource="/Resources/pic/5e4a4cfa-8411-4744-bd53-1f219e7ac097.png"/>
+                                 UriSource="/Resources/pic/e93ee721-afa4-4021-9968-8472b1cd26b0.png"/>
 
                     <FormatConvertedBitmap x:Key="GrayscaleImage"
                                           Source="{StaticResource OriginalImage}"
@@ -183,7 +185,7 @@
                 </StackPanel>
             </GroupBox>
 
-            <GroupBox Header="{extensions:Localize Header_AISupport}" Margin="{StaticResource VerticalSmallMarginThickness}">
+            <GroupBox Header="{extensions:Localize Header_Development}" Margin="{StaticResource VerticalSmallMarginThickness}">
                 <StackPanel Margin="{StaticResource SectionContentMarginThickness}">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -196,7 +198,7 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="WEB"
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="CAD"
                                    Style="{StaticResource BaseTextBlockStyle}"
                                    FontWeight="SemiBold"
                                    VerticalAlignment="Center"
@@ -210,15 +212,15 @@
                                        Foreground="{DynamicResource TextMutedBrush}"
                                        FontWeight="SemiBold"
                                        TextWrapping="Wrap">
-                                <Run Text="• ChatGPT 4o"/><LineBreak/>
-                                <Run Text="• Mistral Large 2"/><LineBreak/>
-                                <Run Text="• Claude 3.5 Sonnet"/>
+                                <Run Text="• Autodesk Inventor 2027"/><LineBreak/>
+                                <Run Text="• DXF flat patterns"/><LineBreak/>
+                                <Run Text="• IGES / STEP / SAT / STL"/>
                             </TextBlock>
                         </Border>
 
                         <Separator Grid.Row="1" Grid.ColumnSpan="2" Margin="{StaticResource VerticalSmallMarginThickness}"/>
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="CLI"
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="DEV"
                                    Style="{StaticResource BaseTextBlockStyle}"
                                    FontWeight="SemiBold"
                                    VerticalAlignment="Center"
@@ -232,9 +234,9 @@
                                        Foreground="{DynamicResource TextMutedBrush}"
                                        FontWeight="SemiBold"
                                        TextWrapping="Wrap">
-                                <Run Text="• Claude 4 Sonnet"/><LineBreak/>
-                                <Run Text="• Claude 4.1 Opus"/><LineBreak/>
-                                <Run Text="• Claude 4.5 Sonnet"/>
+                                <Run Text="• .NET 8 / C# 12"/><LineBreak/>
+                                <Run Text="• SDK 9.0.317"/><LineBreak/>
+                                <Run Text="• OpenAI Codex"/>
                             </TextBlock>
                         </Border>
                     </Grid>

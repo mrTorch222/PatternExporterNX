@@ -77,6 +77,14 @@ public class PartDataReader
             UnitsTypeEnum.kFootLengthUnits => DocumentLengthUnit.Foot,
             _ => DocumentLengthUnit.Unknown
         };
+        if (partDoc.ComponentDefinition is SheetMetalComponentDefinition sheetMetalDefinition)
+        {
+            var bendMetrics = SheetMetalBendAnalyzer.Analyze(sheetMetalDefinition);
+            partData.BendCount = bendMetrics.Count;
+            partData.LongestBendLengthMm = bendMetrics.LongestLengthMm;
+            partData.BendsUpCount = bendMetrics.UpCount;
+            partData.BendsDownCount = bendMetrics.DownCount;
+        }
 
         SetExpressionStatesForAllProperties(partData, mgr);
 

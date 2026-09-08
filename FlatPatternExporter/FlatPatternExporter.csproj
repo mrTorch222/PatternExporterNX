@@ -60,7 +60,7 @@
       <CommitDate>$([System.DateTime]::Parse('$(CommitDateRaw)').ToString('dd.MM.yyyy HH:mm:ss'))</CommitDate>
     </PropertyGroup>
     <PropertyGroup>
-      <VersionPrefix>3.0.2</VersionPrefix>
+      <VersionPrefix>3.1.0</VersionPrefix>
       <VersionSuffix>$(RevisionNumber)</VersionSuffix>
       <AssemblyVersion>$(VersionPrefix).$(VersionSuffix)</AssemblyVersion>
       <FileVersion>$(VersionPrefix).$(VersionSuffix)</FileVersion>
@@ -86,6 +86,7 @@
 
   <ItemGroup>
     <Resource Include="Resources\pic\5e4a4cfa-8411-4744-bd53-1f219e7ac097.png" />
+    <Resource Include="Resources\pic\e93ee721-afa4-4021-9968-8472b1cd26b0.png" />
   </ItemGroup>
 
 

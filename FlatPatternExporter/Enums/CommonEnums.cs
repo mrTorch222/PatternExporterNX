@@ -25,6 +25,21 @@ public enum SplineReplacementType
     FitPoints = 2         // Fit-point spline
 }
 
+public enum FrameExportFormat
+{
+    Iges = 0,
+    Step = 1,
+    Sat = 2,
+    Stl = 3
+}
+
+public enum FlatPatternTopSideMode
+{
+    AsModeled = 0,
+    MostBendsUp = 1,
+    MostBendsDown = 2
+}
+
 public enum CsvDelimiterType
 {
     Comma = 0,           // Comma (,)

@@ -1975,21 +1975,21 @@
   <data name="Frame_LabelSolidFaces" xml:space="preserve"><value>Грани</value></data>
   <data name="Frame_LabelSurfaces" xml:space="preserve"><value>Поверхности</value></data>
   <data name="Frame_ColumnLength" xml:space="preserve"><value>Длина, мм</value></data>
-  <data name="Frame_ColumnOutputFile" xml:space="preserve"><value>Файл IGES</value></data>
+  <data name="Frame_ColumnOutputFile" xml:space="preserve"><value>3D-файл</value></data>
   <data name="Frame_ColumnSourceFile" xml:space="preserve"><value>Исходный файл</value></data>
   <data name="Frame_ErrorAssemblyRequired" xml:space="preserve"><value>Перед сканированием элементов Генератора рам откройте главную сборку.</value></data>
-  <data name="Frame_ErrorOutputFolder" xml:space="preserve"><value>Выберите папку экспорта IGES.</value></data>
+  <data name="Frame_ErrorOutputFolder" xml:space="preserve"><value>Выберите папку экспорта 3D.</value></data>
   <data name="Frame_InfoNoMembers" xml:space="preserve"><value>В сборке не найдены элементы Генератора рам.</value></data>
   <data name="Frame_StatusScanning" xml:space="preserve"><value>Сканирование элементов Генератора рам...</value></data>
   <data name="Frame_StatusScanComplete" xml:space="preserve"><value>Найдено: {0}; ошибок сканирования: {1}.</value></data>
-  <data name="Frame_StatusExporting" xml:space="preserve"><value>Экспорт элементов Генератора рам в IGES...</value></data>
-  <data name="Frame_StatusExportComplete" xml:space="preserve"><value>Экспортировано IGES: {0}; ошибок: {1}.</value></data>
+  <data name="Frame_StatusExporting" xml:space="preserve"><value>Экспорт элементов Генератора рам...</value></data>
+  <data name="Frame_StatusExportComplete" xml:space="preserve"><value>Экспортировано 3D-файлов: {0}; ошибок: {1}.</value></data>
   <data name="Frame_StatusBomExported" xml:space="preserve"><value>BOM элементов рам сохранён: {0}</value></data>
-  <data name="Frame_SelectOutputFolder" xml:space="preserve"><value>Выберите папку для IGES-файлов Генератора рам</value></data>
+  <data name="Frame_SelectOutputFolder" xml:space="preserve"><value>Выберите папку для 3D-файлов Генератора рам</value></data>
   <data name="Frame_Error" xml:space="preserve"><value>Ошибка операции Генератора рам: {0}</value></data>
   <data name="Frame_ErrorInventorUnavailable" xml:space="preserve"><value>Inventor недоступен.</value></data>
   <data name="Frame_ErrorDocumentUnavailable" xml:space="preserve"><value>Исходный документ недоступен.</value></data>
-  <data name="Frame_ErrorInvalidIges" xml:space="preserve"><value>Inventor не создал корректный IGES-файл.</value></data>
+  <data name="Frame_ErrorInvalidIges" xml:space="preserve"><value>Inventor не создал корректный 3D-файл.</value></data>
   <data name="Frame_UnknownMember" xml:space="preserve"><value>Элемент рамы</value></data>
   <data name="Frame_GeometrySurfaces" xml:space="preserve"><value>Поверхности</value></data>
   <data name="Frame_GeometrySolids" xml:space="preserve"><value>Тела</value></data>
@@ -2002,6 +2002,27 @@
   <data name="Frame_ErrorModelUpdate" xml:space="preserve"><value>Не удалось обновить модель детали.</value></data>
   <data name="Frame_ErrorSingleSolidRequired" xml:space="preserve"><value>Для экспорта трубы требуется ровно одно solid-тело.</value></data>
   <data name="Frame_ErrorOpenSurfaceBody" xml:space="preserve"><value>Обнаружено незамкнутое surface-тело.</value></data>
-  <data name="Frame_ErrorTranslatorOptions" xml:space="preserve"><value>IGES Translator не предоставляет параметры экспорта для этой детали.</value></data>
-  <data name="Frame_ErrorLogWrite" xml:space="preserve"><value>Не удалось записать журнал экспорта IGES: {0}</value></data>
+  <data name="Frame_ErrorTranslatorOptions" xml:space="preserve"><value>Выбранный транслятор не предоставляет параметры экспорта для этой детали.</value></data>
+  <data name="Frame_ErrorLogWrite" xml:space="preserve"><value>Не удалось записать журнал экспорта 3D: {0}</value></data>
+  <data name="Frame_ButtonExport3d" xml:space="preserve"><value>Экспорт 3D</value></data>
+  <data name="Frame_LabelFormat" xml:space="preserve"><value>Формат</value></data>
+  <data name="Header_Development" xml:space="preserve"><value>Разработка</value></data>
+  <data name="Header_FlatPatternOrientation" xml:space="preserve"><value>Верхняя сторона развертки</value></data>
+  <data name="Label_TopSideMode" xml:space="preserve"><value>Ориентация</value></data>
+  <data name="TopSide_AsModeled" xml:space="preserve"><value>Как в модели</value></data>
+  <data name="TopSide_MostBendsUp" xml:space="preserve"><value>Больше гибов вверх</value></data>
+  <data name="TopSide_MostBendsDown" xml:space="preserve"><value>Больше гибов вниз</value></data>
+  <data name="TopSide_Hint" xml:space="preserve"><value>Ориентация временно применяется при экспорте и восстанавливается после создания DXF.</value></data>
+  <data name="Property_BendCount_DisplayName" xml:space="preserve"><value>Количество гибов</value></data>
+  <data name="Property_BendCount_ColumnHeader" xml:space="preserve"><value>Количество гибов</value></data>
+  <data name="Property_BendCount_Category" xml:space="preserve"><value>Системные</value></data>
+  <data name="Property_LongestBendLengthMm_DisplayName" xml:space="preserve"><value>Самый длинный гиб, мм</value></data>
+  <data name="Property_LongestBendLengthMm_ColumnHeader" xml:space="preserve"><value>Самый длинный гиб, мм</value></data>
+  <data name="Property_LongestBendLengthMm_Category" xml:space="preserve"><value>Системные</value></data>
+  <data name="Property_BendsUpCount_DisplayName" xml:space="preserve"><value>Гибов вверх</value></data>
+  <data name="Property_BendsUpCount_ColumnHeader" xml:space="preserve"><value>Гибов вверх</value></data>
+  <data name="Property_BendsUpCount_Category" xml:space="preserve"><value>Системные</value></data>
+  <data name="Property_BendsDownCount_DisplayName" xml:space="preserve"><value>Гибов вниз</value></data>
+  <data name="Property_BendsDownCount_ColumnHeader" xml:space="preserve"><value>Гибов вниз</value></data>
+  <data name="Property_BendsDownCount_Category" xml:space="preserve"><value>Системные</value></data>
 </root>

@@ -26,7 +26,7 @@ PatternExporterNX is a standalone WPF utility that connects to a running Autodes
 - Generates thumbnails for parts and exported DXF previews to aid validation. Uses a dual-method approach: ApprenticeServer API (primary, faster) with automatic fallback to Windows Shell API if ApprenticeServer is unavailable.
 - Reads `Part Img` from saved-file thumbnail data without opening a new Inventor view; DXF export creates a missing sheet-metal Flat Pattern in memory before calling `FlatPattern.DataIO.WriteDataToFile`.
 - Persists UI layout, column order, presets, themes, and localization preferences in `%AppData%\FlatPatternExporter\settings.json`.
-- Provides a separate Frame Generator tab that finds unique frame-member IPT documents recursively, counts their occurrences, reads `G_L` in millimeters, exports them with Inventor's IGES translator, and writes the resulting BOM to Excel or CSV.
+- Provides a separate Frame Generator workspace that finds unique frame-member IPT documents recursively, counts their occurrences, reads `G_L` in millimeters, exports IGES, STEP, SAT or STL, and writes the resulting BOM to Excel or CSV.
 - Ships with English and Russian UI resources plus a light/dark theme switcher.
 
 ## Development
@@ -113,11 +113,11 @@ See [PUBLISH.md](PUBLISH.md) for detailed publishing documentation.
 
 1. Open the main Frame Generator assembly and select the **Frame Generator** tab.
 2. Click **Scan frames**. Suppressed occurrences are ignored; repeated references to the same IPT are grouped and counted.
-3. Choose the IGES folder and configure the file-name template. Available tokens are `{PartNumber}`, `{StockNumber}`, `{Material}`, `{Description}`, `{Length}`, `{Qty}`, and `{FileName}`.
-4. Use **Surfaces / Analytic / IGES 144** for the analytic tube export, then click **Export IGES**. These are the defaults for new settings; existing saved selections are retained. Files with duplicate resolved names receive `_2`, `_3`, and later suffixes.
+3. Choose the 3D output folder and configure the file-name template. Available tokens are `{PartNumber}`, `{StockNumber}`, `{Material}`, `{Description}`, `{Length}`, `{Qty}`, and `{FileName}`.
+4. Choose IGES, STEP, SAT or STL and click **Export 3D**. For tube cutting through IGES, use **Surfaces / Analytic / IGES 144**. These are the IGES defaults for new settings; existing saved selections are retained. Files with duplicate resolved names receive `_2`, `_3`, and later suffixes.
 5. Click **Export BOM** to save the displayed grouped list as `.xlsx` or UTF-8 `.csv`.
 
-Before export, each part is updated with `Update2(false)` and must contain exactly one closed solid body. Sketches are excluded; the fitting tolerance is 0.001 cm (0.01 mm). `IGES_EXPORT_LOG.txt` records export options, geometry diagnostics, output sizes, and errors. Files are replaced only after a successful export to a nonempty temporary file.
+Before export, each part is updated with `Update2(false)` and must contain exactly one closed solid body. IGES excludes sketches and uses a fitting tolerance of 0.001 cm (0.01 mm). `3D_EXPORT_LOG.txt` records the selected format, geometry diagnostics, output sizes, and errors. Files are replaced only after a successful export to a nonempty temporary file.
 
 Frame detection follows Inventor's Frame Generator document interest identifier, and length is read from the `G_L` model parameter using Inventor's database units. IGES export requires a real Frame Generator assembly and the IGES Translator Add-In available in Inventor 2027.
 
@@ -126,7 +126,8 @@ Frame detection follows Inventor's Frame Generator document interest identifier,
 - **Organization**: create material/thickness subfolders or route files to a custom project/workspace directory.
 - **DXF formatting**: merge profiles into polylines, rebase geometry to origin, trim centerlines, and atomically post-process DXFs with `Utilities/DxfPostProcessor`.
 - **Spline handling**: replace splines with lines or arcs, or preserve SPLINE entities while converting control points to fit points with a checked tolerance.
-- **Diagnostics and metrics**: select document-unit and cut-length columns; cut length uses enabled outer/interior profile layers and is shown in millimeters or meters without changing DXF scale or headers.
+- **Diagnostics and metrics**: select document-unit, cut-length, bend-count, longest-bend and up/down bend columns. Bend lengths are measured from the current Inventor flat pattern in millimeters.
+- **Flat-pattern top side**: keep the model orientation or temporarily flip the active flat-pattern orientation so most bends point up or down. The original orientation is restored immediately after DXF creation.
 - **Layer presets**: toggle individual layers, assign custom names, colors, and line types; save presets for later reuse.
 - **File naming**: compose file names with tokens such as `{PartNumber}`, `{Material}`, `{Thickness}`, model states, user-defined properties, or `{CUSTOM:text}` segments.
 

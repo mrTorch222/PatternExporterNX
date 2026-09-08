@@ -49,6 +49,7 @@ public record DxfExportSettings
     public bool RebaseGeometry { get; init; } = true;
     public bool TrimCenterlines { get; init; }
     public bool OptimizeDxf { get; init; }
+    public FlatPatternTopSideMode TopSideMode { get; init; } = FlatPatternTopSideMode.AsModeled;
 }
 
 public record SplineSettings
@@ -95,6 +96,7 @@ public record FrameExportSettings
     public int GeometryType { get; init; }
     public int SolidFaceType { get; init; } = 1;
     public int SurfaceType { get; init; } = 1;
+    public FrameExportFormat ExportFormat { get; init; } = FrameExportFormat.Iges;
 }
 
 public record ApplicationSettings

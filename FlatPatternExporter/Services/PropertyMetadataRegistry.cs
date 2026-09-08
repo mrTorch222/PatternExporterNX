@@ -163,6 +163,36 @@ public static class PropertyMetadataRegistry
             RoundingDecimals = 3,
             IsTokenizable = false
         },
+        ["BendCount"] = new PropertyDefinition
+        {
+            InternalName = "BendCount",
+            LocalizationKeyPrefix = "Property_BendCount",
+            Type = PropertyType.System,
+            IsTokenizable = false
+        },
+        ["LongestBendLengthMm"] = new PropertyDefinition
+        {
+            InternalName = "LongestBendLengthMm",
+            LocalizationKeyPrefix = "Property_LongestBendLengthMm",
+            Type = PropertyType.System,
+            RequiresRounding = true,
+            RoundingDecimals = 2,
+            IsTokenizable = false
+        },
+        ["BendsUpCount"] = new PropertyDefinition
+        {
+            InternalName = "BendsUpCount",
+            LocalizationKeyPrefix = "Property_BendsUpCount",
+            Type = PropertyType.System,
+            IsTokenizable = false
+        },
+        ["BendsDownCount"] = new PropertyDefinition
+        {
+            InternalName = "BendsDownCount",
+            LocalizationKeyPrefix = "Property_BendsDownCount",
+            Type = PropertyType.System,
+            IsTokenizable = false
+        },
 
         // ===== Document properties (not iProperty) =====
         ["FileName"] = new PropertyDefinition

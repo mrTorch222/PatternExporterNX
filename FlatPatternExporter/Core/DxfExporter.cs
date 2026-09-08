@@ -231,6 +231,7 @@ public class DxfExporter
                     try
                     {
                         var flatPattern = GetOrCreateFlatPattern(smCompDef, partData);
+                        UpdateBendMetrics(smCompDef, partData);
                         var oDataIO = flatPattern.DataIO;
 
                         var options = PrepareExportOptions(exportOptions);
@@ -277,7 +278,16 @@ public class DxfExporter
                             cancellationToken.ThrowIfCancellationRequested();
                         }
 
-                        oDataIO.WriteDataToFile(dxfOptions, filePath);
+                        var originalFlipBaseFace = ApplyTopSideMode(flatPattern, exportOptions.TopSideMode);
+                        try
+                        {
+                            oDataIO.WriteDataToFile(dxfOptions, filePath);
+                        }
+                        finally
+                        {
+                            if (originalFlipBaseFace.HasValue)
+                                flatPattern.FlatPatternOrientations.ActiveFlatPatternOrientation.FlipBaseFace = originalFlipBaseFace.Value;
+                        }
                         var postProcessResult = DxfPostProcessor.Process(filePath, new DxfPostProcessOptions
                         {
                             OptimizeVersion = exportOptions.OptimizeDxf,
@@ -367,6 +377,47 @@ public class DxfExporter
         }
 
         return flatPattern;
+    }
+
+    private static void UpdateBendMetrics(SheetMetalComponentDefinition definition, PartData partData)
+    {
+        var metrics = SheetMetalBendAnalyzer.Analyze(definition);
+        partData.BendCount = metrics.Count;
+        partData.LongestBendLengthMm = metrics.LongestLengthMm;
+        partData.BendsUpCount = metrics.UpCount;
+        partData.BendsDownCount = metrics.DownCount;
+        partData.OnPropertyChanged(nameof(PartData.BendCount));
+        partData.OnPropertyChanged(nameof(PartData.LongestBendLengthMm));
+        partData.OnPropertyChanged(nameof(PartData.BendsUpCount));
+        partData.OnPropertyChanged(nameof(PartData.BendsDownCount));
+    }
+
+    private static bool? ApplyTopSideMode(FlatPattern flatPattern, FlatPatternTopSideMode mode)
+    {
+        if (mode == FlatPatternTopSideMode.AsModeled) return null;
+
+        var results = flatPattern.FlatBendResults;
+        var upCount = 0;
+        var downCount = 0;
+        foreach (FlatBendResult result in results)
+        {
+            if (result.IsOnBottomFace) continue;
+            if (result.IsDirectionUp) upCount++;
+            else downCount++;
+        }
+
+        var shouldFlip = mode switch
+        {
+            FlatPatternTopSideMode.MostBendsUp => downCount > upCount,
+            FlatPatternTopSideMode.MostBendsDown => upCount > downCount,
+            _ => false
+        };
+        if (!shouldFlip) return null;
+
+        var orientation = flatPattern.FlatPatternOrientations.ActiveFlatPatternOrientation;
+        var original = orientation.FlipBaseFace;
+        orientation.FlipBaseFace = !original;
+        return original;
     }
 
     private string PrepareExportOptions(ExportOptions exportOptions)
@@ -529,6 +580,7 @@ public class ExportOptions
     public bool MergeProfilesIntoPolyline { get; set; }
     public bool RebaseGeometry { get; set; }
     public bool TrimCenterlines { get; set; }
+    public FlatPatternTopSideMode TopSideMode { get; set; } = FlatPatternTopSideMode.AsModeled;
 
     public List<LayerSetting> LayerSettings { get; set; } = [];
     public bool ShowFileLockedDialogs { get; set; } = true;

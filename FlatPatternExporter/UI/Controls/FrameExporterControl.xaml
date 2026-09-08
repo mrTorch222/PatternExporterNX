@@ -4,7 +4,7 @@
              xmlns:extensions="clr-namespace:FlatPatternExporter.Extensions"
              Background="{DynamicResource BackgroundPrimaryBrush}"
              Foreground="{DynamicResource TextSecondaryBrush}">
-    <Grid Margin="8">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -12,20 +12,23 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <WrapPanel Grid.Row="0" Margin="0,0,0,8">
+        <WrapPanel Grid.Row="0" Margin="{StaticResource OuterTopMarginThickness}">
             <Button x:Name="ScanFrameButton" Content="{extensions:Localize Frame_ButtonScan}" Click="ScanFrameButton_Click"
-                    Style="{StaticResource InteractiveActionButtonStyle}" Margin="0,0,8,0"/>
-            <Button x:Name="ExportIgesButton" Content="{extensions:Localize Frame_ButtonExportIges}" Click="ExportIgesButton_Click"
-                    Style="{StaticResource InteractiveActionButtonStyle}" Margin="0,0,8,0" IsEnabled="False"/>
+                    Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}"/>
+            <Button x:Name="Export3dButton" Content="{extensions:Localize Frame_ButtonExport3d}" Click="Export3dButton_Click"
+                    Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}" IsEnabled="False"/>
             <Button x:Name="ExportBomButton" Content="{extensions:Localize Frame_ButtonExportBom}" Click="ExportBomButton_Click"
-                    Style="{StaticResource InteractiveActionButtonStyle}" Margin="0,0,8,0" IsEnabled="False"/>
+                    Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}" IsEnabled="False"/>
             <Button Content="{extensions:Localize Button_Clear}" Click="ClearButton_Click"
-                    Style="{StaticResource InteractiveActionButtonStyle}"/>
+                    Style="{StaticResource LargeSquareButtonStyle}"/>
         </WrapPanel>
 
-        <Border Grid.Row="1" Background="{DynamicResource BackgroundTertiaryBrush}"
+        <Expander Grid.Row="1" Header="{extensions:Localize Header_Settings}" IsExpanded="True"
+                  Margin="{StaticResource StandardPaddingThickness}" Padding="{StaticResource UniformSmallPaddingThickness}"
+                  FlowDirection="RightToLeft" Style="{StaticResource SquareExpanderStyle}">
+        <Border Background="{DynamicResource BackgroundTertiaryBrush}" FlowDirection="LeftToRight"
                 BorderBrush="{DynamicResource BorderSecondaryBrush}" BorderThickness="1" CornerRadius="3"
-                Padding="8" Margin="0,0,0,8">
+                Padding="8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -54,7 +57,17 @@
 
                 <TextBlock Grid.Row="0" Grid.Column="3" Grid.ColumnSpan="3" Text="{extensions:Localize Frame_TokensHint}"
                            TextWrapping="Wrap" Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,6"/>
-                <StackPanel Grid.Row="1" Grid.Column="3" Orientation="Horizontal" Margin="0,0,16,6">
+                <StackPanel Grid.Row="2" Grid.Column="3" Orientation="Horizontal" Margin="0,0,16,0">
+                    <TextBlock Text="{extensions:Localize Frame_LabelFormat}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox x:Name="ExportFormatComboBox" Width="100" SelectedIndex="0" SelectionChanged="ExportFormatComboBox_SelectionChanged">
+                        <ComboBoxItem Content="IGES"/>
+                        <ComboBoxItem Content="STEP"/>
+                        <ComboBoxItem Content="SAT"/>
+                        <ComboBoxItem Content="STL"/>
+                    </ComboBox>
+                </StackPanel>
+                <WrapPanel x:Name="IgesOptionsPanel" Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="3">
+                <StackPanel Orientation="Horizontal" Margin="0,0,16,6">
                     <TextBlock Text="{extensions:Localize Frame_LabelGeometryType}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <ComboBox x:Name="GeometryTypeComboBox" Width="120" SelectedIndex="0">
                         <ComboBoxItem Content="{extensions:Localize Frame_GeometrySurfaces}"/>
@@ -62,22 +75,24 @@
                         <ComboBoxItem Content="{extensions:Localize Frame_GeometryWireframe}"/>
                     </ComboBox>
                 </StackPanel>
-                <StackPanel Grid.Row="1" Grid.Column="4" Orientation="Horizontal" Margin="0,0,16,6">
+                <StackPanel Orientation="Horizontal" Margin="0,0,16,6">
                     <TextBlock Text="{extensions:Localize Frame_LabelSolidFaces}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <ComboBox x:Name="SolidFaceTypeComboBox" Width="100" SelectedIndex="1">
                         <ComboBoxItem Content="{extensions:Localize Frame_FacesNurbs}"/>
                         <ComboBoxItem Content="{extensions:Localize Frame_FacesAnalytic}"/>
                     </ComboBox>
                 </StackPanel>
-                <StackPanel Grid.Row="1" Grid.Column="5" Orientation="Horizontal" Margin="0,0,0,6">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                     <TextBlock Text="{extensions:Localize Frame_LabelSurfaces}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <ComboBox x:Name="SurfaceTypeComboBox" Width="90" SelectedIndex="1">
                         <ComboBoxItem Content="IGES 143"/>
                         <ComboBoxItem Content="IGES 144"/>
                     </ComboBox>
                 </StackPanel>
+                </WrapPanel>
             </Grid>
         </Border>
+        </Expander>
 
         <DataGrid x:Name="FrameMembersGrid" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True"
                   CanUserAddRows="False" SelectionMode="Extended" AlternationCount="2"
@@ -100,6 +115,13 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <TextBlock x:Name="StatusTextBlock" Grid.Row="3" Margin="0,8,0,0" Foreground="{DynamicResource TextMutedBrush}"/>
+        <StatusBar Grid.Row="3" Style="{StaticResource BaseStatusBarStyle}">
+            <StatusBarItem Style="{StaticResource BaseStatusBarItemStyle}">
+                <TextBlock>
+                    <Run Text="{extensions:Localize Text_Status}" FontWeight="Bold"/>
+                    <Run x:Name="StatusTextBlock"/>
+                </TextBlock>
+            </StatusBarItem>
+        </StatusBar>
     </Grid>
 </UserControl>

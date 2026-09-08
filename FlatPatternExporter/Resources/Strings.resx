@@ -1975,21 +1975,21 @@ Possible solutions:
   <data name="Frame_LabelSolidFaces" xml:space="preserve"><value>Faces</value></data>
   <data name="Frame_LabelSurfaces" xml:space="preserve"><value>Surfaces</value></data>
   <data name="Frame_ColumnLength" xml:space="preserve"><value>Length, mm</value></data>
-  <data name="Frame_ColumnOutputFile" xml:space="preserve"><value>IGES file</value></data>
+  <data name="Frame_ColumnOutputFile" xml:space="preserve"><value>3D file</value></data>
   <data name="Frame_ColumnSourceFile" xml:space="preserve"><value>Source file</value></data>
   <data name="Frame_ErrorAssemblyRequired" xml:space="preserve"><value>Open the main assembly before scanning Frame Generator members.</value></data>
-  <data name="Frame_ErrorOutputFolder" xml:space="preserve"><value>Select an IGES output folder.</value></data>
+  <data name="Frame_ErrorOutputFolder" xml:space="preserve"><value>Select a 3D output folder.</value></data>
   <data name="Frame_InfoNoMembers" xml:space="preserve"><value>No Frame Generator members were found in the assembly.</value></data>
   <data name="Frame_StatusScanning" xml:space="preserve"><value>Scanning Frame Generator members...</value></data>
   <data name="Frame_StatusScanComplete" xml:space="preserve"><value>Found: {0}; scan errors: {1}.</value></data>
-  <data name="Frame_StatusExporting" xml:space="preserve"><value>Exporting Frame Generator members to IGES...</value></data>
-  <data name="Frame_StatusExportComplete" xml:space="preserve"><value>IGES exported: {0}; errors: {1}.</value></data>
+  <data name="Frame_StatusExporting" xml:space="preserve"><value>Exporting Frame Generator members...</value></data>
+  <data name="Frame_StatusExportComplete" xml:space="preserve"><value>3D files exported: {0}; errors: {1}.</value></data>
   <data name="Frame_StatusBomExported" xml:space="preserve"><value>Frame BOM saved: {0}</value></data>
-  <data name="Frame_SelectOutputFolder" xml:space="preserve"><value>Select a folder for Frame Generator IGES files</value></data>
+  <data name="Frame_SelectOutputFolder" xml:space="preserve"><value>Select a folder for Frame Generator 3D files</value></data>
   <data name="Frame_Error" xml:space="preserve"><value>Frame Generator operation failed: {0}</value></data>
   <data name="Frame_ErrorInventorUnavailable" xml:space="preserve"><value>Inventor is unavailable.</value></data>
   <data name="Frame_ErrorDocumentUnavailable" xml:space="preserve"><value>Source document is unavailable.</value></data>
-  <data name="Frame_ErrorInvalidIges" xml:space="preserve"><value>Inventor did not create a valid IGES file.</value></data>
+  <data name="Frame_ErrorInvalidIges" xml:space="preserve"><value>Inventor did not create a valid 3D file.</value></data>
   <data name="Frame_UnknownMember" xml:space="preserve"><value>Frame member</value></data>
   <data name="Frame_GeometrySurfaces" xml:space="preserve"><value>Surfaces</value></data>
   <data name="Frame_GeometrySolids" xml:space="preserve"><value>Solids</value></data>
@@ -2002,6 +2002,27 @@ Possible solutions:
   <data name="Frame_ErrorModelUpdate" xml:space="preserve"><value>Model update failed.</value></data>
   <data name="Frame_ErrorSingleSolidRequired" xml:space="preserve"><value>Tube export requires exactly one solid body.</value></data>
   <data name="Frame_ErrorOpenSurfaceBody" xml:space="preserve"><value>An open surface body was found.</value></data>
-  <data name="Frame_ErrorTranslatorOptions" xml:space="preserve"><value>The IGES translator does not provide export options for this document.</value></data>
-  <data name="Frame_ErrorLogWrite" xml:space="preserve"><value>Could not write the IGES export log: {0}</value></data>
+  <data name="Frame_ErrorTranslatorOptions" xml:space="preserve"><value>The selected translator does not provide export options for this document.</value></data>
+  <data name="Frame_ErrorLogWrite" xml:space="preserve"><value>Could not write the 3D export log: {0}</value></data>
+  <data name="Frame_ButtonExport3d" xml:space="preserve"><value>Export 3D</value></data>
+  <data name="Frame_LabelFormat" xml:space="preserve"><value>Format</value></data>
+  <data name="Header_Development" xml:space="preserve"><value>Development</value></data>
+  <data name="Header_FlatPatternOrientation" xml:space="preserve"><value>Flat pattern top side</value></data>
+  <data name="Label_TopSideMode" xml:space="preserve"><value>Orientation</value></data>
+  <data name="TopSide_AsModeled" xml:space="preserve"><value>As in model</value></data>
+  <data name="TopSide_MostBendsUp" xml:space="preserve"><value>Most bends up</value></data>
+  <data name="TopSide_MostBendsDown" xml:space="preserve"><value>Most bends down</value></data>
+  <data name="TopSide_Hint" xml:space="preserve"><value>The export orientation is selected temporarily and restored after DXF creation.</value></data>
+  <data name="Property_BendCount_DisplayName" xml:space="preserve"><value>Bend count</value></data>
+  <data name="Property_BendCount_ColumnHeader" xml:space="preserve"><value>Bends</value></data>
+  <data name="Property_BendCount_Category" xml:space="preserve"><value>System</value></data>
+  <data name="Property_LongestBendLengthMm_DisplayName" xml:space="preserve"><value>Longest bend, mm</value></data>
+  <data name="Property_LongestBendLengthMm_ColumnHeader" xml:space="preserve"><value>Longest bend, mm</value></data>
+  <data name="Property_LongestBendLengthMm_Category" xml:space="preserve"><value>System</value></data>
+  <data name="Property_BendsUpCount_DisplayName" xml:space="preserve"><value>Bends up</value></data>
+  <data name="Property_BendsUpCount_ColumnHeader" xml:space="preserve"><value>Bends up</value></data>
+  <data name="Property_BendsUpCount_Category" xml:space="preserve"><value>System</value></data>
+  <data name="Property_BendsDownCount_DisplayName" xml:space="preserve"><value>Bends down</value></data>
+  <data name="Property_BendsDownCount_ColumnHeader" xml:space="preserve"><value>Bends down</value></data>
+  <data name="Property_BendsDownCount_Category" xml:space="preserve"><value>System</value></data>
 </root>

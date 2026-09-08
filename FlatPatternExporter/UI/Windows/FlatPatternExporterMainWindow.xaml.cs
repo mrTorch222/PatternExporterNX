@@ -124,6 +124,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
     private bool _mergeProfilesIntoPolyline = true;
     private bool _rebaseGeometry = true;
     private bool _trimCenterlines = false;
+    private FlatPatternTopSideMode _topSideMode = FlatPatternTopSideMode.AsModeled;
 
     // Excel/CSV export settings
     private CsvDelimiterType _csvDelimiter = CsvDelimiterType.Tab;
@@ -324,6 +325,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             RebaseGeometry = settings.DxfExport.RebaseGeometry;
             TrimCenterlines = settings.DxfExport.TrimCenterlines;
             OptimizeDxf = settings.DxfExport.OptimizeDxf;
+            TopSideMode = settings.DxfExport.TopSideMode;
 
             // Spline settings
             EnableSplineReplacement = settings.Spline.EnableSplineReplacement;
@@ -540,7 +542,8 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                 MergeProfilesIntoPolyline = MergeProfilesIntoPolyline,
                 RebaseGeometry = RebaseGeometry,
                 TrimCenterlines = TrimCenterlines,
-                OptimizeDxf = OptimizeDxf
+                OptimizeDxf = OptimizeDxf,
+                TopSideMode = TopSideMode
             },
 
             Spline = new SplineSettings
@@ -708,6 +711,17 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                 _selectedSplineReplacement = value;
                 OnPropertyChanged();
             }
+        }
+    }
+
+    public FlatPatternTopSideMode TopSideMode
+    {
+        get => _topSideMode;
+        set
+        {
+            if (_topSideMode == value) return;
+            _topSideMode = value;
+            OnPropertyChanged();
         }
     }
 
@@ -1318,6 +1332,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             MergeProfilesIntoPolyline = MergeProfilesIntoPolyline,
             RebaseGeometry = RebaseGeometry,
             TrimCenterlines = TrimCenterlines,
+            TopSideMode = TopSideMode,
             LayerSettings = LayerSettings.ToList(),
             ShowFileLockedDialogs = true
         };

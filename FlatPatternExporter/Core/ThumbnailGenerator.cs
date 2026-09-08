@@ -1,4 +1,4 @@
-using System.Drawing.Imaging;
+﻿using System.Drawing.Imaging;
 using System.IO;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -10,6 +10,8 @@ using FlatPatternExporter.UI.Windows;
 using Inventor;
 using Microsoft.WindowsAPICodePack.Shell;
 using Svg.Skia;
+using IOFile = System.IO.File;
+using IOPath = System.IO.Path;
 
 namespace FlatPatternExporter.Core;
 
@@ -107,16 +109,37 @@ public class ThumbnailGenerator
 
     public async Task<BitmapImage?> GetThumbnailAsync(PartDocument document, Dispatcher dispatcher)
     {
+        try
+        {
+            var inventorThumbnail = await GetThumbnailViaInventorAsync(document, dispatcher);
+            if (inventorThumbnail is not null) return inventorThumbnail;
+        }
+        catch
+        {
+            // Fall back to the thumbnail embedded in the saved file.
+        }
+
         if (_apprentice is not null)
         {
             try
             {
-                return await GetThumbnailViaApprenticeAsync(document, dispatcher);
+                var apprenticeThumbnail = await GetThumbnailViaApprenticeAsync(document, dispatcher);
+                if (apprenticeThumbnail is not null) return apprenticeThumbnail;
             }
             catch
             {
                 // Fallback to Shell API
             }
+        }
+
+        try
+        {
+            var renderedThumbnail = await RenderThumbnailViaInventorAsync(document, dispatcher);
+            if (renderedThumbnail is not null) return renderedThumbnail;
+        }
+        catch
+        {
+            // Last fallback: ask Windows for its cached file thumbnail.
         }
 
         try
@@ -134,6 +157,13 @@ public class ThumbnailGenerator
         }
     }
 
+    private static async Task<BitmapImage?> GetThumbnailViaInventorAsync(PartDocument document, Dispatcher dispatcher)
+    {
+        BitmapImage? bitmap = null;
+        await dispatcher.InvokeAsync(() => bitmap = ConvertPictureToBitmapImage(document.Thumbnail));
+        return bitmap;
+    }
+
     private Task<BitmapImage?> GetThumbnailViaApprenticeAsync(PartDocument document, Dispatcher dispatcher)
     {
         var tcs = new TaskCompletionSource<BitmapImage?>();
@@ -144,28 +174,7 @@ public class ThumbnailGenerator
             try
             {
                 apprenticeDoc = _apprentice!.Open(document.FullDocumentName);
-                var thumbnail = apprenticeDoc.Thumbnail;
-                var img = IPictureDispConverter.PictureDispToImage(thumbnail);
-
-                if (img != null)
-                {
-                    using var memoryStream = new MemoryStream();
-                    img.Save(memoryStream, ImageFormat.Png);
-                    memoryStream.Position = 0;
-
-                    var bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.StreamSource = memoryStream;
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.EndInit();
-                    bitmap.Freeze();
-
-                    tcs.SetResult(bitmap);
-                }
-                else
-                {
-                    tcs.SetResult(null);
-                }
+                tcs.SetResult(ConvertPictureToBitmapImage(apprenticeDoc.Thumbnail));
             }
             catch (Exception ex)
             {
@@ -178,6 +187,69 @@ public class ThumbnailGenerator
         });
 
         return tcs.Task;
+    }
+
+    private static async Task<BitmapImage?> RenderThumbnailViaInventorAsync(PartDocument document, Dispatcher dispatcher)
+    {
+        BitmapImage? bitmap = null;
+        await dispatcher.InvokeAsync(() =>
+        {
+            var temporaryFile = IOPath.Combine(IOPath.GetTempPath(), $"PatternExporterNX-{Guid.NewGuid():N}.png");
+            var application = (Inventor.Application)document.Parent;
+            var activeDocument = application.ActiveDocument;
+            Inventor.View? view = null;
+
+            try
+            {
+                view = document.Views.Add();
+                view.Visible = false;
+                var camera = view.Camera;
+                camera.ViewOrientationType = ViewOrientationTypeEnum.kIsoTopRightViewOrientation;
+                camera.Fit();
+                camera.Apply();
+                view.Update();
+                view.SaveAsBitmap(temporaryFile, 256, 256);
+                bitmap = LoadBitmapImage(temporaryFile);
+            }
+            finally
+            {
+                view?.Close();
+                if (activeDocument is not null && application.ActiveDocument != activeDocument)
+                    activeDocument.Activate();
+                if (IOFile.Exists(temporaryFile)) IOFile.Delete(temporaryFile);
+            }
+        });
+
+        return bitmap;
+    }
+
+    private static BitmapImage? ConvertPictureToBitmapImage(stdole.IPictureDisp thumbnail)
+    {
+        using var image = IPictureDispConverter.PictureDispToImage(thumbnail);
+        if (image is null) return null;
+
+        using var memoryStream = new MemoryStream();
+        image.Save(memoryStream, ImageFormat.Png);
+        memoryStream.Position = 0;
+
+        var bitmap = new BitmapImage();
+        bitmap.BeginInit();
+        bitmap.StreamSource = memoryStream;
+        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+        bitmap.EndInit();
+        bitmap.Freeze();
+        return bitmap;
+    }
+
+    private static BitmapImage LoadBitmapImage(string filePath)
+    {
+        var bitmap = new BitmapImage();
+        bitmap.BeginInit();
+        bitmap.UriSource = new Uri(filePath, UriKind.Absolute);
+        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+        bitmap.EndInit();
+        bitmap.Freeze();
+        return bitmap;
     }
 
     private async Task<BitmapImage?> GetThumbnailViaShellAsync(PartDocument document, Dispatcher dispatcher)

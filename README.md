@@ -24,6 +24,7 @@ PatternExporterNX is a standalone WPF utility that connects to a running Autodes
 - Exports DXF files with customizable layer mapping, AutoCAD version targeting, polylines merging, spline replacement, geometry rebasing, and optional DXF optimization.
 - Builds file names from tokenized templates (including custom text and user-defined iProperties) and organizes output by material, thickness, or custom subfolders.
 - Generates thumbnails for parts and exported DXF previews to aid validation. Uses a dual-method approach: ApprenticeServer API (primary, faster) with automatic fallback to Windows Shell API if ApprenticeServer is unavailable.
+- If a saved IPT has no embedded thumbnail, renders `Part Img` through an isolated Inventor view; DXF export creates a missing sheet-metal Flat Pattern in memory before calling `FlatPattern.DataIO.WriteDataToFile`.
 - Persists UI layout, column order, presets, themes, and localization preferences in `%AppData%\FlatPatternExporter\settings.json`.
 - Provides a separate Frame Generator tab that finds unique frame-member IPT documents recursively, counts their occurrences, reads `G_L` in millimeters, exports them with Inventor's IGES translator, and writes the resulting BOM to Excel or CSV.
 - Ships with English and Russian UI resources plus a light/dark theme switcher.

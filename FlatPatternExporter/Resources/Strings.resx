@@ -1998,4 +1998,5 @@ Possible solutions:
   <data name="Frame_FacesAnalytic" xml:space="preserve"><value>Analytic</value></data>
   <data name="Frame_BomSheetName" xml:space="preserve"><value>Frame BOM</value></data>
   <data name="Frame_BomFileFilter" xml:space="preserve"><value>Excel workbook (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv</value></data>
+  <data name="Error_FlatPatternCreationFailed" xml:space="preserve"><value>Inventor could not create a flat pattern for the part.</value></data>
 </root>

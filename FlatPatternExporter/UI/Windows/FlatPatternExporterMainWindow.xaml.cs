@@ -75,7 +75,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             }
         }
     }
-    
+
     private double _exportProgressValue;
     public double ExportProgressValue
     {
@@ -137,10 +137,10 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
     private ExportFolderType _selectedExportFolder = ExportFolderType.ChooseFolder;
     private bool _enableSubfolder = false;
     private string _fixedFolderPath = string.Empty;
-    public string FixedFolderPath 
-    { 
-        get => _fixedFolderPath; 
-        set 
+    public string FixedFolderPath
+    {
+        get => _fixedFolderPath;
+        set
         {
             _fixedFolderPath = value;
             FixedFolderPathTextBlock.Text = value.Length > 55 ? $"... {value[^55..]}" : value;
@@ -385,7 +385,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                         AddUserDefinedIPropertyColumn(propertyDef.InventorPropertyName ?? internalName);
                     else
                         if (presetLookup[internalName].FirstOrDefault() is { } presetProperty)
-                            AddIPropertyColumn(presetProperty);
+                        AddIPropertyColumn(presetProperty);
                 }
             }
 
@@ -510,7 +510,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
         {
             Interface = new InterfaceSettings
             {
-                ColumnOrder = [..columnsInDisplayOrder],
+                ColumnOrder = [.. columnsInDisplayOrder],
                 UserDefinedProperties = userDefinedProperties,
                 PropertySubstitutions = propertySubstitutions,
                 IsExpanded = SettingsExpander?.IsExpanded ?? false,
@@ -922,7 +922,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
 
     // Computed property for subfolder checkbox IsEnabled
     public bool IsSubfolderCheckBoxEnabled => SelectedExportFolder != ExportFolderType.PartFolder;
-    
+
     public bool EnableFileNameConstructor
     {
         get => _enableFileNameConstructor;
@@ -1180,7 +1180,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             : operationType == OperationType.Scan
                 ? _localizationManager.GetString("Status_PartsFound", result.ProcessedCount, GetElapsedTime(result.ElapsedTime))
                 : _localizationManager.GetString("Status_Completed", GetElapsedTime(result.ElapsedTime));
-        
+
         var state = UIState.CreateAfterOperationState(_partsData.Count > 0, result.WasCancelled, statusText);
         SetUIState(state);
     }
@@ -1218,7 +1218,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                         _localizationManager.GetString("Info_Warning"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
                 break;
-                
+
             case OperationType.Export:
                 var exportTitle = isQuickMode
                     ? _localizationManager.GetString("Info_QuickExportCompleted")
@@ -1971,7 +1971,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
     {
         var stopwatch = Stopwatch.StartNew();
         var result = new OperationResult();
-        
+
         try
         {
             if (updateUI)
@@ -2067,7 +2067,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                 _partDataReader.UpdateQuantitiesWithMultiplier(_partsData, multiplier);
 
             result.WasCancelled = cancellationToken.IsCancellationRequested;
-            
+
             if (updateUI)
             {
                 _lastScannedDocument = cancellationToken.IsCancellationRequested ? null : document;
@@ -2179,9 +2179,9 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
     {
         AvailableTokens = [];
         UserDefinedTokens = [];
-        
+
         RefreshAvailableTokens();
-        
+
         // Subscribe to changes in user-defined properties collection
         PropertyMetadataRegistry.UserDefinedProperties.CollectionChanged += (s, e) =>
         {
@@ -2334,24 +2334,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
     private async void ExportSelectedDXF_Click(object sender, RoutedEventArgs e)
     {
         var selectedItems = PartsDataGrid.SelectedItems.Cast<PartData>().ToList();
-
-        var itemsWithoutFlatPattern = selectedItems.Where(p => !p.HasFlatPattern).ToList();
-        if (itemsWithoutFlatPattern.Count == selectedItems.Count)
-        {
-            CustomMessageBox.Show(_localizationManager.GetString("Message_NoFlatPatternsSelected"), _localizationManager.GetString("MessageBox_Information"), MessageBoxButton.OK,
-                MessageBoxImage.Warning);
-            return;
-        }
-
-        if (itemsWithoutFlatPattern.Count > 0)
-        {
-            var dialogResult =
-                CustomMessageBox.Show(_localizationManager.GetString("Message_SomeFlatPatternsSkipped"),
-                    _localizationManager.GetString("MessageBox_Information"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (dialogResult == MessageBoxResult.No) return;
-
-            selectedItems = [.. selectedItems.Except(itemsWithoutFlatPattern)];
-        }
+        if (selectedItems.Count == 0) return;
 
         // Document validation
         var validation = ValidateDocumentOrShowError();
@@ -2370,7 +2353,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
         var result = await ExecuteWithErrorHandlingAsync(async () =>
         {
             var processedCount = 0;
-            var skippedCount = itemsWithoutFlatPattern.Count;
+            var skippedCount = 0;
             var exportProgress = new Progress<double>(UpdateExportProgress);
             await Task.Run(() => _dxfExporter.ExportDXF(selectedItems, context.TargetDirectory, context.Multiplier,
                 exportOptions, ref processedCount, ref skippedCount, context.GenerateThumbnails, exportProgress, _operationCts!.Token), _operationCts!.Token);
@@ -2915,31 +2898,31 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
         switch (UpdateState)
         {
             case UpdateButtonState.Error:
-            {
-                var errorMessage = _latestUpdateCheckResult.ErrorMessage ?? _localizationManager.GetString("Error_CheckUpdateFailed");
-                var fullMessage = $"{errorMessage}\n\n{_localizationManager.GetString("Question_RetryUpdateCheck")}";
-
-                var result = CustomMessageBox.Show(
-                    this,
-                    fullMessage,
-                    _localizationManager.GetString("Header_Update"),
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Error);
-
-                if (result == MessageBoxResult.Yes)
                 {
-                    _latestUpdateCheckResult = null;
-                    NotifyUpdatePropertiesChanged();
+                    var errorMessage = _latestUpdateCheckResult.ErrorMessage ?? _localizationManager.GetString("Error_CheckUpdateFailed");
+                    var fullMessage = $"{errorMessage}\n\n{_localizationManager.GetString("Question_RetryUpdateCheck")}";
 
-                    TitleBar.ShowUpdateNotification(
-                        _localizationManager.GetString("Notification_CheckingUpdates"),
-                        0.5
-                    );
+                    var result = CustomMessageBox.Show(
+                        this,
+                        fullMessage,
+                        _localizationManager.GetString("Header_Update"),
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Error);
 
-                    await CheckForUpdatesAsync();
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        _latestUpdateCheckResult = null;
+                        NotifyUpdatePropertiesChanged();
+
+                        TitleBar.ShowUpdateNotification(
+                            _localizationManager.GetString("Notification_CheckingUpdates"),
+                            0.5
+                        );
+
+                        await CheckForUpdatesAsync();
+                    }
+                    return;
                 }
-                return;
-            }
 
             case UpdateButtonState.UpToDate:
                 return;

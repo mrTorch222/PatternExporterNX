@@ -1998,4 +1998,5 @@
   <data name="Frame_FacesAnalytic" xml:space="preserve"><value>Аналитические</value></data>
   <data name="Frame_BomSheetName" xml:space="preserve"><value>BOM рам</value></data>
   <data name="Frame_BomFileFilter" xml:space="preserve"><value>Книга Excel (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv</value></data>
+  <data name="Error_FlatPatternCreationFailed" xml:space="preserve"><value>Inventor не смог создать развертку детали.</value></data>
 </root>

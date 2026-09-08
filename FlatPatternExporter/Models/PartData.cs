@@ -14,6 +14,8 @@ public class PartData : INotifyPropertyChanged
     private int quantity;
     private bool isOverridden;
     private bool isMultiplied;
+    private BitmapImage? preview;
+    private bool hasFlatPattern;
     private BitmapImage? dxfPreview;
     private double? cutLengthMm;
     private Enums.ProcessingStatus processingStatusEnum = Enums.ProcessingStatus.NotProcessed;
@@ -37,8 +39,26 @@ public class PartData : INotifyPropertyChanged
     public string FileName { get; set; } = "";
     public string FullFileName { get; set; } = "";
     public string ModelState { get; set; } = "";
-    public BitmapImage? Preview { get; set; }
-    public bool HasFlatPattern { get; set; }
+    public BitmapImage? Preview
+    {
+        get => preview;
+        set
+        {
+            if (preview == value) return;
+            preview = value;
+            OnPropertyChanged();
+        }
+    }
+    public bool HasFlatPattern
+    {
+        get => hasFlatPattern;
+        set
+        {
+            if (hasFlatPattern == value) return;
+            hasFlatPattern = value;
+            OnPropertyChanged();
+        }
+    }
     public string Material { get; set; } = "";
     public string Thickness { get; set; } = "";
     public string PartNumber { get; set; } = "";

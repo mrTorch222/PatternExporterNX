@@ -179,62 +179,60 @@ public class DxfExporter
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var partNumber = partData.PartNumber;
-            var qty = partData.IsOverridden ? partData.Quantity : partData.OriginalQuantity * multiplier;
+                var qty = partData.IsOverridden ? partData.Quantity : partData.OriginalQuantity * multiplier;
 
-            if (exportOptions.SelectedExportFolder == ExportFolderType.PartFolder)
-            {
-                var partPath = _documentCache.GetCachedPartPath(partNumber) ?? _inventorManager.GetPartDocumentFullPath(partNumber);
-                if (!string.IsNullOrEmpty(partPath))
+                if (exportOptions.SelectedExportFolder == ExportFolderType.PartFolder)
                 {
-                    targetDir = Path.GetDirectoryName(partPath) ?? "";
-                }
-                else
-                {
-                    targetDir = "";
-                }
-            }
-
-            PartDocument? partDoc = null;
-            try
-            {
-                partDoc = _documentCache.GetCachedPartDocument(partNumber) ?? _inventorManager.OpenPartDocument(partNumber);
-                if (partDoc == null) throw new Exception(LocalizationManager.Instance.GetString("Error_PartFileNotFound"));
-
-                var smCompDef = (SheetMetalComponentDefinition)partDoc.ComponentDefinition;
-                var material = partData.Material;
-                var thickness = partData.Thickness;
-
-                var materialDir = exportOptions.OrganizeByMaterial ? Path.Combine(targetDir, material) : targetDir;
-                if (!Directory.Exists(materialDir)) Directory.CreateDirectory(materialDir);
-
-                var thicknessDir = exportOptions.OrganizeByThickness
-                    ? Path.Combine(materialDir, thickness)
-                    : materialDir;
-                if (!Directory.Exists(thicknessDir)) Directory.CreateDirectory(thicknessDir);
-
-                string fileName;
-                if (exportOptions.EnableFileNameConstructor && !string.IsNullOrEmpty(_tokenService.FileNameTemplate))
-                {
-                    fileName = _tokenService.ResolveTemplate(_tokenService.FileNameTemplate, partData);
-                }
-                else
-                {
-                    fileName = partNumber;
+                    var partPath = _documentCache.GetCachedPartPath(partNumber) ?? _inventorManager.GetPartDocumentFullPath(partNumber);
+                    if (!string.IsNullOrEmpty(partPath))
+                    {
+                        targetDir = Path.GetDirectoryName(partPath) ?? "";
+                    }
+                    else
+                    {
+                        targetDir = "";
+                    }
                 }
 
-                var filePath = Path.Combine(thicknessDir, fileName + ".dxf");
-
-                if (!IsValidPath(filePath)) continue;
-
-                var exportSuccess = false;
-
-                if (smCompDef.HasFlatPattern)
+                PartDocument? partDoc = null;
+                try
                 {
-                    var flatPattern = smCompDef.FlatPattern;
-                    var oDataIO = flatPattern.DataIO;
+                    partDoc = _documentCache.GetCachedPartDocument(partNumber) ?? _inventorManager.OpenPartDocument(partNumber);
+                    if (partDoc == null) throw new Exception(LocalizationManager.Instance.GetString("Error_PartFileNotFound"));
+
+                    var smCompDef = (SheetMetalComponentDefinition)partDoc.ComponentDefinition;
+                    var material = partData.Material;
+                    var thickness = partData.Thickness;
+
+                    var materialDir = exportOptions.OrganizeByMaterial ? Path.Combine(targetDir, material) : targetDir;
+                    if (!Directory.Exists(materialDir)) Directory.CreateDirectory(materialDir);
+
+                    var thicknessDir = exportOptions.OrganizeByThickness
+                        ? Path.Combine(materialDir, thickness)
+                        : materialDir;
+                    if (!Directory.Exists(thicknessDir)) Directory.CreateDirectory(thicknessDir);
+
+                    string fileName;
+                    if (exportOptions.EnableFileNameConstructor && !string.IsNullOrEmpty(_tokenService.FileNameTemplate))
+                    {
+                        fileName = _tokenService.ResolveTemplate(_tokenService.FileNameTemplate, partData);
+                    }
+                    else
+                    {
+                        fileName = partNumber;
+                    }
+
+                    var filePath = Path.Combine(thicknessDir, fileName + ".dxf");
+
+                    if (!IsValidPath(filePath)) continue;
+
+                    var exportSuccess = false;
 
                     try
                     {
+                        var flatPattern = GetOrCreateFlatPattern(smCompDef, partData);
+                        var oDataIO = flatPattern.DataIO;
+
                         var options = PrepareExportOptions(exportOptions);
 
                         var layerOptionsBuilder = new StringBuilder();
@@ -300,33 +298,32 @@ public class DxfExporter
                     {
                         Debug.WriteLine($"DXF export error: {ex.Message}");
                     }
-                }
 
-                partData.ProcessingStatusEnum = exportSuccess ? ProcessingStatus.Success : ProcessingStatus.Skipped;
+                    partData.ProcessingStatusEnum = exportSuccess ? ProcessingStatus.Success : ProcessingStatus.Skipped;
 
-                if (exportSuccess && generateThumbnails && thumbnailGenerator != null &&
-                    AcadVersionMapping.SupportsOptimization(exportOptions.SelectedAcadVersion))
-                {
-                    var dxfPreview = thumbnailGenerator.GenerateDxfThumbnails(filePath, Dispatcher.CurrentDispatcher);
-                    if (dxfPreview != null)
+                    if (exportSuccess && generateThumbnails && thumbnailGenerator != null &&
+                        AcadVersionMapping.SupportsOptimization(exportOptions.SelectedAcadVersion))
                     {
-                        partData.DxfPreview = dxfPreview;
+                        var dxfPreview = thumbnailGenerator.GenerateDxfThumbnails(filePath, Dispatcher.CurrentDispatcher);
+                        if (dxfPreview != null)
+                        {
+                            partData.DxfPreview = dxfPreview;
+                        }
                     }
+
+                    if (exportSuccess)
+                        localProcessedCount++;
+                    else
+                        localSkippedCount++;
+
+                    progress?.Report(totalParts > 0 ? (double)localProcessedCount / totalParts * 100 : 0);
                 }
-
-                if (exportSuccess)
-                    localProcessedCount++;
-                else
+                catch (Exception ex)
+                {
                     localSkippedCount++;
-
-                progress?.Report(totalParts > 0 ? (double)localProcessedCount / totalParts * 100 : 0);
+                    Debug.WriteLine($"Part processing error: {ex.Message}");
+                }
             }
-            catch (Exception ex)
-            {
-                localSkippedCount++;
-                Debug.WriteLine($"Part processing error: {ex.Message}");
-            }
-        }
         }
         catch (OperationCanceledException)
         {
@@ -344,6 +341,32 @@ public class DxfExporter
         skippedCount = localSkippedCount;
 
         progress?.Report(100);
+    }
+
+    private static FlatPattern GetOrCreateFlatPattern(SheetMetalComponentDefinition componentDefinition, PartData partData)
+    {
+        var created = !componentDefinition.HasFlatPattern;
+        if (created) componentDefinition.Unfold();
+
+        if (!componentDefinition.HasFlatPattern)
+            throw new InvalidOperationException(LocalizationManager.Instance.GetString("Error_FlatPatternCreationFailed"));
+
+        var flatPattern = componentDefinition.FlatPattern;
+        if (created)
+        {
+            try
+            {
+                flatPattern.ExitEdit();
+            }
+            catch
+            {
+                // Some document states create the flat pattern without entering edit mode.
+            }
+
+            partData.HasFlatPattern = true;
+        }
+
+        return flatPattern;
     }
 
     private string PrepareExportOptions(ExportOptions exportOptions)

@@ -17,6 +17,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     private readonly ObservableCollection<FrameMemberData> _members = [];
     private readonly Dictionary<string, PartDocument> _documents = new(StringComparer.OrdinalIgnoreCase);
     private readonly LocalizationManager _localization = LocalizationManager.Instance;
+    private readonly TemplatePresetManager _presetManager = new();
     private InventorManager? _inventorManager;
     private bool _isBusy;
 
@@ -24,6 +25,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     {
         InitializeComponent();
         FrameMembersGrid.ItemsSource = _members;
+        FramePresetComboBox.ItemsSource = _presetManager.TemplatePresets;
         NameTemplateTextBox.Text = FrameFileNameService.DefaultTemplate;
         UpdatePreview();
     }
@@ -37,13 +39,15 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     {
         settings ??= new FrameExportSettings();
         OutputFolderTextBox.Text = settings.OutputFolder;
-        NameTemplateTextBox.Text = string.IsNullOrWhiteSpace(settings.FileNameTemplate)
-            ? FrameFileNameService.DefaultTemplate
-            : settings.FileNameTemplate;
         GeometryTypeComboBox.SelectedIndex = ClampIndex(settings.GeometryType, GeometryTypeComboBox.Items.Count, 0);
         SolidFaceTypeComboBox.SelectedIndex = ClampIndex(settings.SolidFaceType, SolidFaceTypeComboBox.Items.Count, 1);
         SurfaceTypeComboBox.SelectedIndex = ClampIndex(settings.SurfaceType, SurfaceTypeComboBox.Items.Count, 1);
         ExportFormatComboBox.SelectedIndex = ClampIndex((int)settings.ExportFormat, ExportFormatComboBox.Items.Count, 0);
+        _presetManager.LoadPresets(settings.TemplatePresets, settings.SelectedTemplatePresetIndex);
+        FramePresetComboBox.SelectedItem = _presetManager.SelectedTemplatePreset;
+        NameTemplateTextBox.Text = string.IsNullOrWhiteSpace(settings.FileNameTemplate)
+            ? FrameFileNameService.DefaultTemplate
+            : settings.FileNameTemplate;
         UpdateFormatControls();
         UpdatePreview();
     }
@@ -55,7 +59,9 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         GeometryType = GeometryTypeComboBox.SelectedIndex,
         SolidFaceType = SolidFaceTypeComboBox.SelectedIndex,
         SurfaceType = SurfaceTypeComboBox.SelectedIndex,
-        ExportFormat = (FrameExportFormat)ExportFormatComboBox.SelectedIndex
+        ExportFormat = (FrameExportFormat)ExportFormatComboBox.SelectedIndex,
+        TemplatePresets = _presetManager.GetPresetData().ToList(),
+        SelectedTemplatePresetIndex = _presetManager.GetSelectedPresetIndex()
     };
 
     private async void ScanFrameButton_Click(object sender, RoutedEventArgs e)
@@ -182,6 +188,60 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     }
 
     private void NameTemplateTextBox_TextChanged(object sender, TextChangedEventArgs e) => UpdatePreview();
+
+    private void NameTokenButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button { Tag: string token }) InsertNameTemplateText(token);
+    }
+
+    private void AddCustomNameTextButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(CustomNameTextBox.Text)) return;
+        InsertNameTemplateText(CustomNameTextBox.Text);
+        CustomNameTextBox.Clear();
+    }
+
+    private void InsertNameTemplateText(string value)
+    {
+        var start = NameTemplateTextBox.SelectionStart;
+        var length = NameTemplateTextBox.SelectionLength;
+        var text = NameTemplateTextBox.Text;
+        NameTemplateTextBox.Text = text.Remove(start, length).Insert(start, value);
+        NameTemplateTextBox.SelectionStart = start + value.Length;
+        NameTemplateTextBox.Focus();
+    }
+
+    private void FramePresetComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (FramePresetComboBox.SelectedItem is not TemplatePreset preset) return;
+        _presetManager.SelectedTemplatePreset = preset;
+        FramePresetNameTextBox.Text = preset.Name;
+        NameTemplateTextBox.Text = preset.Template;
+    }
+
+    private void CreateFramePresetButton_Click(object sender, RoutedEventArgs e)
+    {
+        var name = FramePresetNameTextBox.Text.Trim();
+        if (string.IsNullOrEmpty(name)) return;
+        _presetManager.CreatePreset(name, NameTemplateTextBox.Text, out _);
+        FramePresetComboBox.SelectedItem = _presetManager.SelectedTemplatePreset;
+    }
+
+    private void UpdateFramePresetButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_presetManager.SelectedTemplatePreset is null) return;
+        _presetManager.UpdateSelectedTemplate(NameTemplateTextBox.Text);
+        var name = FramePresetNameTextBox.Text.Trim();
+        if (!string.IsNullOrEmpty(name)) _presetManager.RenameSelected(name, out _);
+        FramePresetComboBox.Items.Refresh();
+    }
+
+    private void DeleteFramePresetButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_presetManager.DeleteSelectedPreset()) return;
+        FramePresetComboBox.SelectedItem = null;
+        FramePresetNameTextBox.Clear();
+    }
 
     private void ExportFormatComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {

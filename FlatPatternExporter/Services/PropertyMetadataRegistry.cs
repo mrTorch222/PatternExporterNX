@@ -193,6 +193,13 @@ public static class PropertyMetadataRegistry
             Type = PropertyType.System,
             IsTokenizable = false
         },
+        ["StructurePath"] = new PropertyDefinition
+        {
+            InternalName = "StructurePath",
+            LocalizationKeyPrefix = "Property_StructurePath",
+            Type = PropertyType.System,
+            IsTokenizable = false
+        },
 
         // ===== Document properties (not iProperty) =====
         ["FileName"] = new PropertyDefinition

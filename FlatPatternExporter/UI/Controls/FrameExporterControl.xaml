@@ -42,6 +42,8 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="{extensions:Localize Frame_LabelOutputFolder}" VerticalAlignment="Center" Margin="0,0,8,6"/>
@@ -89,6 +91,29 @@
                         <ComboBoxItem Content="IGES 144"/>
                     </ComboBox>
                 </StackPanel>
+                </WrapPanel>
+
+                <WrapPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="6" Margin="0,8,0,0">
+                    <TextBlock Text="{extensions:Localize Frame_TokensHint}" VerticalAlignment="Center" Margin="0,0,8,4"/>
+                    <Button Content="{}{PartNumber}" Tag="{}{PartNumber}" Click="NameTokenButton_Click" Margin="0,0,4,4"/>
+                    <Button Content="{}{StockNumber}" Tag="{}{StockNumber}" Click="NameTokenButton_Click" Margin="0,0,4,4"/>
+                    <Button Content="{}{Material}" Tag="{}{Material}" Click="NameTokenButton_Click" Margin="0,0,4,4"/>
+                    <Button Content="{}{Description}" Tag="{}{Description}" Click="NameTokenButton_Click" Margin="0,0,4,4"/>
+                    <Button Content="{}{Length}" Tag="{}{Length}" Click="NameTokenButton_Click" Margin="0,0,4,4"/>
+                    <Button Content="{}{Qty}" Tag="{}{Qty}" Click="NameTokenButton_Click" Margin="0,0,4,4"/>
+                    <Button Content="{}{FileName}" Tag="{}{FileName}" Click="NameTokenButton_Click" Margin="0,0,12,4"/>
+                    <TextBox x:Name="CustomNameTextBox" Width="130" ToolTip="{extensions:Localize ToolTip_EnterCustomText}" Margin="0,0,4,4"/>
+                    <Button Content="+" Click="AddCustomNameTextButton_Click" ToolTip="{extensions:Localize ToolTip_AddCustomToken}" Width="28" Margin="0,0,4,4"/>
+                </WrapPanel>
+
+                <WrapPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="6" Margin="0,4,0,0">
+                    <TextBlock Text="{extensions:Localize Header_TemplatePresets}" VerticalAlignment="Center" Margin="0,0,8,4"/>
+                    <ComboBox x:Name="FramePresetComboBox" Width="180" DisplayMemberPath="Name"
+                              SelectionChanged="FramePresetComboBox_SelectionChanged" Margin="0,0,4,4"/>
+                    <TextBox x:Name="FramePresetNameTextBox" Width="140" ToolTip="{extensions:Localize ToolTip_PresetName}" Margin="0,0,4,4"/>
+                    <Button Content="+" Click="CreateFramePresetButton_Click" ToolTip="{extensions:Localize ToolTip_CreatePreset}" Width="30" Margin="0,0,4,4"/>
+                    <Button Content="{extensions:Localize Button_Save}" Click="UpdateFramePresetButton_Click" ToolTip="{extensions:Localize ToolTip_SavePreset}" Margin="0,0,4,4"/>
+                    <Button Content="×" Click="DeleteFramePresetButton_Click" ToolTip="{extensions:Localize ToolTip_DeletePreset}" Width="30" Margin="0,0,4,4"/>
                 </WrapPanel>
             </Grid>
         </Border>

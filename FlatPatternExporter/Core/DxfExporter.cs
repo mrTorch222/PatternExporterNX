@@ -165,6 +165,7 @@ public class DxfExporter
         var localSkippedCount = skippedCount;
 
         var thumbnailGenerator = generateThumbnails ? new ThumbnailGenerator() : null;
+        var reservedOutputPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var partData in partsDataList)
         {
@@ -222,7 +223,7 @@ public class DxfExporter
                         fileName = partNumber;
                     }
 
-                    var filePath = Path.Combine(thicknessDir, fileName + ".dxf");
+                    var filePath = MakeUniqueOutputPath(Path.Combine(thicknessDir, fileName + ".dxf"), reservedOutputPaths);
 
                     if (!IsValidPath(filePath)) continue;
 
@@ -513,6 +514,20 @@ public class DxfExporter
                 cancellationToken.ThrowIfCancellationRequested();
             }
             return true;
+        }
+    }
+
+    internal static string MakeUniqueOutputPath(string filePath, ISet<string> reservedPaths)
+    {
+        if (reservedPaths.Add(filePath)) return filePath;
+
+        var directory = Path.GetDirectoryName(filePath) ?? "";
+        var baseName = Path.GetFileNameWithoutExtension(filePath);
+        var extension = Path.GetExtension(filePath);
+        for (var suffix = 2; ; suffix++)
+        {
+            var candidate = Path.Combine(directory, $"{baseName}_{suffix}{extension}");
+            if (reservedPaths.Add(candidate)) return candidate;
         }
     }
 

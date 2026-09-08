@@ -42,6 +42,11 @@ public record OrganizationSettings
     public bool OrganizeByThickness { get; init; }
 }
 
+public record HierarchySettings
+{
+    public bool MergeDuplicateFiles { get; init; } = true;
+}
+
 public record DxfExportSettings
 {
     public AcadVersionType SelectedAcadVersion { get; init; } = AcadVersionType.V2000;
@@ -97,6 +102,8 @@ public record FrameExportSettings
     public int SolidFaceType { get; init; } = 1;
     public int SurfaceType { get; init; } = 1;
     public FrameExportFormat ExportFormat { get; init; } = FrameExportFormat.Iges;
+    public List<TemplatePresetData> TemplatePresets { get; init; } = [];
+    public int SelectedTemplatePresetIndex { get; init; } = -1;
 }
 
 public record ApplicationSettings
@@ -104,6 +111,7 @@ public record ApplicationSettings
     public InterfaceSettings Interface { get; init; } = new();
     public ComponentFilterSettings ComponentFilter { get; init; } = new();
     public OrganizationSettings Organization { get; init; } = new();
+    public HierarchySettings Hierarchy { get; init; } = new();
 
     public ProcessingMethod SelectedProcessingMethod { get; init; } = ProcessingMethod.BOM;
 

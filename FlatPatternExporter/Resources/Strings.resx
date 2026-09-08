@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
@@ -2025,4 +2025,10 @@ Possible solutions:
   <data name="Property_BendsDownCount_DisplayName" xml:space="preserve"><value>Bends down</value></data>
   <data name="Property_BendsDownCount_ColumnHeader" xml:space="preserve"><value>Bends down</value></data>
   <data name="Property_BendsDownCount_Category" xml:space="preserve"><value>System</value></data>
+  <data name="UI_ProcessByNestedStructure" xml:space="preserve"><value>Nested structure</value></data>
+  <data name="Hierarchy_Header" xml:space="preserve"><value>Assembly structure and quantity multipliers</value></data>
+  <data name="Hierarchy_MergeDuplicates" xml:space="preserve"><value>Remove duplicate rows (sum quantity)</value></data>
+  <data name="Property_StructurePath_DisplayName" xml:space="preserve"><value>Assembly path</value></data>
+  <data name="Property_StructurePath_ColumnHeader" xml:space="preserve"><value>Assembly path</value></data>
+  <data name="Property_StructurePath_Category" xml:space="preserve"><value>System</value></data>
 </root>

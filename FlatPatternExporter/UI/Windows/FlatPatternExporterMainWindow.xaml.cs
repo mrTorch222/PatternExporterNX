@@ -49,6 +49,8 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
 
     // Data and collections
     private readonly ObservableCollection<PartData> _partsData = [];
+    public ObservableCollection<AssemblyHierarchyNode> HierarchyRoots { get; } = [];
+    private readonly List<PartOccurrenceContribution> _hierarchyContributions = [];
     private readonly CollectionViewSource _partsDataView;
 
     // Process state
@@ -150,6 +152,8 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
 
     // Processing method
     private ProcessingMethod _selectedProcessingMethod = ProcessingMethod.BOM;
+    private bool _mergeHierarchyDuplicateFiles = true;
+    private bool _hierarchyRefreshPending;
 
     // Model state
     private bool _isPrimaryModelState = true;
@@ -316,6 +320,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
 
             // Processing method
             SelectedProcessingMethod = settings.SelectedProcessingMethod;
+            MergeHierarchyDuplicateFiles = settings.Hierarchy.MergeDuplicateFiles;
 
             // DXF export settings (set backing field directly to avoid UI notification dialog)
             _selectedAcadVersion = settings.DxfExport.SelectedAcadVersion;
@@ -532,6 +537,11 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             {
                 OrganizeByMaterial = OrganizeByMaterial,
                 OrganizeByThickness = OrganizeByThickness
+            },
+
+            Hierarchy = new HierarchySettings
+            {
+                MergeDuplicateFiles = MergeHierarchyDuplicateFiles
             },
 
             SelectedProcessingMethod = SelectedProcessingMethod,
@@ -756,8 +766,26 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             if (_selectedProcessingMethod != value)
             {
                 _selectedProcessingMethod = value;
+                if (_partsData.Count > 0)
+                    _lastScannedDocument = null;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(IsHierarchyMode));
+                QueueHierarchyRefresh();
             }
+        }
+    }
+
+    public bool IsHierarchyMode => SelectedProcessingMethod == ProcessingMethod.Hierarchy;
+
+    public bool MergeHierarchyDuplicateFiles
+    {
+        get => _mergeHierarchyDuplicateFiles;
+        set
+        {
+            if (_mergeHierarchyDuplicateFiles == value) return;
+            _mergeHierarchyDuplicateFiles = value;
+            OnPropertyChanged();
+            QueueHierarchyRefresh();
         }
     }
 
@@ -1315,7 +1343,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             FixedFolderPath = FixedFolderPath,
             EnableSubfolder = EnableSubfolder,
             SubfolderName = SubfolderNameTextBox.Text,
-            Multiplier = int.TryParse(MultiplierTextBox.Text, out var m) ? m : 1,
+            Multiplier = IsHierarchyMode ? 1 : int.TryParse(MultiplierTextBox.Text, out var m) ? m : 1,
             SelectedProcessingMethod = SelectedProcessingMethod,
             ExcludeReferenceParts = ExcludeReferenceParts,
             ExcludePurchasedParts = ExcludePurchasedParts,
@@ -2022,6 +2050,15 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             result.ProcessedCount = scanResult.ProcessedCount;
             result.ProcessingMethod = scanResult.ProcessingMethod;
 
+            if (updateUI)
+            {
+                SetHierarchyData(scanResult.HierarchyRoots, scanResult.HierarchyContributions);
+            }
+
+            var hierarchyRows = SelectedProcessingMethod == ProcessingMethod.Hierarchy
+                ? HierarchyQuantityCalculator.Calculate(HierarchyRoots, _hierarchyContributions, MergeHierarchyDuplicateFiles)
+                : [];
+
             // Process parts for UI
             if (updateUI && sheetMetalParts.Count > 0)
             {
@@ -2044,7 +2081,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                 });
 
                 var itemCounter = 1;
-                var totalParts = sheetMetalParts.Count;
+                var totalParts = SelectedProcessingMethod == ProcessingMethod.Hierarchy ? hierarchyRows.Count : sheetMetalParts.Count;
                 var processedParts = 0;
 
                 var partProgress = new Progress<PartData>(partData =>
@@ -2056,13 +2093,18 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
 
                 await Task.Run(async () =>
                 {
-                    foreach (var part in sheetMetalParts)
+                    var rows = SelectedProcessingMethod == ProcessingMethod.Hierarchy
+                        ? hierarchyRows
+                        : sheetMetalParts.Select(part => new HierarchyPartQuantity(part.Key, part.Key, "", part.Value)).ToList();
+                    foreach (var part in rows)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
 
-                        var partData = await _partDataReader.GetPartDataAsync(part.Key, part.Value, itemCounter++);
+                        var partData = await _partDataReader.GetPartDataAsync(part.PartNumber, part.Quantity, itemCounter++);
                         if (partData != null)
                         {
+                            partData.HierarchyKey = part.Key;
+                            partData.StructurePath = part.StructurePath;
                             ((IProgress<PartData>)partProgress).Report(partData);
                         }
 
@@ -2078,7 +2120,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                 }, cancellationToken);
             }
 
-            if (updateUI && int.TryParse(MultiplierTextBox.Text, out var multiplier) && multiplier > 0)
+            if (updateUI && !IsHierarchyMode && int.TryParse(MultiplierTextBox.Text, out var multiplier) && multiplier > 0)
                 _partDataReader.UpdateQuantitiesWithMultiplier(_partsData, multiplier);
 
             result.WasCancelled = cancellationToken.IsCancellationRequested;
@@ -2104,6 +2146,78 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
         }
 
         return result;
+    }
+
+    private void SetHierarchyData(
+        IEnumerable<AssemblyHierarchyNode> roots,
+        IEnumerable<PartOccurrenceContribution> contributions)
+    {
+        foreach (var root in HierarchyRoots)
+            SubscribeHierarchyNode(root, subscribe: false);
+
+        HierarchyRoots.Clear();
+        _hierarchyContributions.Clear();
+        foreach (var root in roots)
+        {
+            HierarchyRoots.Add(root);
+            SubscribeHierarchyNode(root, subscribe: true);
+        }
+        _hierarchyContributions.AddRange(contributions);
+        OnPropertyChanged(nameof(HierarchyRoots));
+    }
+
+    private void SubscribeHierarchyNode(AssemblyHierarchyNode node, bool subscribe)
+    {
+        if (subscribe)
+            node.PropertyChanged += HierarchyNode_PropertyChanged;
+        else
+            node.PropertyChanged -= HierarchyNode_PropertyChanged;
+
+        foreach (var child in node.Children)
+            SubscribeHierarchyNode(child, subscribe);
+    }
+
+    private void HierarchyNode_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(AssemblyHierarchyNode.Multiplier))
+            QueueHierarchyRefresh();
+    }
+
+    private void QueueHierarchyRefresh()
+    {
+        if (!IsHierarchyMode || _hierarchyContributions.Count == 0 || _hierarchyRefreshPending) return;
+        _hierarchyRefreshPending = true;
+        Dispatcher.BeginInvoke(async () =>
+        {
+            _hierarchyRefreshPending = false;
+            await RebuildHierarchyPartsAsync();
+        }, DispatcherPriority.Background);
+    }
+
+    private async Task RebuildHierarchyPartsAsync()
+    {
+        if (_isScanning || _isExporting) return;
+
+        var rows = HierarchyQuantityCalculator.Calculate(
+            HierarchyRoots,
+            _hierarchyContributions,
+            MergeHierarchyDuplicateFiles);
+        var rebuilt = new List<PartData>();
+        var item = 1;
+        foreach (var row in rows)
+        {
+            var partData = await _partDataReader.GetPartDataAsync(row.PartNumber, row.Quantity, item++);
+            if (partData is null) continue;
+            partData.HierarchyKey = row.Key;
+            partData.StructurePath = row.StructurePath;
+            rebuilt.Add(partData);
+        }
+
+        _partsData.Clear();
+        foreach (var partData in rebuilt)
+            _partsData.Add(partData);
+        _itemCounter = rebuilt.Count + 1;
+        _tokenService.UpdatePartsData(_partsData);
     }
 
     private async void ScanButton_Click(object sender, RoutedEventArgs e)

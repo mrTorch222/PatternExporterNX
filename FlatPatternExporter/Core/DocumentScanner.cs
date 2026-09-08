@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using FlatPatternExporter.Enums;
 using FlatPatternExporter.Models;
@@ -54,9 +54,32 @@ public class DocumentScanner
                     await Task.Run(() => ProcessComponentOccurrences(asmDoc.ComponentDefinition.Occurrences, sheetMetalParts, options, progress, cancellationToken), cancellationToken);
                 else if (processingMethod == ProcessingMethod.BOM)
                     await Task.Run(() => ProcessBOM(asmDoc.ComponentDefinition.BOM, sheetMetalParts, options, progress, cancellationToken), cancellationToken);
+                else if (processingMethod == ProcessingMethod.Hierarchy)
+                {
+                    var root = new AssemblyHierarchyNode
+                    {
+                        Id = "0",
+                        Name = asmDoc.DisplayName,
+                        FullFileName = asmDoc.FullFileName
+                    };
+                    result.HierarchyRoots.Add(root);
+                    await Task.Run(() => ProcessHierarchyOccurrences(
+                        asmDoc.ComponentDefinition.Occurrences,
+                        root,
+                        sheetMetalParts,
+                        result.HierarchyContributions,
+                        options,
+                        progress,
+                        cancellationToken), cancellationToken);
+                }
 
                 await _conflictAnalyzer.AnalyzeConflictsAsync();
                 _conflictAnalyzer.FilterConflictingParts(sheetMetalParts);
+                if (processingMethod == ProcessingMethod.Hierarchy)
+                {
+                    result.HierarchyContributions.RemoveAll(item =>
+                        !sheetMetalParts.ContainsKey(item.PartNumber));
+                }
 
                 result.SheetMetalParts = sheetMetalParts;
                 result.ProcessedCount = sheetMetalParts.Count;
@@ -250,6 +273,99 @@ public class DocumentScanner
         }
     }
 
+    private void ProcessHierarchyOccurrences(
+        ComponentOccurrences occurrences,
+        AssemblyHierarchyNode parent,
+        Dictionary<string, int> sheetMetalParts,
+        List<PartOccurrenceContribution> contributions,
+        ScanOptions options,
+        IProgress<ScanProgress>? scanProgress,
+        CancellationToken cancellationToken)
+    {
+        var occurrenceIndex = 0;
+        foreach (ComponentOccurrence occurrence in occurrences)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            occurrenceIndex++;
+
+            try
+            {
+                if (occurrence.Suppressed || occurrence.Definition is VirtualComponentDefinition) continue;
+                var fullFileName = GetFullFileName(occurrence);
+                if (ShouldExcludeComponent(occurrence.BOMStructure, fullFileName, options)) continue;
+
+                if (occurrence.DefinitionDocumentType == DocumentTypeEnum.kAssemblyDocumentObject)
+                {
+                    var assembly = (AssemblyDocument)occurrence.Definition.Document;
+                    var child = new AssemblyHierarchyNode
+                    {
+                        Id = $"{parent.Id}.{occurrenceIndex}",
+                        Name = occurrence.Name,
+                        FullFileName = assembly.FullFileName,
+                        Parent = parent
+                    };
+                    parent.Children.Add(child);
+                    ProcessHierarchyOccurrences(
+                        (ComponentOccurrences)occurrence.SubOccurrences,
+                        child,
+                        sheetMetalParts,
+                        contributions,
+                        options,
+                        scanProgress,
+                        cancellationToken);
+                    continue;
+                }
+
+                if (occurrence.DefinitionDocumentType != DocumentTypeEnum.kPartDocumentObject ||
+                    occurrence.Definition.Document is not PartDocument partDoc)
+                    continue;
+
+                var manager = new PropertyManager((Document)partDoc);
+                var partNumber = manager.GetMappedProperty("PartNumber");
+                if (string.IsNullOrWhiteSpace(partNumber)) continue;
+                _documentCache.AddDocumentToCache(partDoc, partNumber);
+                if (partDoc.SubType != PropertyManager.SheetMetalSubType) continue;
+
+                _conflictAnalyzer.AddPartToTracker(partNumber, partDoc.FullFileName, manager.GetModelState());
+                sheetMetalParts[partNumber] = sheetMetalParts.GetValueOrDefault(partNumber) + 1;
+                parent.DirectPartCount++;
+
+                var existingIndex = contributions.FindIndex(item =>
+                    item.AssemblyNodeId == parent.Id &&
+                    string.Equals(item.PartNumber, partNumber, StringComparison.OrdinalIgnoreCase));
+                if (existingIndex >= 0)
+                    contributions[existingIndex] = contributions[existingIndex] with { BaseQuantity = contributions[existingIndex].BaseQuantity + 1 };
+                else
+                    contributions.Add(new PartOccurrenceContribution(partNumber, parent.Id, BuildStructurePath(parent), 1));
+            }
+            catch (COMException ex) when (ex.ErrorCode == unchecked((int)0x80004005))
+            {
+                _hasMissingReferences = true;
+                Debug.WriteLine($"Detected component with missing reference: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error processing hierarchy component: {ex.Message}");
+            }
+
+            scanProgress?.Report(new ScanProgress
+            {
+                ProcessedItems = occurrenceIndex,
+                TotalItems = occurrences.Count,
+                CurrentOperation = LocalizationManager.Instance.GetString("Status_ScanningComponents"),
+                CurrentItem = LocalizationManager.Instance.GetString("Status_ComponentProgress", occurrenceIndex, occurrences.Count)
+            });
+        }
+    }
+
+    private static string BuildStructurePath(AssemblyHierarchyNode node)
+    {
+        var names = new Stack<string>();
+        for (var current = node; current is not null; current = current.Parent)
+            names.Push(current.Name);
+        return string.Join(" / ", names);
+    }
+
     private List<(BOMRow Row, int ParentQuantity)> GetAllBOMRowsRecursively(BOM bom, ScanOptions options, int parentQuantity = 1)
     {
         var allRows = new List<(BOMRow, int)>();
@@ -411,6 +527,8 @@ public class ScanResult
     public bool HasMissingReferences { get; set; }
     public ProcessingMethod ProcessingMethod { get; set; }
     public List<string> Errors { get; set; } = [];
+    public List<AssemblyHierarchyNode> HierarchyRoots { get; set; } = [];
+    public List<PartOccurrenceContribution> HierarchyContributions { get; set; } = [];
 }
 
 public class ScanOptions

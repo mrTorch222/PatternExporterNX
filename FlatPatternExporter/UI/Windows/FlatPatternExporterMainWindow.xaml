@@ -116,6 +116,7 @@
                                 <StackPanel Grid.Column="0" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Top">
                                     <RadioButton x:Name="TraverseRadioButton" Content="{extensions:Localize UI_ProcessByStructure}" IsChecked="{Binding SelectedProcessingMethod, Converter={x:Static converters:EnumToBooleanConverter.Instance}, ConverterParameter=Traverse, Mode=TwoWay}" Margin="{StaticResource BottomSmallMarginThickness}"/>
                                     <RadioButton x:Name="BomRadioButton" Content="{extensions:Localize UI_ProcessByBOM}" IsChecked="{Binding SelectedProcessingMethod, Converter={x:Static converters:EnumToBooleanConverter.Instance}, ConverterParameter=BOM, Mode=TwoWay}" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <RadioButton x:Name="HierarchyRadioButton" Content="{extensions:Localize UI_ProcessByNestedStructure}" IsChecked="{Binding SelectedProcessingMethod, Converter={x:Static converters:EnumToBooleanConverter.Instance}, ConverterParameter=Hierarchy, Mode=TwoWay}" Margin="{StaticResource BottomSmallMarginThickness}"/>
                                 </StackPanel>
 
                                 <!-- Vertical separator -->
@@ -756,6 +757,7 @@
         <Grid Grid.Row="2" Margin="{StaticResource OuterBottomMarginThickness}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
@@ -849,7 +851,17 @@
 
                         <!-- Multiplier -->
                         <Label Content="{extensions:Localize Label_Multiplier}" Style="{StaticResource BaseLabelStyle}" Margin="{StaticResource RightSmallMarginThickness}"/>
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel x:Name="GlobalMultiplierPanel" Orientation="Horizontal">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="IsEnabled" Value="True"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsHierarchyMode}" Value="True">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
                             <TextBox x:Name="MultiplierTextBox" Text="1"
                                  PreviewTextInput="MultiplierTextBox_PreviewTextInput"
                                  TextChanged="MultiplierTextBox_TextChanged"
@@ -880,8 +892,47 @@
                 </Grid>
             </Border>
 
+            <Border Grid.Row="1" Margin="0,5,0,5" Padding="8"
+                    Background="{DynamicResource BackgroundTertiaryBrush}"
+                    BorderBrush="{DynamicResource BorderPrimaryBrush}" BorderThickness="1" CornerRadius="3">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsHierarchyMode}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{extensions:Localize Hierarchy_Header}" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                        <TreeView ItemsSource="{Binding HierarchyRoots}" MaxHeight="190">
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" MinWidth="220"/>
+                                        <TextBlock Text="{extensions:Localize Label_Multiplier}" Margin="12,0,5,0" VerticalAlignment="Center"/>
+                                        <TextBox Text="{Binding Multiplier, UpdateSourceTrigger=PropertyChanged}" Width="45" VerticalContentAlignment="Center"/>
+                                        <TextBlock Text="{Binding DirectPartCount, StringFormat=' ({0})'}" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                                    </StackPanel>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </StackPanel>
+                    <CheckBox Grid.Column="1" Content="{extensions:Localize Hierarchy_MergeDuplicates}"
+                              IsChecked="{Binding MergeHierarchyDuplicateFiles, Mode=TwoWay}"
+                              VerticalAlignment="Top" Margin="16,24,0,0"/>
+                </Grid>
+            </Border>
+
             <!-- Data table -->
-            <Grid Grid.Row="1">
+            <Grid Grid.Row="2">
                 <DataGrid x:Name="PartsDataGrid"
                       AutoGenerateColumns="False"
                       IsReadOnly="False"

@@ -15,7 +15,8 @@ public enum ExportFolderType
 public enum ProcessingMethod
 {
     Traverse = 0,          // Traverse
-    BOM = 1               // Bill of Materials
+    BOM = 1,               // Bill of Materials
+    Hierarchy = 2          // Nested assembly structure with branch multipliers
 }
 
 public enum SplineReplacementType

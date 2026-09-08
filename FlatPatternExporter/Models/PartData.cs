@@ -39,6 +39,8 @@ public class PartData : INotifyPropertyChanged
     public string FileName { get; set; } = "";
     public string FullFileName { get; set; } = "";
     public string ModelState { get; set; } = "";
+    public string HierarchyKey { get; set; } = "";
+    public string StructurePath { get; set; } = "";
     public BitmapImage? Preview
     {
         get => preview;

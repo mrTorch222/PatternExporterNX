@@ -1963,4 +1963,39 @@ Possible solutions:
   <data name="Unit_Inch" xml:space="preserve"><value>in</value></data>
   <data name="Unit_Foot" xml:space="preserve"><value>ft</value></data>
   <data name="Unit_Unknown" xml:space="preserve"><value>Unknown</value></data>
+  <data name="MainTab_FlatPatterns" xml:space="preserve"><value>Sheet metal</value></data>
+  <data name="MainTab_FrameGenerator" xml:space="preserve"><value>Frame Generator</value></data>
+  <data name="Frame_ButtonScan" xml:space="preserve"><value>Scan frames</value></data>
+  <data name="Frame_ButtonExportIges" xml:space="preserve"><value>Export IGES</value></data>
+  <data name="Frame_ButtonExportBom" xml:space="preserve"><value>Export BOM</value></data>
+  <data name="Frame_LabelOutputFolder" xml:space="preserve"><value>Output folder</value></data>
+  <data name="Frame_LabelNameTemplate" xml:space="preserve"><value>File name template</value></data>
+  <data name="Frame_TokensHint" xml:space="preserve"><value>Tokens: {PartNumber}, {StockNumber}, {Material}, {Description}, {Length}, {Qty}, {FileName}</value></data>
+  <data name="Frame_LabelGeometryType" xml:space="preserve"><value>Geometry</value></data>
+  <data name="Frame_LabelSolidFaces" xml:space="preserve"><value>Faces</value></data>
+  <data name="Frame_LabelSurfaces" xml:space="preserve"><value>Surfaces</value></data>
+  <data name="Frame_ColumnLength" xml:space="preserve"><value>Length, mm</value></data>
+  <data name="Frame_ColumnOutputFile" xml:space="preserve"><value>IGES file</value></data>
+  <data name="Frame_ColumnSourceFile" xml:space="preserve"><value>Source file</value></data>
+  <data name="Frame_ErrorAssemblyRequired" xml:space="preserve"><value>Open the main assembly before scanning Frame Generator members.</value></data>
+  <data name="Frame_ErrorOutputFolder" xml:space="preserve"><value>Select an IGES output folder.</value></data>
+  <data name="Frame_InfoNoMembers" xml:space="preserve"><value>No Frame Generator members were found in the assembly.</value></data>
+  <data name="Frame_StatusScanning" xml:space="preserve"><value>Scanning Frame Generator members...</value></data>
+  <data name="Frame_StatusScanComplete" xml:space="preserve"><value>Found: {0}; scan errors: {1}.</value></data>
+  <data name="Frame_StatusExporting" xml:space="preserve"><value>Exporting Frame Generator members to IGES...</value></data>
+  <data name="Frame_StatusExportComplete" xml:space="preserve"><value>IGES exported: {0}; errors: {1}.</value></data>
+  <data name="Frame_StatusBomExported" xml:space="preserve"><value>Frame BOM saved: {0}</value></data>
+  <data name="Frame_SelectOutputFolder" xml:space="preserve"><value>Select a folder for Frame Generator IGES files</value></data>
+  <data name="Frame_Error" xml:space="preserve"><value>Frame Generator operation failed: {0}</value></data>
+  <data name="Frame_ErrorInventorUnavailable" xml:space="preserve"><value>Inventor is unavailable.</value></data>
+  <data name="Frame_ErrorDocumentUnavailable" xml:space="preserve"><value>Source document is unavailable.</value></data>
+  <data name="Frame_ErrorInvalidIges" xml:space="preserve"><value>Inventor did not create a valid IGES file.</value></data>
+  <data name="Frame_UnknownMember" xml:space="preserve"><value>Frame member</value></data>
+  <data name="Frame_GeometrySurfaces" xml:space="preserve"><value>Surfaces</value></data>
+  <data name="Frame_GeometrySolids" xml:space="preserve"><value>Solids</value></data>
+  <data name="Frame_GeometryWireframe" xml:space="preserve"><value>Wireframe</value></data>
+  <data name="Frame_FacesNurbs" xml:space="preserve"><value>NURBS</value></data>
+  <data name="Frame_FacesAnalytic" xml:space="preserve"><value>Analytic</value></data>
+  <data name="Frame_BomSheetName" xml:space="preserve"><value>Frame BOM</value></data>
+  <data name="Frame_BomFileFilter" xml:space="preserve"><value>Excel workbook (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv</value></data>
 </root>

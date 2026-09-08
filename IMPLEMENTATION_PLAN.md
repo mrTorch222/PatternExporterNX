@@ -80,6 +80,17 @@ PatternExporterNX — независимый форк [isinicyn/FlatPatternExpor
 4. Импорт в реальную программу резки без ручной смены spline mode и масштаба.
 5. Только после этого обновить версию приложения и подготовить Release archive.
 
+## Этап 7. Экспорт элементов Генератора рам
+
+1. Добавить вторую вкладку, не смешивая состояние экспорта труб с таблицей листового металла.
+2. Рекурсивно находить документы Frame Generator по `DocumentInterests`, игнорировать подавленные вхождения, группировать одинаковые IPT и считать количество.
+3. Читать iProperties и параметр `G_L`, поддержать токены `{PartNumber}`, `{StockNumber}`, `{Material}`, `{Description}`, `{Length}`, `{Qty}`, `{FileName}` и безопасные уникальные имена.
+4. Экспортировать каждый уникальный элемент штатным IGES Translator Add-In Inventor с выбираемыми `GeometryType`, `SolidFaceType` и `SurfaceType`.
+5. Экспортировать сгруппированный BOM в Excel и UTF-8 CSV; хранить настройки вкладки в общем совместимом JSON.
+6. Проверить нейминг, BOM и совместимость старых настроек автоматическими тестами; отдельно проверить интерфейс и реальный IGES на сборке Frame Generator в Inventor 2027.
+
+Результат: реализация и автоматические тесты завершены. Ручная приемка на реальной сборке Frame Generator и проверка полученных IGES в целевой CAD/CAM-системе остаются обязательными перед выпуском.
+
 ## Рекомендуемый порядок коммитов
 
 1. `build: target Inventor 2027 interop`
@@ -88,5 +99,6 @@ PatternExporterNX — независимый форк [isinicyn/FlatPatternExpor
 4. `feat: convert control-point splines to fit-point splines`
 5. `feat: add cut-length columns`
 6. `test: add DXF regression fixtures and acceptance coverage`
+7. `feat: export Frame Generator members and BOM`
 
 Такой порядок позволяет проверять каждую функцию отдельно и при необходимости откатывать ее без потери остальных изменений.

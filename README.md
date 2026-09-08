@@ -15,7 +15,7 @@
 - Ограничения исходной сборки и ручной проверки: [FORK_BASELINE.md](FORK_BASELINE.md).
 
 ## Overview
-PatternExporterNX is a standalone WPF utility that connects to a running Autodesk Inventor session and automates flat-pattern exports for sheet-metal parts. The tool scans assemblies or parts, resolves conflicts, and produces DXF files with predictable naming, layer configuration, and optional previews. Settings, tokens, and UI preferences persist between sessions so teams can standardize their export pipeline.
+PatternExporterNX is a standalone WPF utility that connects to a running Autodesk Inventor session. It exports sheet-metal flat patterns to DXF and Frame Generator members to IGES. The tool scans assemblies or parts, resolves conflicts, and produces files with predictable naming. Settings, tokens, and UI preferences persist between sessions so teams can standardize their export pipeline.
 
 ## Highlights
 - Connects to Autodesk Inventor through the COM API and validates the active document before processing.
@@ -25,6 +25,7 @@ PatternExporterNX is a standalone WPF utility that connects to a running Autodes
 - Builds file names from tokenized templates (including custom text and user-defined iProperties) and organizes output by material, thickness, or custom subfolders.
 - Generates thumbnails for parts and exported DXF previews to aid validation. Uses a dual-method approach: ApprenticeServer API (primary, faster) with automatic fallback to Windows Shell API if ApprenticeServer is unavailable.
 - Persists UI layout, column order, presets, themes, and localization preferences in `%AppData%\FlatPatternExporter\settings.json`.
+- Provides a separate Frame Generator tab that finds unique frame-member IPT documents recursively, counts their occurrences, reads `G_L` in millimeters, exports them with Inventor's IGES translator, and writes the resulting BOM to Excel or CSV.
 - Ships with English and Russian UI resources plus a light/dark theme switcher.
 
 ## Development
@@ -106,6 +107,16 @@ See [PUBLISH.md](PUBLISH.md) for detailed publishing documentation.
 5. Configure export options: output folder strategy, layer presets, AutoCAD version, spline replacement, DXF optimization, file-name tokens, and thumbnail generation.
 6. Click **Export** to generate DXF files (and optional previews). Progress bars report the operation status and any skipped items.
 7. Use **Clear** to reset the session or adjust settings and re-export as needed.
+
+### Frame Generator members
+
+1. Open the main Frame Generator assembly and select the **Frame Generator** tab.
+2. Click **Scan frames**. Suppressed occurrences are ignored; repeated references to the same IPT are grouped and counted.
+3. Choose the IGES folder and configure the file-name template. Available tokens are `{PartNumber}`, `{StockNumber}`, `{Material}`, `{Description}`, `{Length}`, `{Qty}`, and `{FileName}`.
+4. Select the IGES geometry, face, and surface options, then click **Export IGES**. Files with duplicate resolved names receive `_2`, `_3`, and later suffixes.
+5. Click **Export BOM** to save the displayed grouped list as `.xlsx` or UTF-8 `.csv`.
+
+Frame detection follows Inventor's Frame Generator document interest identifier, and length is read from the `G_L` model parameter using Inventor's database units. IGES export requires a real Frame Generator assembly and the IGES Translator Add-In available in Inventor 2027.
 
 ### Export Options at a Glance
 - **Component filters**: exclude reference, purchased, phantom, and library parts from the export queue.

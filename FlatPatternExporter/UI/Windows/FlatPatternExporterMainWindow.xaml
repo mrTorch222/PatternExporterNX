@@ -49,8 +49,18 @@
             </local:CustomTitleBar.ContentArea>
         </local:CustomTitleBar>
 
+        <TabControl Grid.Row="1" Grid.RowSpan="4">
+            <TabItem Header="{extensions:Localize MainTab_FlatPatterns}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
         <!-- Row 1: Top panel -->
-        <Grid Grid.Row="1" Margin="{StaticResource OuterTopMarginThickness}">
+        <Grid Grid.Row="0" Margin="{StaticResource OuterTopMarginThickness}">
             <!-- Controls aligned to the left -->
             <WrapPanel Orientation="Horizontal" VerticalAlignment="Top">
                 <Button x:Name="ScanButton" Content="{extensions:Localize Button_Scan}" Click="ScanButton_Click" Margin="{StaticResource RightStandardMarginThickness}" Style="{StaticResource LargeSquareProgressButtonStyle}" Tag="{Binding ScanProgressValue, RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="{extensions:Localize ToolTip_ScanButton}" RenderTransformOrigin="0,0"/>
@@ -89,7 +99,7 @@
         </Grid>
 
         <!-- Row 2: Settings -->
-        <Expander x:Name="SettingsExpander" Grid.Row="2" Margin="{StaticResource StandardPaddingThickness}" Padding="{StaticResource UniformSmallPaddingThickness}" Header="{extensions:Localize Header_Settings}" IsExpanded="False" FlowDirection="RightToLeft"
+        <Expander x:Name="SettingsExpander" Grid.Row="1" Margin="{StaticResource StandardPaddingThickness}" Padding="{StaticResource UniformSmallPaddingThickness}" Header="{extensions:Localize Header_Settings}" IsExpanded="False" FlowDirection="RightToLeft"
                   Style="{StaticResource SquareExpanderStyle}">
             <TabControl FlowDirection="LeftToRight">
                 <TabItem Header="{extensions:Localize Header_Main}">
@@ -728,7 +738,7 @@
         </Expander>
 
         <!-- Row 3: Search panel and multiplier -->
-        <Grid Grid.Row="3" Margin="{StaticResource OuterBottomMarginThickness}">
+        <Grid Grid.Row="2" Margin="{StaticResource OuterBottomMarginThickness}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
@@ -939,7 +949,7 @@
         </Grid>
 
         <!-- Row 4: StatusBar -->
-        <StatusBar Grid.Row="4" Style="{StaticResource BaseStatusBarStyle}">
+        <StatusBar Grid.Row="3" Style="{StaticResource BaseStatusBarStyle}">
             <StatusBarItem Style="{StaticResource BaseStatusBarItemStyle}">
                 <TextBlock>
                     <Run Text="{extensions:Localize Text_Status}" FontWeight="Bold"/>
@@ -953,6 +963,12 @@
                 </TextBlock>
             </StatusBarItem>
         </StatusBar>
+                </Grid>
+            </TabItem>
+            <TabItem Header="{extensions:Localize MainTab_FrameGenerator}">
+                <local:FrameExporterControl x:Name="FrameExporter"/>
+            </TabItem>
+        </TabControl>
     </Grid>
     </Border>
 </Window>

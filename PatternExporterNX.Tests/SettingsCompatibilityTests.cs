@@ -24,6 +24,9 @@ public sealed class SettingsCompatibilityTests
         Assert.Equal(SplineReplacementType.Arcs, settings.Spline.SelectedSplineReplacement);
         Assert.Equal("0.02", settings.Spline.SplineTolerance);
         Assert.NotNull(settings.Interface);
+        Assert.NotNull(settings.FrameExport);
+        Assert.Equal(FrameFileNameService.DefaultTemplate, settings.FrameExport.FileNameTemplate);
+        Assert.Equal(1, settings.FrameExport.GeometryType);
         Assert.Equal(0, (int)SplineReplacementType.Lines);
         Assert.Equal(1, (int)SplineReplacementType.Arcs);
         Assert.Equal(2, (int)SplineReplacementType.FitPoints);

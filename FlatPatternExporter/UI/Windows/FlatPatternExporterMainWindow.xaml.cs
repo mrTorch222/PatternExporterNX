@@ -191,6 +191,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
         _excelExportService = new ExcelExportService(_inventorManager, _partDataReader);
 
         InitializeComponent();
+        FrameExporter.Initialize(_inventorManager);
 
         // Initialize theme toggle button from ContentArea StackPanel
         if (TitleBar.ContentArea is StackPanel stackPanel)
@@ -349,6 +350,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
 
             // Update settings
             AutoUpdateCheck = settings.Update.AutoUpdateCheck;
+            FrameExporter.ApplySettings(settings.FrameExport);
 
             // User-defined properties
             PropertyMetadataRegistry.UserDefinedProperties.Clear();
@@ -575,6 +577,8 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             {
                 AutoUpdateCheck = AutoUpdateCheck
             },
+
+            FrameExport = FrameExporter.CollectSettings(),
 
             LayerSettings = layerSettings
         };

@@ -1963,4 +1963,39 @@
   <data name="Unit_Inch" xml:space="preserve"><value>дюйм</value></data>
   <data name="Unit_Foot" xml:space="preserve"><value>фут</value></data>
   <data name="Unit_Unknown" xml:space="preserve"><value>Неизвестно</value></data>
+  <data name="MainTab_FlatPatterns" xml:space="preserve"><value>Листовой металл</value></data>
+  <data name="MainTab_FrameGenerator" xml:space="preserve"><value>Генератор рам</value></data>
+  <data name="Frame_ButtonScan" xml:space="preserve"><value>Сканировать трубы</value></data>
+  <data name="Frame_ButtonExportIges" xml:space="preserve"><value>Экспорт IGES</value></data>
+  <data name="Frame_ButtonExportBom" xml:space="preserve"><value>Экспорт BOM</value></data>
+  <data name="Frame_LabelOutputFolder" xml:space="preserve"><value>Папка экспорта</value></data>
+  <data name="Frame_LabelNameTemplate" xml:space="preserve"><value>Шаблон имени файла</value></data>
+  <data name="Frame_TokensHint" xml:space="preserve"><value>Токены: {PartNumber}, {StockNumber}, {Material}, {Description}, {Length}, {Qty}, {FileName}</value></data>
+  <data name="Frame_LabelGeometryType" xml:space="preserve"><value>Геометрия</value></data>
+  <data name="Frame_LabelSolidFaces" xml:space="preserve"><value>Грани</value></data>
+  <data name="Frame_LabelSurfaces" xml:space="preserve"><value>Поверхности</value></data>
+  <data name="Frame_ColumnLength" xml:space="preserve"><value>Длина, мм</value></data>
+  <data name="Frame_ColumnOutputFile" xml:space="preserve"><value>Файл IGES</value></data>
+  <data name="Frame_ColumnSourceFile" xml:space="preserve"><value>Исходный файл</value></data>
+  <data name="Frame_ErrorAssemblyRequired" xml:space="preserve"><value>Перед сканированием элементов Генератора рам откройте главную сборку.</value></data>
+  <data name="Frame_ErrorOutputFolder" xml:space="preserve"><value>Выберите папку экспорта IGES.</value></data>
+  <data name="Frame_InfoNoMembers" xml:space="preserve"><value>В сборке не найдены элементы Генератора рам.</value></data>
+  <data name="Frame_StatusScanning" xml:space="preserve"><value>Сканирование элементов Генератора рам...</value></data>
+  <data name="Frame_StatusScanComplete" xml:space="preserve"><value>Найдено: {0}; ошибок сканирования: {1}.</value></data>
+  <data name="Frame_StatusExporting" xml:space="preserve"><value>Экспорт элементов Генератора рам в IGES...</value></data>
+  <data name="Frame_StatusExportComplete" xml:space="preserve"><value>Экспортировано IGES: {0}; ошибок: {1}.</value></data>
+  <data name="Frame_StatusBomExported" xml:space="preserve"><value>BOM элементов рам сохранён: {0}</value></data>
+  <data name="Frame_SelectOutputFolder" xml:space="preserve"><value>Выберите папку для IGES-файлов Генератора рам</value></data>
+  <data name="Frame_Error" xml:space="preserve"><value>Ошибка операции Генератора рам: {0}</value></data>
+  <data name="Frame_ErrorInventorUnavailable" xml:space="preserve"><value>Inventor недоступен.</value></data>
+  <data name="Frame_ErrorDocumentUnavailable" xml:space="preserve"><value>Исходный документ недоступен.</value></data>
+  <data name="Frame_ErrorInvalidIges" xml:space="preserve"><value>Inventor не создал корректный IGES-файл.</value></data>
+  <data name="Frame_UnknownMember" xml:space="preserve"><value>Элемент рамы</value></data>
+  <data name="Frame_GeometrySurfaces" xml:space="preserve"><value>Поверхности</value></data>
+  <data name="Frame_GeometrySolids" xml:space="preserve"><value>Тела</value></data>
+  <data name="Frame_GeometryWireframe" xml:space="preserve"><value>Каркас</value></data>
+  <data name="Frame_FacesNurbs" xml:space="preserve"><value>NURBS</value></data>
+  <data name="Frame_FacesAnalytic" xml:space="preserve"><value>Аналитические</value></data>
+  <data name="Frame_BomSheetName" xml:space="preserve"><value>BOM рам</value></data>
+  <data name="Frame_BomFileFilter" xml:space="preserve"><value>Книга Excel (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv</value></data>
 </root>

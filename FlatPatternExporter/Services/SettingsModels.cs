@@ -1,4 +1,4 @@
-using FlatPatternExporter.Enums;
+﻿using FlatPatternExporter.Enums;
 using FlatPatternExporter.Models;
 
 namespace FlatPatternExporter.Services;
@@ -88,6 +88,15 @@ public record UpdateSettings
     public bool AutoUpdateCheck { get; init; } = true;
 }
 
+public record FrameExportSettings
+{
+    public string OutputFolder { get; init; } = "";
+    public string FileNameTemplate { get; init; } = FrameFileNameService.DefaultTemplate;
+    public int GeometryType { get; init; } = 1;
+    public int SolidFaceType { get; init; }
+    public int SurfaceType { get; init; }
+}
+
 public record ApplicationSettings
 {
     public InterfaceSettings Interface { get; init; } = new();
@@ -102,6 +111,7 @@ public record ApplicationSettings
     public FileNameSettings FileName { get; init; } = new();
     public ExcelExportSettings ExcelExport { get; init; } = new();
     public UpdateSettings Update { get; init; } = new();
+    public FrameExportSettings FrameExport { get; init; } = new();
 
     public List<LayerSettingData> LayerSettings { get; init; } = [];
 }

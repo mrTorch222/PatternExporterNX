@@ -34,4 +34,14 @@ public static class LengthUnitConverter
         DocumentLengthUnit.Foot => value * 304.8,
         _ => null
     };
+
+    public static double FromCentimeters(double value, DocumentLengthUnit unit) => unit switch
+    {
+        DocumentLengthUnit.Millimeter => value * 10.0,
+        DocumentLengthUnit.Meter => value / 100.0,
+        DocumentLengthUnit.Centimeter => value,
+        DocumentLengthUnit.Inch => value / 2.54,
+        DocumentLengthUnit.Foot => value / 30.48,
+        _ => value * 10.0
+    };
 }

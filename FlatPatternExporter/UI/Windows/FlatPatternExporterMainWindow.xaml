@@ -43,9 +43,15 @@
                     <Button Style="{StaticResource TitleBarIconButtonStyle}"
                             Tag="{StaticResource InfoIconGeometry}"
                             Click="AboutButton_Click"/>
-                    <ToggleButton Style="{StaticResource ThemeToggleButtonStyle}"
-                                  Checked="ThemeToggleButton_Changed"
-                                  Unchecked="ThemeToggleButton_Changed"/>
+                    <ComboBox Width="105" Margin="4,0"
+                              SelectedValue="{Binding SelectedTheme, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}"
+                              SelectedValuePath="Tag">
+                        <ComboBoxItem Content="{extensions:Localize Theme_Light}" Tag="{x:Static enums:AppTheme.Light}"/>
+                        <ComboBoxItem Content="{extensions:Localize Theme_Dark}" Tag="{x:Static enums:AppTheme.Dark}"/>
+                        <ComboBoxItem Content="{extensions:Localize Theme_Ocean}" Tag="{x:Static enums:AppTheme.Ocean}"/>
+                        <ComboBoxItem Content="{extensions:Localize Theme_Forest}" Tag="{x:Static enums:AppTheme.Forest}"/>
+                        <ComboBoxItem Content="{extensions:Localize Theme_Graphite}" Tag="{x:Static enums:AppTheme.Graphite}"/>
+                    </ComboBox>
                 </StackPanel>
             </local:CustomTitleBar.ContentArea>
         </local:CustomTitleBar>
@@ -372,6 +378,10 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
                             <StackPanel Margin="{StaticResource VerticalSeparatorCenteredMarginThickness}" Grid.Column="0">
                                 <local:LayerSettingControl x:Name="OuterProfileLayerControl" DataContext="{Binding LayerSettings[5]}" Pseudonym="OuterProfile"/>
                                 <local:LayerSettingControl x:Name="InteriorProfilesLayerControl" DataContext="{Binding LayerSettings[6]}" Pseudonym="InteriorProfiles"/>
@@ -393,6 +403,26 @@
                                 <local:LayerSettingControl x:Name="UnconsumedSketchesLayerControl" DataContext="{Binding LayerSettings[11]}" Pseudonym="UnconsumedSketches"/>
                                 <local:LayerSettingControl x:Name="AltRepFrontLayerControl" DataContext="{Binding LayerSettings[9]}" Pseudonym="AltRepFront"/>
                                 <local:LayerSettingControl x:Name="AltRepBackLayerControl" DataContext="{Binding LayerSettings[10]}" Pseudonym="AltRepBack"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="{StaticResource VerticalSeparatorCenteredMarginThickness}">
+                                <TextBlock Text="{extensions:Localize BendAnnotation_Header}" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                <local:LayerSettingControl DataContext="{Binding LayerSettings[16]}" Pseudonym="BendAnnotation"/>
+                                <TextBlock Text="{extensions:Localize BendAnnotation_Template}" Margin="0,6,0,3"/>
+                                <TextBox Text="{Binding BendAnnotationTemplate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                <TextBlock Text="{extensions:Localize BendAnnotation_TokensHint}" Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,3,0,6"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{extensions:Localize BendAnnotation_Font}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                    <ComboBox Width="155" IsEditable="True" ItemsSource="{Binding AvailableFontFamilies}"
+                                              Text="{Binding BendAnnotationFontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <TextBlock Text="{extensions:Localize BendAnnotation_Height}" VerticalAlignment="Center" Margin="10,0,5,0"/>
+                                    <ComboBox Width="65" IsEditable="True" Text="{Binding BendAnnotationTextHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                        <ComboBoxItem Content="1"/><ComboBoxItem Content="1.5"/><ComboBoxItem Content="2"/>
+                                        <ComboBoxItem Content="2.5"/><ComboBoxItem Content="3"/><ComboBoxItem Content="4"/>
+                                        <ComboBoxItem Content="5"/><ComboBoxItem Content="7"/><ComboBoxItem Content="10"/>
+                                    </ComboBox>
+                                </StackPanel>
+                                <CheckBox Content="{extensions:Localize BendAnnotation_ConvertToCurves}"
+                                          IsChecked="{Binding ConvertBendAnnotationsToCurves, Mode=TwoWay}" Margin="0,7,0,0"/>
                             </StackPanel>
                             <Separator Grid.Row="0" Grid.Column="0" Style="{StaticResource VerticalSeparatorStyle}" HorizontalAlignment="Right" Margin="{StaticResource VerticalSmallMarginThickness}"/>
                             <Separator Grid.Row="0" Grid.Column="1" Style="{StaticResource VerticalSeparatorStyle}" HorizontalAlignment="Right" Margin="{StaticResource VerticalSmallMarginThickness}"/>

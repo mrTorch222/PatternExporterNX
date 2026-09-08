@@ -27,8 +27,14 @@ public sealed class ApplicationSettingsFeatureGuardTests
     public void PreserveDisabledFeatures_KeepsSheetSettingsInFrameEdition()
     {
         var savedDxf = new DxfExportSettings { TopSideMode = FlatPatternTopSideMode.MostBendsDown };
+        var savedBendAnnotations = new BendAnnotationSettings { Template = "saved-bend-template" };
         var savedFileName = new FileNameSettings { FileNameTemplate = "saved-sheet" };
-        var saved = new ApplicationSettings { DxfExport = savedDxf, FileName = savedFileName };
+        var saved = new ApplicationSettings
+        {
+            DxfExport = savedDxf,
+            BendAnnotations = savedBendAnnotations,
+            FileName = savedFileName
+        };
 
         var result = ApplicationSettingsFeatureGuard.PreserveDisabledFeatures(
             new ApplicationSettings(),
@@ -36,6 +42,7 @@ public sealed class ApplicationSettingsFeatureGuardTests
             ProductFeatureProfile.For(ProductEdition.Frame));
 
         Assert.Same(savedDxf, result.DxfExport);
+        Assert.Same(savedBendAnnotations, result.BendAnnotations);
         Assert.Same(savedFileName, result.FileName);
     }
 }

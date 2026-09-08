@@ -49,6 +49,9 @@ public sealed class SettingsCompatibilityTests
         Assert.Equal(1, settings.FrameExport.SurfaceType);
         Assert.Equal(FrameExportFormat.Iges, settings.FrameExport.ExportFormat);
         Assert.Equal(FlatPatternTopSideMode.AsModeled, settings.DxfExport.TopSideMode);
+        Assert.Equal(AppTheme.Dark, settings.Interface.SelectedTheme);
+        Assert.Equal("Arial", settings.BendAnnotations.FontFamily);
+        Assert.Equal("3", settings.BendAnnotations.TextHeight);
         Assert.Equal(0, (int)SplineReplacementType.Lines);
         Assert.Equal(1, (int)SplineReplacementType.Arcs);
         Assert.Equal(2, (int)SplineReplacementType.FitPoints);
@@ -67,7 +70,15 @@ public sealed class SettingsCompatibilityTests
                 TemplatePresets = [new TemplatePresetData { Name = "Workshop", Template = "{StockNumber}_{Length}" }],
                 SelectedTemplatePresetIndex = 0
             },
-            DxfExport = new DxfExportSettings { TopSideMode = FlatPatternTopSideMode.MostBendsUp }
+            DxfExport = new DxfExportSettings { TopSideMode = FlatPatternTopSideMode.MostBendsUp },
+            BendAnnotations = new BendAnnotationSettings
+            {
+                Template = "{Angle} / {Radius}",
+                FontFamily = "Tahoma",
+                TextHeight = "4.5",
+                ConvertToCurves = true
+            },
+            Interface = new InterfaceSettings { SelectedTheme = AppTheme.Ocean }
         };
 
         var restored = JsonSerializer.Deserialize<ApplicationSettings>(JsonSerializer.Serialize(settings))!;
@@ -78,5 +89,10 @@ public sealed class SettingsCompatibilityTests
         Assert.Equal("Workshop", Assert.Single(restored.FrameExport.TemplatePresets).Name);
         Assert.Equal(0, restored.FrameExport.SelectedTemplatePresetIndex);
         Assert.Equal(FlatPatternTopSideMode.MostBendsUp, restored.DxfExport.TopSideMode);
+        Assert.Equal(AppTheme.Ocean, restored.Interface.SelectedTheme);
+        Assert.Equal("{Angle} / {Radius}", restored.BendAnnotations.Template);
+        Assert.Equal("Tahoma", restored.BendAnnotations.FontFamily);
+        Assert.Equal("4.5", restored.BendAnnotations.TextHeight);
+        Assert.True(restored.BendAnnotations.ConvertToCurves);
     }
 }

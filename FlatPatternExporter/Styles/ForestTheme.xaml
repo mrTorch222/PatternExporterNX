@@ -1,0 +1,16 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="DarkTheme.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+    <SolidColorBrush x:Key="BackgroundPrimaryBrush" Color="#111B17"/>
+    <SolidColorBrush x:Key="BackgroundSecondaryBrush" Color="#182720"/>
+    <SolidColorBrush x:Key="BackgroundTertiaryBrush" Color="#20352B"/>
+    <SolidColorBrush x:Key="BackgroundQuaternaryBrush" Color="#294438"/>
+    <SolidColorBrush x:Key="BorderPrimaryBrush" Color="#426553"/>
+    <SolidColorBrush x:Key="BorderSecondaryBrush" Color="#345443"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="#45B97C"/>
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#70D69B"/>
+    <SolidColorBrush x:Key="HoverBackgroundBrush" Color="#294A3A"/>
+    <SolidColorBrush x:Key="SelectionBackgroundBrush" Color="#356149"/>
+</ResourceDictionary>

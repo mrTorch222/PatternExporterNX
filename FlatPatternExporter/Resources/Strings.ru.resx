@@ -2031,4 +2031,14 @@
   <data name="Property_StructurePath_DisplayName" xml:space="preserve"><value>Путь в сборке</value></data>
   <data name="Property_StructurePath_ColumnHeader" xml:space="preserve"><value>Путь в сборке</value></data>
   <data name="Property_StructurePath_Category" xml:space="preserve"><value>Системные</value></data>
+  <data name="Theme_Ocean" xml:space="preserve"><value>Океан</value></data>
+  <data name="Theme_Forest" xml:space="preserve"><value>Лес</value></data>
+  <data name="Theme_Graphite" xml:space="preserve"><value>Графит</value></data>
+  <data name="Layer_BendAnnotation" xml:space="preserve"><value>Надписи гибов</value></data>
+  <data name="BendAnnotation_Header" xml:space="preserve"><value>Надписи на линиях гиба</value></data>
+  <data name="BendAnnotation_Template" xml:space="preserve"><value>Шаблон надписи</value></data>
+  <data name="BendAnnotation_TokensHint" xml:space="preserve"><value>Токены: {Direction}, {Angle}, {Radius}, {Length}</value></data>
+  <data name="BendAnnotation_Font" xml:space="preserve"><value>Шрифт</value></data>
+  <data name="BendAnnotation_Height" xml:space="preserve"><value>Высота</value></data>
+  <data name="BendAnnotation_ConvertToCurves" xml:space="preserve"><value>Преобразовать текст в кривые</value></data>
 </root>

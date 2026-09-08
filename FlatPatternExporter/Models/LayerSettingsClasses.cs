@@ -208,7 +208,8 @@ namespace FlatPatternExporter.Models;
             new("TangentLayer", "IV_TANGENT"),
             new("TangentRollLinesLayer", "IV_ROLL_TANGENT"),
             new("RollLinesLayer", "IV_ROLL"),
-            new("UnconsumedSketchConstructionLayer", "IV_UNCONSUMED_SKETCH_CONSTRUCTION")
+            new("UnconsumedSketchConstructionLayer", "IV_UNCONSUMED_SKETCH_CONSTRUCTION"),
+            new("BendAnnotationLayer", "IV_BEND_TEXT")
         ];
 
         /// <summary>

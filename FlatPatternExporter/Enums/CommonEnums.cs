@@ -91,8 +91,11 @@ public enum DocumentType
 
 public enum AppTheme
 {
-    Light,
-    Dark
+    Light = 0,
+    Dark = 1,
+    Ocean = 2,
+    Forest = 3,
+    Graphite = 4
 }
 
 public enum BuildType

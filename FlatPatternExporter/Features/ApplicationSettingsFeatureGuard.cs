@@ -21,6 +21,7 @@ public static class ApplicationSettingsFeatureGuard
                 Hierarchy = saved.Hierarchy,
                 SelectedProcessingMethod = saved.SelectedProcessingMethod,
                 DxfExport = saved.DxfExport,
+                BendAnnotations = saved.BendAnnotations,
                 Spline = saved.Spline,
                 ExportFolder = saved.ExportFolder,
                 FileName = saved.FileName,

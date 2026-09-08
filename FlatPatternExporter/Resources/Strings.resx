@@ -2031,4 +2031,14 @@ Possible solutions:
   <data name="Property_StructurePath_DisplayName" xml:space="preserve"><value>Assembly path</value></data>
   <data name="Property_StructurePath_ColumnHeader" xml:space="preserve"><value>Assembly path</value></data>
   <data name="Property_StructurePath_Category" xml:space="preserve"><value>System</value></data>
+  <data name="Theme_Ocean" xml:space="preserve"><value>Ocean</value></data>
+  <data name="Theme_Forest" xml:space="preserve"><value>Forest</value></data>
+  <data name="Theme_Graphite" xml:space="preserve"><value>Graphite</value></data>
+  <data name="Layer_BendAnnotation" xml:space="preserve"><value>Bend annotations</value></data>
+  <data name="BendAnnotation_Header" xml:space="preserve"><value>Bend annotations</value></data>
+  <data name="BendAnnotation_Template" xml:space="preserve"><value>Text template</value></data>
+  <data name="BendAnnotation_TokensHint" xml:space="preserve"><value>Tokens: {Direction}, {Angle}, {Radius}, {Length}</value></data>
+  <data name="BendAnnotation_Font" xml:space="preserve"><value>Font</value></data>
+  <data name="BendAnnotation_Height" xml:space="preserve"><value>Height</value></data>
+  <data name="BendAnnotation_ConvertToCurves" xml:space="preserve"><value>Convert text to curves</value></data>
 </root>

@@ -1,5 +1,4 @@
 ﻿using System.Windows;
-using FlatPatternExporter.Enums;
 using FlatPatternExporter.Features;
 using FlatPatternExporter.Services;
 using FlatPatternExporter.UI.Windows;
@@ -19,40 +18,13 @@ public partial class App
         var settings = SettingsService.Instance.Settings;
 
         // Apply global settings (theme and language)
-        ApplyTheme(settings.Interface.SelectedTheme);
+        ThemeService.Apply(this, settings.Interface.SelectedTheme);
         ApplyLanguage(settings.Interface.SelectedLanguage);
 
         // Create and show main window with settings
         var mainWindow = new FlatPatternExporterMainWindow(ProductFeatureProfile.Current);
         mainWindow.ApplySettings(settings);
         mainWindow.Show();
-    }
-
-    private void ApplyTheme(AppTheme theme)
-    {
-        try
-        {
-            var themeFileName = theme == AppTheme.Light
-                ? "ColorResources.xaml"
-                : "DarkTheme.xaml";
-            var themeUri = new Uri($"Styles/{themeFileName}", UriKind.Relative);
-
-            var mergedDictionaries = Current.Resources.MergedDictionaries;
-            var existingTheme = mergedDictionaries.FirstOrDefault(d =>
-                d.Source?.OriginalString.Contains("ColorResources.xaml") == true ||
-                d.Source?.OriginalString.Contains("DarkTheme.xaml") == true);
-
-            if (existingTheme != null)
-            {
-                var index = mergedDictionaries.IndexOf(existingTheme);
-                mergedDictionaries.RemoveAt(index);
-                mergedDictionaries.Insert(index, new ResourceDictionary { Source = themeUri });
-            }
-        }
-        catch
-        {
-            // If theme application fails, use default theme from App.xaml
-        }
     }
 
     private void ApplyLanguage(string languageCode)

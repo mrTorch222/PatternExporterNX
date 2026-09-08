@@ -1,8 +1,10 @@
 ﻿using System.Globalization;
 using System.IO;
 using FlatPatternExporter.Enums;
+using FlatPatternExporter.Models;
 using netDxf;
 using netDxf.Entities;
+using netDxf.Tables;
 
 namespace FlatPatternExporter.Utilities;
 
@@ -14,7 +16,21 @@ public sealed record DxfPostProcessOptions
     public double SplineTolerance { get; init; } = 0.01;
     public IReadOnlySet<string> CuttingLayers { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     public DocumentLengthUnit DocumentUnit { get; init; } = DocumentLengthUnit.Unknown;
+    public BendAnnotationRenderOptions? BendAnnotations { get; init; }
 }
+
+public sealed record BendAnnotationSource(double Length, double AngleDegrees, double Radius, bool IsUp);
+
+public sealed record BendAnnotationRenderOptions(
+    string Template,
+    string FontFamily,
+    double TextHeight,
+    bool ConvertToCurves,
+    string LayerName,
+    string ColorName,
+    string BendUpLayerName,
+    string BendDownLayerName,
+    IReadOnlyList<BendAnnotationSource> Sources);
 
 public sealed record DxfPostProcessResult(
     string FilePath,
@@ -71,6 +87,9 @@ public static class DxfPostProcessor
                 document.DrawingVariables.AcadVer = version;
             }
 
+            if (options.BendAnnotations is { TextHeight: > 0 } bendOptions)
+                AddBendAnnotations(document, bendOptions);
+
             var cutLengthMm = DxfCutLengthCalculator.CalculateMillimeters(
                 document, options.CuttingLayers, options.DocumentUnit);
 
@@ -89,6 +108,110 @@ public static class DxfPostProcessor
         {
             if (File.Exists(tempPath)) File.Delete(tempPath);
         }
+    }
+
+    private static void AddBendAnnotations(DxfDocument document, BendAnnotationRenderOptions options)
+    {
+        var layer = document.Layers.FirstOrDefault(item =>
+            string.Equals(item.Name, options.LayerName, StringComparison.OrdinalIgnoreCase));
+        if (layer is null)
+        {
+            layer = new Layer(options.LayerName);
+            document.Layers.Add(layer);
+        }
+        layer.Color = ParseColor(options.ColorName);
+
+        TextStyle? textStyle = null;
+        if (!options.ConvertToCurves)
+        {
+            textStyle = document.TextStyles.FirstOrDefault(item =>
+                string.Equals(item.Name, "PATTERN_EXPORTER_BEND", StringComparison.OrdinalIgnoreCase));
+            if (textStyle is null)
+            {
+                textStyle = new TextStyle(
+                    "PATTERN_EXPORTER_BEND",
+                    options.FontFamily,
+                    netDxf.Tables.FontStyle.Regular);
+                document.TextStyles.Add(textStyle);
+            }
+        }
+
+        var candidates = document.Entities.Lines
+            .Where(line => string.Equals(line.Layer.Name, options.BendUpLayerName, StringComparison.OrdinalIgnoreCase) ||
+                           string.Equals(line.Layer.Name, options.BendDownLayerName, StringComparison.OrdinalIgnoreCase))
+            .Select(line => new
+            {
+                Line = line,
+                IsUp = string.Equals(line.Layer.Name, options.BendUpLayerName, StringComparison.OrdinalIgnoreCase),
+                Length = Vector3.Distance(line.StartPoint, line.EndPoint)
+            })
+            .ToList();
+
+        var remaining = options.Sources.ToList();
+        foreach (var candidate in candidates)
+        {
+            var source = remaining
+                .Where(item => item.IsUp == candidate.IsUp)
+                .OrderBy(item => Math.Abs(item.Length - candidate.Length))
+                .FirstOrDefault();
+            if (source is null) continue;
+            remaining.Remove(source);
+
+            var text = FormatBendAnnotation(options.Template, source);
+            if (string.IsNullOrWhiteSpace(text)) continue;
+            var midpoint = (candidate.Line.StartPoint + candidate.Line.EndPoint) * 0.5;
+            var rotation = NormalizeTextRotation(Math.Atan2(
+                candidate.Line.EndPoint.Y - candidate.Line.StartPoint.Y,
+                candidate.Line.EndPoint.X - candidate.Line.StartPoint.X) * 180.0 / Math.PI);
+            var radians = rotation * Math.PI / 180.0;
+            var position = new Vector2(
+                midpoint.X - Math.Sin(radians) * options.TextHeight * 0.7,
+                midpoint.Y + Math.Cos(radians) * options.TextHeight * 0.7);
+
+            if (options.ConvertToCurves)
+            {
+                foreach (var outline in BendTextOutlineConverter.Create(
+                             text, options.FontFamily, options.TextHeight, position, rotation, layer))
+                    document.Entities.Add(outline);
+            }
+            else
+            {
+                document.Entities.Add(new Text(text, position, options.TextHeight, textStyle!)
+                {
+                    Alignment = TextAlignment.MiddleCenter,
+                    Rotation = rotation,
+                    Layer = layer
+                });
+            }
+        }
+    }
+
+    internal static string FormatBendAnnotation(string template, BendAnnotationSource source)
+    {
+        var direction = source.IsUp ? "UP" : "DOWN";
+        return template
+            .Replace("{Direction}", direction, StringComparison.OrdinalIgnoreCase)
+            .Replace("{Angle}", source.AngleDegrees.ToString("0.#", CultureInfo.InvariantCulture), StringComparison.OrdinalIgnoreCase)
+            .Replace("{Radius}", source.Radius.ToString("0.##", CultureInfo.InvariantCulture), StringComparison.OrdinalIgnoreCase)
+            .Replace("{Length}", source.Length.ToString("0.##", CultureInfo.InvariantCulture), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static double NormalizeTextRotation(double angle)
+    {
+        while (angle > 180) angle -= 360;
+        while (angle <= -180) angle += 360;
+        if (angle > 90) angle -= 180;
+        if (angle < -90) angle += 180;
+        return angle;
+    }
+
+    private static AciColor ParseColor(string colorName)
+    {
+        var rgb = LayerSettingsHelper.GetColorValue(colorName)
+            .Split(';')
+            .Select(value => int.Parse(value, CultureInfo.InvariantCulture))
+            .ToArray();
+        return AciColor.FromTrueColor((rgb[0] << 16) | (rgb[1] << 8) | rgb[2]);
     }
 
     private static SplineConversion ConvertSpline(Spline source, double tolerance)

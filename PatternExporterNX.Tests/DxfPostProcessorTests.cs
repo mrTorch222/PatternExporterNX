@@ -2,6 +2,7 @@
 using FlatPatternExporter.Utilities;
 using netDxf;
 using netDxf.Entities;
+using netDxf.Tables;
 
 namespace PatternExporterNX.Tests;
 
@@ -102,6 +103,72 @@ public sealed class DxfPostProcessorTests
         var converted = Assert.Single(DxfDocument.Load(path)!.Entities.Splines);
         Assert.NotEmpty(converted.FitPoints);
         Assert.True(converted.IsClosed);
+    }
+
+    [Fact]
+    public void Process_AddsConfiguredTextToMatchingBendLine()
+    {
+        var path = CreateBendLineFixture();
+
+        DxfPostProcessor.Process(path, new DxfPostProcessOptions
+        {
+            BendAnnotations = new BendAnnotationRenderOptions(
+                "{Direction} {Angle} R{Radius} L{Length}",
+                "Arial",
+                3,
+                false,
+                "BEND_TEXT",
+                "Red",
+                "IV_BEND",
+                "IV_BEND_DOWN",
+                [new BendAnnotationSource(20, 90, 2.5, true)])
+        });
+
+        var text = Assert.Single(DxfDocument.Load(path)!.Entities.Texts);
+        Assert.Equal("UP 90 R2.5 L20", text.Value);
+        Assert.Equal("BEND_TEXT", text.Layer.Name);
+        Assert.Equal(3, text.Height);
+    }
+
+    [Fact]
+    public void Process_ConvertsBendTextToClosedPolylines()
+    {
+        var path = CreateBendLineFixture();
+
+        DxfPostProcessor.Process(path, new DxfPostProcessOptions
+        {
+            BendAnnotations = new BendAnnotationRenderOptions(
+                "R{Radius}",
+                "Arial",
+                3,
+                true,
+                "BEND_TEXT",
+                "White",
+                "IV_BEND",
+                "IV_BEND_DOWN",
+                [new BendAnnotationSource(20, 90, 2.5, true)])
+        });
+
+        var document = DxfDocument.Load(path)!;
+        Assert.Empty(document.Entities.Texts);
+        Assert.NotEmpty(document.Entities.Polylines2D);
+        Assert.All(document.Entities.Polylines2D, polyline =>
+        {
+            Assert.Equal("BEND_TEXT", polyline.Layer.Name);
+            Assert.True(polyline.IsClosed);
+        });
+    }
+
+    private static string CreateBendLineFixture()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"bend-annotation-{Guid.NewGuid():N}.dxf");
+        var document = new DxfDocument();
+        document.Entities.Add(new Line(Vector3.Zero, new Vector3(20, 0, 0))
+        {
+            Layer = new Layer("IV_BEND")
+        });
+        Assert.True(document.Save(path));
+        return path;
     }
 
     private static string CopyFixture(string? fixture = null)

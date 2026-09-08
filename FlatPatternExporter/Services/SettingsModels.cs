@@ -58,6 +58,14 @@ public record DxfExportSettings
     public FlatPatternTopSideMode TopSideMode { get; init; } = FlatPatternTopSideMode.AsModeled;
 }
 
+public record BendAnnotationSettings
+{
+    public string Template { get; init; } = "{Direction} {Angle}° R{Radius} L{Length}";
+    public string FontFamily { get; init; } = "Arial";
+    public string TextHeight { get; init; } = "3";
+    public bool ConvertToCurves { get; init; }
+}
+
 public record SplineSettings
 {
     public const string DefaultSplineTolerance = "0.01";
@@ -117,6 +125,7 @@ public record ApplicationSettings
     public ProcessingMethod SelectedProcessingMethod { get; init; } = ProcessingMethod.BOM;
 
     public DxfExportSettings DxfExport { get; init; } = new();
+    public BendAnnotationSettings BendAnnotations { get; init; } = new();
     public SplineSettings Spline { get; init; } = new();
     public ExportFolderSettings ExportFolder { get; init; } = new();
     public FileNameSettings FileName { get; init; } = new();

@@ -201,6 +201,12 @@ public class DxfExporter
                     partDoc = _documentCache.GetCachedPartDocument(partNumber) ?? _inventorManager.OpenPartDocument(partNumber);
                     if (partDoc == null) throw new Exception(LocalizationManager.Instance.GetString("Error_PartFileNotFound"));
 
+                    var physicalProperties = PhysicalPropertiesCalculator.Calculate(partDoc);
+                    partData.Mass = physicalProperties.FormattedMass;
+                    partData.Density = physicalProperties.FormattedDensity;
+                    partData.OnPropertyChanged(nameof(PartData.Mass));
+                    partData.OnPropertyChanged(nameof(PartData.Density));
+
                     var smCompDef = (SheetMetalComponentDefinition)partDoc.ComponentDefinition;
                     var material = partData.Material;
                     var thickness = partData.Thickness;
@@ -242,6 +248,9 @@ public class DxfExporter
 
                         foreach (var layer in exportOptions.LayerSettings)
                         {
+                            // Annotation entities are created after the Inventor translator has written the DXF.
+                            if (layer.DisplayName == "BendAnnotationLayer") continue;
+
                             if (layer.CanBeHidden && !layer.IsChecked)
                             {
                                 invisibleLayersBuilder.Append($"{layer.LayerName};");
@@ -280,14 +289,22 @@ public class DxfExporter
                         }
 
                         var originalFlipBaseFace = ApplyTopSideMode(flatPattern, exportOptions.TopSideMode);
+                        IReadOnlyList<BendAnnotationSource> bendAnnotations;
                         try
                         {
+                            if (originalFlipBaseFace.HasValue) partDoc.Update2(false);
+                            bendAnnotations = IsBendAnnotationEnabled(exportOptions)
+                                ? CaptureBendAnnotations(flatPattern, partData.DocumentLengthUnit)
+                                : [];
                             oDataIO.WriteDataToFile(dxfOptions, filePath);
                         }
                         finally
                         {
                             if (originalFlipBaseFace.HasValue)
+                            {
                                 flatPattern.FlatPatternOrientations.ActiveFlatPatternOrientation.FlipBaseFace = originalFlipBaseFace.Value;
+                                partDoc.Update2(false);
+                            }
                         }
                         var postProcessResult = DxfPostProcessor.Process(filePath, new DxfPostProcessOptions
                         {
@@ -300,7 +317,8 @@ public class DxfExporter
                                     ? ParseSplineTolerance(exportOptions.SplineTolerance)
                                     : 0.01,
                             CuttingLayers = GetCuttingLayers(exportOptions.LayerSettings),
-                            DocumentUnit = partData.DocumentLengthUnit
+                            DocumentUnit = partData.DocumentLengthUnit,
+                            BendAnnotations = CreateBendAnnotationOptions(exportOptions, bendAnnotations)
                         });
                         partData.CutLengthMm = postProcessResult.CutLengthMm;
                         exportSuccess = true;
@@ -420,6 +438,72 @@ public class DxfExporter
         orientation.FlipBaseFace = !original;
         return original;
     }
+
+    private static IReadOnlyList<BendAnnotationSource> CaptureBendAnnotations(
+        FlatPattern flatPattern,
+        DocumentLengthUnit documentUnit)
+    {
+        var annotations = new List<BendAnnotationSource>();
+        foreach (FlatBendResult result in flatPattern.FlatBendResults)
+        {
+            if (result.IsOnBottomFace) continue;
+
+            try
+            {
+                var evaluator = result.Edge.Evaluator;
+                evaluator.GetParamExtents(out var minimumParameter, out var maximumParameter);
+                evaluator.GetLengthAtParam(minimumParameter, maximumParameter, out var lengthCentimeters);
+                annotations.Add(new BendAnnotationSource(
+                    LengthUnitConverter.FromCentimeters(lengthCentimeters, documentUnit),
+                    Math.Abs(result.Angle * 180.0 / Math.PI),
+                    LengthUnitConverter.FromCentimeters(result.InnerRadius, documentUnit),
+                    result.IsDirectionUp));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Cannot read bend annotation data: {ex.Message}");
+            }
+        }
+
+        return annotations;
+    }
+
+    private static bool IsBendAnnotationEnabled(ExportOptions exportOptions) =>
+        exportOptions.LayerSettings.Any(layer => layer.DisplayName == "BendAnnotationLayer" && layer.IsChecked);
+
+    private static BendAnnotationRenderOptions? CreateBendAnnotationOptions(
+        ExportOptions exportOptions,
+        IReadOnlyList<BendAnnotationSource> sources)
+    {
+        var annotationLayer = exportOptions.LayerSettings.FirstOrDefault(layer =>
+            layer.DisplayName == "BendAnnotationLayer");
+        if (annotationLayer is null || !annotationLayer.IsChecked || sources.Count == 0) return null;
+
+        if (!TryParsePositiveNumber(exportOptions.BendAnnotationTextHeight, out var textHeight)) return null;
+
+        return new BendAnnotationRenderOptions(
+            exportOptions.BendAnnotationTemplate,
+            string.IsNullOrWhiteSpace(exportOptions.BendAnnotationFontFamily)
+                ? "Arial"
+                : exportOptions.BendAnnotationFontFamily,
+            textHeight,
+            exportOptions.ConvertBendAnnotationsToCurves,
+            ResolveLayerName(annotationLayer),
+            annotationLayer.SelectedColor,
+            ResolveLayerName(exportOptions.LayerSettings.FirstOrDefault(layer => layer.DisplayName == "BendUpLayer")!, "IV_BEND"),
+            ResolveLayerName(exportOptions.LayerSettings.FirstOrDefault(layer => layer.DisplayName == "BendDownLayer")!, "IV_BEND_DOWN"),
+            sources);
+    }
+
+    private static bool TryParsePositiveNumber(string value, out double number)
+    {
+        var parsed = double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out number) ||
+                     double.TryParse(value.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out number);
+        return parsed && double.IsFinite(number) && number > 0;
+    }
+
+    private static string ResolveLayerName(LayerSetting? layer, string fallback = "IV_BEND_TEXT") =>
+        layer is null || string.IsNullOrWhiteSpace(layer.CustomName) ? layer?.LayerName ?? fallback : layer.CustomName;
 
     private string PrepareExportOptions(ExportOptions exportOptions)
     {
@@ -596,6 +680,10 @@ public class ExportOptions
     public bool RebaseGeometry { get; set; }
     public bool TrimCenterlines { get; set; }
     public FlatPatternTopSideMode TopSideMode { get; set; } = FlatPatternTopSideMode.AsModeled;
+    public string BendAnnotationTemplate { get; set; } = "{Direction} {Angle}° R{Radius} L{Length}";
+    public string BendAnnotationFontFamily { get; set; } = "Arial";
+    public string BendAnnotationTextHeight { get; set; } = "3";
+    public bool ConvertBendAnnotationsToCurves { get; set; }
 
     public List<LayerSetting> LayerSettings { get; set; } = [];
     public bool ShowFileLockedDialogs { get; set; } = true;

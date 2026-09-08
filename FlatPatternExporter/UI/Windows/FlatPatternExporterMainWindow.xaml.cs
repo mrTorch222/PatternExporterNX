@@ -47,9 +47,6 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
     private readonly ExcelExportService _excelExportService;
     private readonly UpdateManager _updateManager = new();
 
-    // UI elements
-    public System.Windows.Controls.Primitives.ToggleButton? ThemeToggleButton { get; private set; }
-
     // Data and collections
     private readonly ObservableCollection<PartData> _partsData = [];
     public ObservableCollection<AssemblyHierarchyNode> HierarchyRoots { get; } = [];
@@ -130,6 +127,10 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
     private bool _rebaseGeometry = true;
     private bool _trimCenterlines = false;
     private FlatPatternTopSideMode _topSideMode = FlatPatternTopSideMode.AsModeled;
+    private string _bendAnnotationTemplate = "{Direction} {Angle}° R{Radius} L{Length}";
+    private string _bendAnnotationFontFamily = "Arial";
+    private string _bendAnnotationTextHeight = "3";
+    private bool _convertBendAnnotationsToCurves;
 
     // Excel/CSV export settings
     private CsvDelimiterType _csvDelimiter = CsvDelimiterType.Tab;
@@ -138,6 +139,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
 
     // Update settings
     private bool _autoUpdateCheck = true;
+    private AppTheme _selectedTheme = AppTheme.Dark;
 
     // Folder and path settings
     private ExportFolderType _selectedExportFolder = ExportFolderType.ChooseFolder;
@@ -208,12 +210,6 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
         if (_featureProfile.FrameEnabled)
             FrameExporter.Initialize(_inventorManager);
 
-        // Initialize theme toggle button from ContentArea StackPanel
-        if (TitleBar.ContentArea is StackPanel stackPanel)
-        {
-            ThemeToggleButton = stackPanel.Children.OfType<System.Windows.Controls.Primitives.ToggleButton>().FirstOrDefault();
-        }
-
         // Initialize hotkey dictionary
         _hotKeyActions = new Dictionary<Key, Func<Task>>
         {
@@ -254,6 +250,8 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
         LayerSettings = LayerSettingsHelper.InitializeLayerSettings();
         AvailableColors = LayerSettingsHelper.GetAvailableColors();
         LineTypes = LayerSettingsHelper.GetLineTypes();
+        AvailableFontFamilies = new ObservableCollection<string>(
+            Fonts.SystemFontFamilies.Select(font => font.Source).OrderBy(name => name));
 
         // Initialize ComboBox collections
         InitializeAcadVersions();
@@ -314,9 +312,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             if (savedLanguage != null)
                 LanguageComboBox.SelectedItem = savedLanguage;
 
-            // Set ToggleButton state (theme already applied in App.xaml.cs)
-            if (ThemeToggleButton is not null)
-                ThemeToggleButton.IsChecked = settings.Interface.SelectedTheme == AppTheme.Dark;
+            SelectedTheme = settings.Interface.SelectedTheme;
 
             // Component filter settings
             ExcludeReferenceParts = settings.ComponentFilter.ExcludeReferenceParts;
@@ -341,6 +337,10 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             TrimCenterlines = settings.DxfExport.TrimCenterlines;
             OptimizeDxf = settings.DxfExport.OptimizeDxf;
             TopSideMode = settings.DxfExport.TopSideMode;
+            BendAnnotationTemplate = settings.BendAnnotations.Template;
+            BendAnnotationFontFamily = settings.BendAnnotations.FontFamily;
+            BendAnnotationTextHeight = settings.BendAnnotations.TextHeight;
+            ConvertBendAnnotationsToCurves = settings.BendAnnotations.ConvertToCurves;
 
             // Spline settings
             EnableSplineReplacement = settings.Spline.EnableSplineReplacement;
@@ -533,7 +533,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                 PropertySubstitutions = propertySubstitutions,
                 IsExpanded = SettingsExpander?.IsExpanded ?? false,
                 SelectedLanguage = LocalizationManager.Instance.CurrentCulture.Name,
-                SelectedTheme = ThemeToggleButton?.IsChecked == true ? AppTheme.Dark : AppTheme.Light
+                SelectedTheme = SelectedTheme
             },
 
             ComponentFilter = new ComponentFilterSettings
@@ -565,6 +565,14 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                 TrimCenterlines = TrimCenterlines,
                 OptimizeDxf = OptimizeDxf,
                 TopSideMode = TopSideMode
+            },
+
+            BendAnnotations = new BendAnnotationSettings
+            {
+                Template = BendAnnotationTemplate,
+                FontFamily = BendAnnotationFontFamily,
+                TextHeight = BendAnnotationTextHeight,
+                ConvertToCurves = ConvertBendAnnotationsToCurves
             },
 
             Spline = new SplineSettings
@@ -623,6 +631,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
     public ObservableCollection<LayerSetting> LayerSettings { get; set; }
     public ObservableCollection<LocalizableItem> AvailableColors { get; set; }
     public ObservableCollection<LocalizableItem> LineTypes { get; set; }
+    public ObservableCollection<string> AvailableFontFamilies { get; set; }
     public ObservableCollection<PresetIProperty> PresetIProperties { get; set; }
     public ObservableCollection<AcadVersionItem> AcadVersions { get; set; } = [];
     public ObservableCollection<PropertyMetadataRegistry.PropertyDefinition> AvailableTokens { get; set; } = [];
@@ -912,6 +921,43 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                     _ = CheckForUpdatesAsync();
                 }
             }
+        }
+    }
+
+    public string BendAnnotationTemplate
+    {
+        get => _bendAnnotationTemplate;
+        set { _bendAnnotationTemplate = value; OnPropertyChanged(); }
+    }
+
+    public string BendAnnotationFontFamily
+    {
+        get => _bendAnnotationFontFamily;
+        set { _bendAnnotationFontFamily = value; OnPropertyChanged(); }
+    }
+
+    public string BendAnnotationTextHeight
+    {
+        get => _bendAnnotationTextHeight;
+        set { _bendAnnotationTextHeight = value; OnPropertyChanged(); }
+    }
+
+    public bool ConvertBendAnnotationsToCurves
+    {
+        get => _convertBendAnnotationsToCurves;
+        set { _convertBendAnnotationsToCurves = value; OnPropertyChanged(); }
+    }
+
+    public AppTheme SelectedTheme
+    {
+        get => _selectedTheme;
+        set
+        {
+            if (_selectedTheme == value) return;
+            _selectedTheme = value;
+            OnPropertyChanged();
+            if (System.Windows.Application.Current is { } application)
+                ThemeService.Apply(application, value);
         }
     }
 
@@ -1384,6 +1430,10 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             RebaseGeometry = RebaseGeometry,
             TrimCenterlines = TrimCenterlines,
             TopSideMode = TopSideMode,
+            BendAnnotationTemplate = BendAnnotationTemplate,
+            BendAnnotationFontFamily = BendAnnotationFontFamily,
+            BendAnnotationTextHeight = BendAnnotationTextHeight,
+            ConvertBendAnnotationsToCurves = ConvertBendAnnotationsToCurves,
             LayerSettings = LayerSettings.ToList(),
             ShowFileLockedDialogs = true
         };
@@ -2928,28 +2978,6 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
         if (sender is System.Windows.Controls.ComboBox comboBox && comboBox.SelectedItem is LanguageInfo selectedLanguage)
         {
             _localizationManager.CurrentCulture = selectedLanguage.Culture;
-        }
-    }
-
-    private void ThemeToggleButton_Changed(object sender, RoutedEventArgs e)
-    {
-        if (ThemeToggleButton is null) return;
-
-        var isDarkTheme = ThemeToggleButton.IsChecked == true;
-        var themeFileName = isDarkTheme ? "DarkTheme.xaml" : "ColorResources.xaml";
-        var themeUri = new Uri($"Styles/{themeFileName}", UriKind.Relative);
-
-        var mergedDictionaries = System.Windows.Application.Current.Resources.MergedDictionaries;
-
-        var existingTheme = mergedDictionaries.FirstOrDefault(d =>
-            d.Source?.OriginalString.Contains("ColorResources.xaml") == true ||
-            d.Source?.OriginalString.Contains("DarkTheme.xaml") == true);
-
-        if (existingTheme != null)
-        {
-            var index = mergedDictionaries.IndexOf(existingTheme);
-            mergedDictionaries.RemoveAt(index);
-            mergedDictionaries.Insert(index, new ResourceDictionary { Source = themeUri });
         }
     }
 

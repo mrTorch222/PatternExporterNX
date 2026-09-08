@@ -92,9 +92,9 @@ public record FrameExportSettings
 {
     public string OutputFolder { get; init; } = "";
     public string FileNameTemplate { get; init; } = FrameFileNameService.DefaultTemplate;
-    public int GeometryType { get; init; } = 1;
-    public int SolidFaceType { get; init; }
-    public int SurfaceType { get; init; }
+    public int GeometryType { get; init; }
+    public int SolidFaceType { get; init; } = 1;
+    public int SurfaceType { get; init; } = 1;
 }
 
 public record ApplicationSettings

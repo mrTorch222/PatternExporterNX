@@ -1999,4 +1999,9 @@ Possible solutions:
   <data name="Frame_BomSheetName" xml:space="preserve"><value>Frame BOM</value></data>
   <data name="Frame_BomFileFilter" xml:space="preserve"><value>Excel workbook (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv</value></data>
   <data name="Error_FlatPatternCreationFailed" xml:space="preserve"><value>Inventor could not create a flat pattern for the part.</value></data>
+  <data name="Frame_ErrorModelUpdate" xml:space="preserve"><value>Model update failed.</value></data>
+  <data name="Frame_ErrorSingleSolidRequired" xml:space="preserve"><value>Tube export requires exactly one solid body.</value></data>
+  <data name="Frame_ErrorOpenSurfaceBody" xml:space="preserve"><value>An open surface body was found.</value></data>
+  <data name="Frame_ErrorTranslatorOptions" xml:space="preserve"><value>The IGES translator does not provide export options for this document.</value></data>
+  <data name="Frame_ErrorLogWrite" xml:space="preserve"><value>Could not write the IGES export log: {0}</value></data>
 </root>

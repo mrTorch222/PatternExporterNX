@@ -56,7 +56,7 @@
                            TextWrapping="Wrap" Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,6"/>
                 <StackPanel Grid.Row="1" Grid.Column="3" Orientation="Horizontal" Margin="0,0,16,6">
                     <TextBlock Text="{extensions:Localize Frame_LabelGeometryType}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <ComboBox x:Name="GeometryTypeComboBox" Width="120" SelectedIndex="1">
+                    <ComboBox x:Name="GeometryTypeComboBox" Width="120" SelectedIndex="0">
                         <ComboBoxItem Content="{extensions:Localize Frame_GeometrySurfaces}"/>
                         <ComboBoxItem Content="{extensions:Localize Frame_GeometrySolids}"/>
                         <ComboBoxItem Content="{extensions:Localize Frame_GeometryWireframe}"/>
@@ -64,14 +64,14 @@
                 </StackPanel>
                 <StackPanel Grid.Row="1" Grid.Column="4" Orientation="Horizontal" Margin="0,0,16,6">
                     <TextBlock Text="{extensions:Localize Frame_LabelSolidFaces}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <ComboBox x:Name="SolidFaceTypeComboBox" Width="100" SelectedIndex="0">
+                    <ComboBox x:Name="SolidFaceTypeComboBox" Width="100" SelectedIndex="1">
                         <ComboBoxItem Content="{extensions:Localize Frame_FacesNurbs}"/>
                         <ComboBoxItem Content="{extensions:Localize Frame_FacesAnalytic}"/>
                     </ComboBox>
                 </StackPanel>
                 <StackPanel Grid.Row="1" Grid.Column="5" Orientation="Horizontal" Margin="0,0,0,6">
                     <TextBlock Text="{extensions:Localize Frame_LabelSurfaces}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <ComboBox x:Name="SurfaceTypeComboBox" Width="90" SelectedIndex="0">
+                    <ComboBox x:Name="SurfaceTypeComboBox" Width="90" SelectedIndex="1">
                         <ComboBoxItem Content="IGES 143"/>
                         <ComboBoxItem Content="IGES 144"/>
                     </ComboBox>

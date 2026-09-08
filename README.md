@@ -34,7 +34,7 @@ The upstream project documents development with assistance from [Claude Code](ht
 
 ## System Requirements
 - Windows 10/11 x64
-- .NET 8.0 Desktop Runtime; development uses .NET SDK 8.0.424 x64 (pinned in `global.json`) and Visual Studio Code or Visual Studio 2022
+- .NET 8.0 Desktop Runtime; development uses .NET SDK 9.0.317 x64 (pinned in `global.json`) and Visual Studio Code or Visual Studio 2022
 - Autodesk Inventor 2027 installed locally; build, external interop loading and DXF export are verified. Cutting-software acceptance remains pending
 - Git in `PATH` if you want build numbers populated by the MSBuild `SetVersionInfo` target
 - Standalone ApprenticeServer (optional) – recommended for reliable saved-file thumbnails; Inventor 2026 and later require the separately installed, Windows-registered Apprentice Server for external applications. Windows Shell API is used automatically if it is unavailable.
@@ -60,7 +60,7 @@ The solution and output executable use the new product name. Source directories 
 dotnet restore PatternExporterNX.sln --source https://api.nuget.org/v3/index.json
 dotnet build PatternExporterNX.sln -c Release -p:Platform=x64 --no-restore
 ```
-The solution uses .NET SDK 8.0.424 (`global.json`), C# 12 and `net8.0-windows10.0.26100.0`. `NuGet.Config` provides nuget.org without changing global NuGet settings. `InventorInstallDir` defaults to `%ProgramW6432%\Autodesk\Inventor 2027`; MSBuild reports a clear error if interop is absent. At runtime, interop is loaded from the `InventorInstallDir` environment variable, the Inventor 2027 installation registry entry, or the default install directory. A command-line MSBuild property applies only to the build; use the environment variable for a custom runtime location. Autodesk interop remains `Private=false` and is not redistributed.
+The solution uses .NET SDK 9.0.317 (`global.json`), C# 12 and `net8.0-windows10.0.26100.0`. `NuGet.Config` provides nuget.org without changing global NuGet settings. `InventorInstallDir` defaults to `%ProgramW6432%\Autodesk\Inventor 2027`; MSBuild reports a clear error if interop is absent. At runtime, interop is loaded from the `InventorInstallDir` environment variable, the Inventor 2027 installation registry entry, or the default install directory. A command-line MSBuild property applies only to the build; use the environment variable for a custom runtime location. Autodesk interop remains `Private=false` and is not redistributed.
 
 ### Portable build / publish
 Use the included publish profiles under `FlatPatternExporter/Properties/PublishProfiles` or run:
@@ -114,8 +114,10 @@ See [PUBLISH.md](PUBLISH.md) for detailed publishing documentation.
 1. Open the main Frame Generator assembly and select the **Frame Generator** tab.
 2. Click **Scan frames**. Suppressed occurrences are ignored; repeated references to the same IPT are grouped and counted.
 3. Choose the IGES folder and configure the file-name template. Available tokens are `{PartNumber}`, `{StockNumber}`, `{Material}`, `{Description}`, `{Length}`, `{Qty}`, and `{FileName}`.
-4. Select the IGES geometry, face, and surface options, then click **Export IGES**. Files with duplicate resolved names receive `_2`, `_3`, and later suffixes.
+4. Use **Surfaces / Analytic / IGES 144** for the analytic tube export, then click **Export IGES**. These are the defaults for new settings; existing saved selections are retained. Files with duplicate resolved names receive `_2`, `_3`, and later suffixes.
 5. Click **Export BOM** to save the displayed grouped list as `.xlsx` or UTF-8 `.csv`.
+
+Before export, each part is updated with `Update2(false)` and must contain exactly one closed solid body. Sketches are excluded; the fitting tolerance is 0.001 cm (0.01 mm). `IGES_EXPORT_LOG.txt` records export options, geometry diagnostics, output sizes, and errors. Files are replaced only after a successful export to a nonempty temporary file.
 
 Frame detection follows Inventor's Frame Generator document interest identifier, and length is read from the `G_L` model parameter using Inventor's database units. IGES export requires a real Frame Generator assembly and the IGES Translator Add-In available in Inventor 2027.
 
@@ -152,7 +154,7 @@ Frame detection follows Inventor's Frame Generator document interest identifier,
 - **Missing Autodesk interop**: verify that Inventor 2027 is installed and `InventorInstallDir` points to its installation root. The runtime resolves the local interop instead of requiring a redistributed DLL.
 - **Duplicate part numbers**: review the conflict analyzer panel after scanning. Resolve naming conflicts in Inventor or adjust token templates before exporting.
 - **Incorrect DXF output**: experiment with spline replacement, geometry rebasing, and layer presets. Use the DXF preview column to confirm results quickly.
-- **Thumbnail generation**: the application reads the document's saved thumbnail, then tries standalone ApprenticeServer and Windows Shell. It never creates a new Inventor view during scanning. If the optional standalone ApprenticeServer is unavailable and Windows has no cached IPT thumbnail, `Part Img` remains empty.
+- **Thumbnail generation**: the application reads the document's saved thumbnail, then tries standalone ApprenticeServer and Windows Shell. It never creates a new Inventor view during scanning.
 
 ## License
 

@@ -1999,4 +1999,9 @@
   <data name="Frame_BomSheetName" xml:space="preserve"><value>BOM рам</value></data>
   <data name="Frame_BomFileFilter" xml:space="preserve"><value>Книга Excel (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv</value></data>
   <data name="Error_FlatPatternCreationFailed" xml:space="preserve"><value>Inventor не смог создать развертку детали.</value></data>
+  <data name="Frame_ErrorModelUpdate" xml:space="preserve"><value>Не удалось обновить модель детали.</value></data>
+  <data name="Frame_ErrorSingleSolidRequired" xml:space="preserve"><value>Для экспорта трубы требуется ровно одно solid-тело.</value></data>
+  <data name="Frame_ErrorOpenSurfaceBody" xml:space="preserve"><value>Обнаружено незамкнутое surface-тело.</value></data>
+  <data name="Frame_ErrorTranslatorOptions" xml:space="preserve"><value>IGES Translator не предоставляет параметры экспорта для этой детали.</value></data>
+  <data name="Frame_ErrorLogWrite" xml:space="preserve"><value>Не удалось записать журнал экспорта IGES: {0}</value></data>
 </root>

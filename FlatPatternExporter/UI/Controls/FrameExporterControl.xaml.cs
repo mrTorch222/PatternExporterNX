@@ -39,9 +39,9 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         NameTemplateTextBox.Text = string.IsNullOrWhiteSpace(settings.FileNameTemplate)
             ? FrameFileNameService.DefaultTemplate
             : settings.FileNameTemplate;
-        GeometryTypeComboBox.SelectedIndex = ClampIndex(settings.GeometryType, GeometryTypeComboBox.Items.Count, 1);
-        SolidFaceTypeComboBox.SelectedIndex = ClampIndex(settings.SolidFaceType, SolidFaceTypeComboBox.Items.Count, 0);
-        SurfaceTypeComboBox.SelectedIndex = ClampIndex(settings.SurfaceType, SurfaceTypeComboBox.Items.Count, 0);
+        GeometryTypeComboBox.SelectedIndex = ClampIndex(settings.GeometryType, GeometryTypeComboBox.Items.Count, 0);
+        SolidFaceTypeComboBox.SelectedIndex = ClampIndex(settings.SolidFaceType, SolidFaceTypeComboBox.Items.Count, 1);
+        SurfaceTypeComboBox.SelectedIndex = ClampIndex(settings.SurfaceType, SurfaceTypeComboBox.Items.Count, 1);
         UpdatePreview();
     }
 

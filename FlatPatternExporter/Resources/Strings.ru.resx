@@ -2003,7 +2003,6 @@
   <data name="Frame_ErrorSingleSolidRequired" xml:space="preserve"><value>Для экспорта трубы требуется ровно одно solid-тело.</value></data>
   <data name="Frame_ErrorOpenSurfaceBody" xml:space="preserve"><value>Обнаружено незамкнутое surface-тело.</value></data>
   <data name="Frame_ErrorTranslatorOptions" xml:space="preserve"><value>Выбранный транслятор не предоставляет параметры экспорта для этой детали.</value></data>
-  <data name="Frame_ErrorLogWrite" xml:space="preserve"><value>Не удалось записать журнал экспорта 3D: {0}</value></data>
   <data name="Frame_ButtonExport3d" xml:space="preserve"><value>Экспорт 3D</value></data>
   <data name="Frame_LabelFormat" xml:space="preserve"><value>Формат</value></data>
   <data name="Header_Development" xml:space="preserve"><value>Разработка</value></data>
@@ -2051,4 +2050,5 @@
   <data name="Theme_KeyColor" xml:space="preserve"><value>Ключевой цвет темы</value></data>
   <data name="BendAnnotation_Enable" xml:space="preserve"><value>Добавлять надписи гибов в DXF</value></data>
   <data name="ProcessingStatus_Failed" xml:space="preserve"><value>Ошибка</value></data>
+  <data name="Frame_OrganizeByStockNumber" xml:space="preserve"><value>Организовать по типу сортамента</value></data>
 </root>

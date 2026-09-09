@@ -42,6 +42,24 @@ public sealed class FrameBomExportServiceTests
     }
 
     [Fact]
+    public void CsvUsesSelectedDelimiter()
+    {
+        var filePath = Path.Combine(Path.GetTempPath(), $"frame-bom-{Guid.NewGuid():N}.csv");
+        try
+        {
+            FrameBomExportService.ExportCsv(filePath, [Member], "\t");
+            var text = File.ReadAllText(filePath, Encoding.UTF8);
+
+            Assert.Contains("PN;42\tRHS 40x20", text);
+            Assert.DoesNotContain("\"PN;42\"", text);
+        }
+        finally
+        {
+            if (File.Exists(filePath)) File.Delete(filePath);
+        }
+    }
+
+    [Fact]
     public void ExcelWritesLengthAndQuantityAsNumbers()
     {
         var filePath = Path.Combine(Path.GetTempPath(), $"frame-bom-{Guid.NewGuid():N}.xlsx");

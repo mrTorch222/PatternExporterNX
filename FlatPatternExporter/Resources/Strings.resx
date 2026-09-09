@@ -2003,7 +2003,6 @@ Possible solutions:
   <data name="Frame_ErrorSingleSolidRequired" xml:space="preserve"><value>Tube export requires exactly one solid body.</value></data>
   <data name="Frame_ErrorOpenSurfaceBody" xml:space="preserve"><value>An open surface body was found.</value></data>
   <data name="Frame_ErrorTranslatorOptions" xml:space="preserve"><value>The selected translator does not provide export options for this document.</value></data>
-  <data name="Frame_ErrorLogWrite" xml:space="preserve"><value>Could not write the 3D export log: {0}</value></data>
   <data name="Frame_ButtonExport3d" xml:space="preserve"><value>Export 3D</value></data>
   <data name="Frame_LabelFormat" xml:space="preserve"><value>Format</value></data>
   <data name="Header_Development" xml:space="preserve"><value>Development</value></data>
@@ -2051,4 +2050,5 @@ Possible solutions:
   <data name="Theme_KeyColor" xml:space="preserve"><value>Theme accent color</value></data>
   <data name="BendAnnotation_Enable" xml:space="preserve"><value>Add bend annotations to DXF</value></data>
   <data name="ProcessingStatus_Failed" xml:space="preserve"><value>Failed</value></data>
+  <data name="Frame_OrganizeByStockNumber" xml:space="preserve"><value>Organize by profile type</value></data>
 </root>

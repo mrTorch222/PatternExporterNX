@@ -74,7 +74,19 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     public void ApplySettings(FrameExportSettings? settings)
     {
         settings ??= new FrameExportSettings();
-        OutputFolderTextBox.Text = settings.OutputFolder;
+        OutputFolderTextBox.Text = string.IsNullOrWhiteSpace(settings.FixedFolderPath)
+            ? settings.OutputFolder
+            : settings.FixedFolderPath;
+        SetSelectedExportFolder(settings.SelectedExportFolder
+            ?? (string.IsNullOrWhiteSpace(OutputFolderTextBox.Text) ? ExportFolderType.ChooseFolder : ExportFolderType.FixedFolder));
+        FrameEnableSubfolderCheckBox.IsChecked = settings.EnableSubfolder;
+        FrameSubfolderNameTextBox.Text = settings.SubfolderName;
+        FrameOrganizeByMaterialCheckBox.IsChecked = settings.OrganizeByMaterial;
+        FrameOrganizeByStockNumberCheckBox.IsChecked = settings.OrganizeByStockNumber;
+        FrameCsvDelimiterComboBox.SelectedItem = settings.CsvDelimiter;
+        FrameBomFileNameComboBox.SelectedItem = settings.BomFileNameType;
+        FrameExcelFormatRadioButton.IsChecked = settings.DefaultBomFormat == ExportFileFormat.Excel;
+        FrameCsvFormatRadioButton.IsChecked = settings.DefaultBomFormat == ExportFileFormat.Csv;
         GeometryTypeComboBox.SelectedIndex = ClampIndex(settings.GeometryType, GeometryTypeComboBox.Items.Count, 0);
         SolidFaceTypeComboBox.SelectedIndex = ClampIndex(settings.SolidFaceType, SolidFaceTypeComboBox.Items.Count, 1);
         SurfaceTypeComboBox.SelectedIndex = ClampIndex(settings.SurfaceType, SurfaceTypeComboBox.Items.Count, 1);
@@ -86,6 +98,8 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
             ? FrameFileNameService.DefaultTemplate
             : settings.FileNameTemplate);
         UpdateFormatControls();
+        UpdateExportPlacementControls();
+        UpdateBomFormatControls();
         UpdatePresetControls();
         UpdatePreview();
     }
@@ -93,6 +107,17 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     public FrameExportSettings CollectSettings() => new()
     {
         OutputFolder = OutputFolderTextBox.Text.Trim(),
+        SelectedExportFolder = GetSelectedExportFolder(),
+        FixedFolderPath = OutputFolderTextBox.Text.Trim(),
+        EnableSubfolder = FrameEnableSubfolderCheckBox.IsChecked == true,
+        SubfolderName = FrameSubfolderNameTextBox.Text.Trim(),
+        OrganizeByMaterial = FrameOrganizeByMaterialCheckBox.IsChecked == true,
+        OrganizeByStockNumber = FrameOrganizeByStockNumberCheckBox.IsChecked == true,
+        CsvDelimiter = FrameCsvDelimiterComboBox.SelectedItem is CsvDelimiterType delimiter ? delimiter : CsvDelimiterType.Tab,
+        DefaultBomFormat = FrameCsvFormatRadioButton.IsChecked == true ? ExportFileFormat.Csv : ExportFileFormat.Excel,
+        BomFileNameType = FrameBomFileNameComboBox.SelectedItem is ExcelExportFileNameType fileNameType
+            ? fileNameType
+            : ExcelExportFileNameType.DateTimeFormat,
         EnableFileNameConstructor = FrameEnableFileNameConstructorCheckBox.IsChecked == true,
         FileNameTemplate = _fileNameTemplate,
         GeometryType = GeometryTypeComboBox.SelectedIndex,
@@ -145,7 +170,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     {
         if (_isBusy || _inventorManager is null || _members.Count == 0) return;
 
-        var outputFolder = OutputFolderTextBox.Text.Trim();
+        if (!TryResolveExportFolder(out var outputFolder, out var usePartFolder)) return;
         if (string.IsNullOrWhiteSpace(outputFolder))
         {
             ShowError(_localization.GetString("Frame_ErrorOutputFolder"));
@@ -170,7 +195,12 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
                 GeometryTypeComboBox.SelectedIndex,
                 SolidFaceTypeComboBox.SelectedIndex,
                 SurfaceTypeComboBox.SelectedIndex,
-                (FrameExportFormat)ExportFormatComboBox.SelectedIndex);
+                (FrameExportFormat)ExportFormatComboBox.SelectedIndex,
+                usePartFolder,
+                FrameEnableSubfolderCheckBox.IsChecked == true,
+                FrameSubfolderNameTextBox.Text.Trim(),
+                FrameOrganizeByMaterialCheckBox.IsChecked == true,
+                FrameOrganizeByStockNumberCheckBox.IsChecked == true);
             var exporter = new Frame3dExporter(_inventorManager);
             foreach (var member in _members)
             {
@@ -202,20 +232,28 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     {
         if (_members.Count == 0) return;
 
+        var format = FrameCsvFormatRadioButton.IsChecked == true ? ExportFileFormat.Csv : ExportFileFormat.Excel;
+        var extension = ExportFileFormatMapping.GetFileExtension(format);
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
             Title = _localization.GetString("Frame_ButtonExportBom"),
             Filter = _localization.GetString("Frame_BomFileFilter"),
-            DefaultExt = ".xlsx",
-            FileName = "Frame_BOM.xlsx",
-            AddExtension = true
+            DefaultExt = extension,
+            FileName = GetBomExportFileName() + extension,
+            AddExtension = true,
+            FilterIndex = ExportFileFormatMapping.GetFilterIndex(format)
         };
         if (dialog.ShowDialog() != true) return;
 
         try
         {
             if (string.Equals(IOPath.GetExtension(dialog.FileName), ".csv", StringComparison.OrdinalIgnoreCase))
-                FrameBomExportService.ExportCsv(dialog.FileName, _members);
+                FrameBomExportService.ExportCsv(
+                    dialog.FileName,
+                    _members,
+                    CsvDelimiterMapping.GetDelimiter(FrameCsvDelimiterComboBox.SelectedItem is CsvDelimiterType delimiter
+                        ? delimiter
+                        : CsvDelimiterType.Tab));
             else
                 FrameBomExportService.ExportExcel(dialog.FileName, _members);
             StatusTextBlock.Text = _localization.GetString("Frame_StatusBomExported", dialog.FileName);
@@ -235,6 +273,22 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         };
         if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             OutputFolderTextBox.Text = dialog.SelectedPath;
+    }
+
+    private void FrameExportPlacement_Changed(object sender, RoutedEventArgs e) => UpdateExportPlacementControls();
+
+    private void FrameSubfolder_Changed(object sender, RoutedEventArgs e) => UpdateExportPlacementControls();
+
+    private void FrameBomFormat_Changed(object sender, RoutedEventArgs e) => UpdateBomFormatControls();
+
+    private void FrameSubfolderNameTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox textBox) return;
+        var sanitized = string.Concat(textBox.Text.Where(character => !IOPath.GetInvalidFileNameChars().Contains(character)));
+        if (sanitized == textBox.Text) return;
+        var caretIndex = Math.Min(textBox.CaretIndex, sanitized.Length);
+        textBox.Text = sanitized;
+        textBox.CaretIndex = caretIndex;
     }
 
     private void ClearButton_Click(object sender, RoutedEventArgs e)
@@ -574,6 +628,114 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     {
         if (IgesOptionsPanel is null || ExportFormatComboBox is null) return;
         IgesOptionsPanel.IsEnabled = ExportFormatComboBox.SelectedIndex == (int)FrameExportFormat.Iges;
+    }
+
+    private void UpdateExportPlacementControls()
+    {
+        if (FrameEnableSubfolderCheckBox is null || FrameSubfolderNameTextBox is null || FrameSelectFixedFolderButton is null)
+            return;
+        var usePartFolder = FramePartFolderRadioButton?.IsChecked == true;
+        FrameEnableSubfolderCheckBox.IsEnabled = !usePartFolder;
+        if (usePartFolder) FrameEnableSubfolderCheckBox.IsChecked = false;
+        FrameSubfolderNameTextBox.IsEnabled = !usePartFolder && FrameEnableSubfolderCheckBox.IsChecked == true;
+        FrameSelectFixedFolderButton.IsEnabled = FrameFixedFolderRadioButton?.IsChecked == true;
+        OutputFolderTextBox.IsEnabled = FrameFixedFolderRadioButton?.IsChecked == true;
+    }
+
+    private void UpdateBomFormatControls()
+    {
+        if (FrameCsvDelimiterComboBox is not null)
+            FrameCsvDelimiterComboBox.IsEnabled = FrameCsvFormatRadioButton?.IsChecked == true;
+    }
+
+    private void SetSelectedExportFolder(ExportFolderType folderType)
+    {
+        switch (folderType)
+        {
+            case ExportFolderType.ComponentFolder: FrameComponentFolderRadioButton.IsChecked = true; break;
+            case ExportFolderType.PartFolder: FramePartFolderRadioButton.IsChecked = true; break;
+            case ExportFolderType.ProjectFolder: FrameProjectFolderRadioButton.IsChecked = true; break;
+            case ExportFolderType.FixedFolder: FrameFixedFolderRadioButton.IsChecked = true; break;
+            default: FrameChooseFolderRadioButton.IsChecked = true; break;
+        }
+    }
+
+    private ExportFolderType GetSelectedExportFolder()
+    {
+        if (FrameComponentFolderRadioButton.IsChecked == true) return ExportFolderType.ComponentFolder;
+        if (FramePartFolderRadioButton.IsChecked == true) return ExportFolderType.PartFolder;
+        if (FrameProjectFolderRadioButton.IsChecked == true) return ExportFolderType.ProjectFolder;
+        if (FrameFixedFolderRadioButton.IsChecked == true) return ExportFolderType.FixedFolder;
+        return ExportFolderType.ChooseFolder;
+    }
+
+    private bool TryResolveExportFolder(out string outputFolder, out bool usePartFolder)
+    {
+        outputFolder = "";
+        usePartFolder = false;
+        var activeDocument = _inventorManager?.Application?.ActiveDocument;
+        var assemblyFolder = activeDocument is null || string.IsNullOrWhiteSpace(activeDocument.FullFileName)
+            ? ""
+            : IOPath.GetDirectoryName(activeDocument.FullFileName) ?? "";
+
+        switch (GetSelectedExportFolder())
+        {
+            case ExportFolderType.ChooseFolder:
+                using (var dialog = new System.Windows.Forms.FolderBrowserDialog
+                {
+                    Description = _localization.GetString("Frame_SelectOutputFolder"),
+                    SelectedPath = Directory.Exists(assemblyFolder) ? assemblyFolder : ""
+                })
+                {
+                    if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK) return false;
+                    outputFolder = dialog.SelectedPath;
+                }
+                break;
+            case ExportFolderType.ComponentFolder:
+                outputFolder = assemblyFolder;
+                break;
+            case ExportFolderType.PartFolder:
+                outputFolder = assemblyFolder;
+                usePartFolder = true;
+                break;
+            case ExportFolderType.ProjectFolder:
+                _inventorManager?.SetProjectFolderInfo();
+                outputFolder = _inventorManager?.ProjectWorkspacePath ?? "";
+                break;
+            case ExportFolderType.FixedFolder:
+                outputFolder = OutputFolderTextBox.Text.Trim();
+                break;
+        }
+
+        if (usePartFolder && _members.Any(member => !string.IsNullOrWhiteSpace(IOPath.GetDirectoryName(member.FullFileName))))
+            return true;
+        if (!string.IsNullOrWhiteSpace(outputFolder)) return true;
+        ShowError(_localization.GetString("Frame_ErrorOutputFolder"));
+        return false;
+    }
+
+    private string GetBomExportFileName()
+    {
+        var fallback = $"Export_{DateTime.Now:yyyyMMdd_HHmmss}";
+        var type = FrameBomFileNameComboBox.SelectedItem is ExcelExportFileNameType selected
+            ? selected
+            : ExcelExportFileNameType.DateTimeFormat;
+        var document = _inventorManager?.Application?.ActiveDocument;
+        if (document is null || type == ExcelExportFileNameType.DateTimeFormat) return fallback;
+
+        string value;
+        if (type == ExcelExportFileNameType.FileName)
+        {
+            value = IOPath.GetFileNameWithoutExtension(document.DisplayName);
+        }
+        else
+        {
+            value = new PropertyManager(document).GetMappedProperty("PartNumber");
+        }
+
+        var invalid = IOPath.GetInvalidFileNameChars();
+        value = new string(value.Select(character => invalid.Contains(character) ? '_' : character).ToArray()).Trim();
+        return string.IsNullOrWhiteSpace(value) ? fallback : value;
     }
 
     private string GetSelectedExtension() => (FrameExportFormat)Math.Max(0, ExportFormatComboBox?.SelectedIndex ?? 0) switch

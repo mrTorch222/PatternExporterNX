@@ -122,7 +122,7 @@ See [PUBLISH.md](PUBLISH.md) for detailed publishing documentation.
 
 1. Open the main Frame Generator assembly and select the **Frame Generator** tab.
 2. Click **Scan frames**. Suppressed occurrences are ignored; repeated references to the same IPT are grouped and counted.
-3. Choose the 3D output folder and configure the file-name template. Available tokens are `{PartNumber}`, `{StockNumber}`, `{Material}`, `{Description}`, `{Length}`, `{Qty}`, and `{FileName}`.
+3. Choose the 3D output folder and configure the file name on the **File Name** tab. The visual constructor supports presets, custom text, user-defined iProperties, live preview, and the tokens `{PartNumber}`, `{StockNumber}`, `{Material}`, `{Description}`, `{Length}`, `{Qty}`, and `{FileName}`.
 4. Choose IGES, STEP, SAT or STL and click **Export 3D**. For tube cutting through IGES, use **Surfaces / Analytic / IGES 144**. These are the IGES defaults for new settings; existing saved selections are retained. Files with duplicate resolved names receive `_2`, `_3`, and later suffixes.
 5. Click **Export BOM** to save the displayed grouped list as `.xlsx` or UTF-8 `.csv`.
 

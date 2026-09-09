@@ -23,6 +23,13 @@ public sealed class FrameMemberData : INotifyPropertyChanged
     public Dictionary<string, string> UserDefinedProperties { get; init; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, string> AttributeValues { get; init; } = new(StringComparer.OrdinalIgnoreCase);
 
+    public void SetAttributeValue(string internalName, string value)
+    {
+        AttributeValues[internalName] = value;
+        OnPropertyChanged($"AttributeValues[{internalName}]");
+        OnPropertyChanged("Item[]");
+    }
+
     public ProcessingStatus ProcessingStatus
     {
         get => _processingStatus;

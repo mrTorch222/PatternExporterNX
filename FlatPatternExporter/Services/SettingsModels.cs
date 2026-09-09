@@ -116,6 +116,7 @@ public record FrameExportSettings
     public CsvDelimiterType CsvDelimiter { get; init; } = CsvDelimiterType.Tab;
     public ExportFileFormat DefaultBomFormat { get; init; } = ExportFileFormat.Excel;
     public ExcelExportFileNameType BomFileNameType { get; init; } = ExcelExportFileNameType.DateTimeFormat;
+    public List<string>? AttributeColumnOrder { get; init; }
     public bool EnableFileNameConstructor { get; init; } = true;
     public string FileNameTemplate { get; init; } = DefaultFileNameTemplate;
     public int GeometryType { get; init; }

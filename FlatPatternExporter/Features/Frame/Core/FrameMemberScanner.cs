@@ -107,7 +107,7 @@ public sealed class FrameMemberScanner
             if (metadata?.Type is not (PropertyMetadataRegistry.PropertyType.IProperty or PropertyMetadataRegistry.PropertyType.UserDefined))
                 continue;
             var value = propertyManager.GetMappedProperty(internalName);
-            member.AttributeValues[internalName] = value;
+            member.SetAttributeValue(internalName, value);
             if (metadata.Type == PropertyMetadataRegistry.PropertyType.UserDefined && metadata.InventorPropertyName is { Length: > 0 } propertyName)
                 member.UserDefinedProperties[propertyName] = value;
         }

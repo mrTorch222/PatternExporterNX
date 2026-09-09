@@ -53,6 +53,7 @@ public sealed class SettingsCompatibilityTests
         Assert.Equal(CsvDelimiterType.Tab, settings.FrameExport.CsvDelimiter);
         Assert.Equal(ExportFileFormat.Excel, settings.FrameExport.DefaultBomFormat);
         Assert.Equal(ExcelExportFileNameType.DateTimeFormat, settings.FrameExport.BomFileNameType);
+        Assert.Null(settings.FrameExport.AttributeColumnOrder);
         Assert.Equal(FlatPatternTopSideMode.AsModeled, settings.DxfExport.TopSideMode);
         Assert.Equal(AppTheme.Dark, settings.Interface.SelectedTheme);
         Assert.Equal("Arial", settings.BendAnnotations.FontFamily);
@@ -81,6 +82,7 @@ public sealed class SettingsCompatibilityTests
                 CsvDelimiter = CsvDelimiterType.Pipe,
                 DefaultBomFormat = ExportFileFormat.Csv,
                 BomFileNameType = ExcelExportFileNameType.PartNumber,
+                AttributeColumnOrder = ["Material", "PartNumber", "UDP_Workshop"],
                 TemplatePresets = [new TemplatePresetData { Name = "Workshop", Template = "{StockNumber}_{Length}" }],
                 SelectedTemplatePresetIndex = 0
             },
@@ -107,6 +109,7 @@ public sealed class SettingsCompatibilityTests
         Assert.Equal(CsvDelimiterType.Pipe, restored.FrameExport.CsvDelimiter);
         Assert.Equal(ExportFileFormat.Csv, restored.FrameExport.DefaultBomFormat);
         Assert.Equal(ExcelExportFileNameType.PartNumber, restored.FrameExport.BomFileNameType);
+        Assert.Equal(["Material", "PartNumber", "UDP_Workshop"], restored.FrameExport.AttributeColumnOrder);
         Assert.Equal(ProcessingMethod.Hierarchy, restored.SelectedProcessingMethod);
         Assert.False(restored.Hierarchy.MergeDuplicateFiles);
         Assert.Equal("Workshop", Assert.Single(restored.FrameExport.TemplatePresets).Name);

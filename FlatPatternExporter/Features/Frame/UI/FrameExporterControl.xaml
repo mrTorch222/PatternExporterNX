@@ -22,6 +22,8 @@
                     Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}" IsEnabled="False"/>
             <Button x:Name="ExportBomButton" Content="{extensions:Localize Frame_ButtonExportBom}" Click="ExportBomButton_Click"
                     Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}" IsEnabled="False"/>
+            <Button Content="{extensions:Localize UI_AddColumns}" Click="AddFrameColumnsButton_Click"
+                    Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}"/>
             <Button Content="{extensions:Localize Button_Clear}" Click="ClearButton_Click"
                     Style="{StaticResource LargeSquareButtonStyle}"/>
         </WrapPanel>
@@ -349,6 +351,7 @@
 
         <DataGrid x:Name="FrameMembersGrid" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True"
                   CanUserAddRows="False" SelectionMode="Extended" AlternationCount="2"
+                  HeadersVisibility="Column" RowHeaderWidth="0"
                   SelectionChanged="FrameMembersGrid_SelectionChanged"
                   Background="{DynamicResource BackgroundPrimaryBrush}"
                   BorderBrush="{DynamicResource BorderPrimaryBrush}" BorderThickness="1"
@@ -357,10 +360,6 @@
                   CellStyle="{StaticResource DataGridCellStyle}">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="{extensions:Localize Property_ProcessingStatus_ColumnHeader}" Binding="{Binding ProcessingStatusText}" SortMemberPath="ProcessingStatus"/>
-                <DataGridTextColumn Header="{extensions:Localize Property_PartNumber_ColumnHeader}" Binding="{Binding PartNumber}" SortMemberPath="PartNumber"/>
-                <DataGridTextColumn Header="{extensions:Localize Property_StockNumber_ColumnHeader}" Binding="{Binding StockNumber}" SortMemberPath="StockNumber"/>
-                <DataGridTextColumn Header="{extensions:Localize Property_Material_ColumnHeader}" Binding="{Binding Material}" SortMemberPath="Material"/>
-                <DataGridTextColumn Header="{extensions:Localize Property_Description_ColumnHeader}" Binding="{Binding Description}" SortMemberPath="Description"/>
                 <DataGridTextColumn Header="{extensions:Localize Frame_ColumnLength}" Binding="{Binding LengthMm, StringFormat=F2}" SortMemberPath="LengthMm"/>
                 <DataGridTextColumn Header="{extensions:Localize Property_Quantity_ColumnHeader}" Binding="{Binding Quantity}" SortMemberPath="Quantity"/>
                 <DataGridTextColumn Header="{extensions:Localize Property_FileName_ColumnHeader}" Binding="{Binding FileName}" SortMemberPath="FileName"/>

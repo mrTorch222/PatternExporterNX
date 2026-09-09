@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using FlatPatternExporter.Core;
@@ -23,6 +24,7 @@ namespace FlatPatternExporter.Features.Frame.UI;
 
 public partial class FrameExporterControl : System.Windows.Controls.UserControl
 {
+    private static readonly string[] DefaultAttributeColumns = ["PartNumber", "StockNumber", "Material", "Description"];
     private static readonly Regex TemplateSegmentRegex = new(
         @"\{CUSTOM:(?<custom>[^}]*)\}|\{(?<token>[^{}:]+)\}",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
@@ -53,6 +55,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         _localization.LanguageChanged += (_, _) =>
         {
             RefreshAvailableNameTokens();
+            RefreshAttributeColumnHeaders();
             RenderFileNameTemplate();
             UpdatePreview();
         };
@@ -87,6 +90,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         FrameBomFileNameComboBox.SelectedItem = settings.BomFileNameType;
         FrameExcelFormatRadioButton.IsChecked = settings.DefaultBomFormat == ExportFileFormat.Excel;
         FrameCsvFormatRadioButton.IsChecked = settings.DefaultBomFormat == ExportFileFormat.Csv;
+        RestoreAttributeColumns(settings.AttributeColumnOrder);
         GeometryTypeComboBox.SelectedIndex = ClampIndex(settings.GeometryType, GeometryTypeComboBox.Items.Count, 0);
         SolidFaceTypeComboBox.SelectedIndex = ClampIndex(settings.SolidFaceType, SolidFaceTypeComboBox.Items.Count, 1);
         SurfaceTypeComboBox.SelectedIndex = ClampIndex(settings.SurfaceType, SurfaceTypeComboBox.Items.Count, 1);
@@ -118,6 +122,11 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         BomFileNameType = FrameBomFileNameComboBox.SelectedItem is ExcelExportFileNameType fileNameType
             ? fileNameType
             : ExcelExportFileNameType.DateTimeFormat,
+        AttributeColumnOrder = FrameMembersGrid.Columns
+            .Where(column => GetAttributeInternalName(column) is not null)
+            .OrderBy(column => column.DisplayIndex)
+            .Select(column => GetAttributeInternalName(column)!)
+            .ToList(),
         EnableFileNameConstructor = FrameEnableFileNameConstructorCheckBox.IsChecked == true,
         FileNameTemplate = _fileNameTemplate,
         GeometryType = GeometryTypeComboBox.SelectedIndex,
@@ -247,15 +256,17 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
 
         try
         {
+            var columns = GetSelectedBomColumns();
             if (string.Equals(IOPath.GetExtension(dialog.FileName), ".csv", StringComparison.OrdinalIgnoreCase))
                 FrameBomExportService.ExportCsv(
                     dialog.FileName,
                     _members,
                     CsvDelimiterMapping.GetDelimiter(FrameCsvDelimiterComboBox.SelectedItem is CsvDelimiterType delimiter
                         ? delimiter
-                        : CsvDelimiterType.Tab));
+                        : CsvDelimiterType.Tab),
+                    columns);
             else
-                FrameBomExportService.ExportExcel(dialog.FileName, _members);
+                FrameBomExportService.ExportExcel(dialog.FileName, _members, columns);
             StatusTextBlock.Text = _localization.GetString("Frame_StatusBomExported", dialog.FileName);
         }
         catch (Exception ex)
@@ -328,7 +339,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
 
     private void AddFrameUserPropertyButton_Click(object sender, RoutedEventArgs e)
     {
-        var properties = PropertyMetadataRegistry.GetPresetProperties();
+        var properties = GetFrameSelectableProperties();
         var window = new SelectIPropertyWindow(
             properties,
             _ => true,
@@ -354,10 +365,115 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
             foreach (var property in PropertyMetadataRegistry.UserDefinedProperties)
             {
                 if (property.InventorPropertyName is not { Length: > 0 } propertyName) continue;
-                member.UserDefinedProperties[propertyName] = propertyManager.GetMappedProperty(property.InternalName);
+                var value = propertyManager.GetMappedProperty(property.InternalName);
+                member.UserDefinedProperties[propertyName] = value;
+                member.SetAttributeValue(property.InternalName, value);
             }
         }
     }
+
+    private void AddFrameColumnsButton_Click(object sender, RoutedEventArgs e)
+    {
+        var properties = GetFrameSelectableProperties();
+        var window = new SelectIPropertyWindow(
+            properties,
+            internalName => FrameMembersGrid.Columns.Any(column => GetAttributeInternalName(column) == internalName),
+            AddFrameAttributeColumn,
+            AddFrameUserDefinedAttributeColumn,
+            RemoveFrameAttributeColumn)
+        {
+            Owner = Window.GetWindow(this)
+        };
+        window.ShowDialog();
+    }
+
+    private void RestoreAttributeColumns(IReadOnlyCollection<string>? columnOrder)
+    {
+        foreach (var column in FrameMembersGrid.Columns.Where(column => GetAttributeInternalName(column) is not null).ToList())
+            FrameMembersGrid.Columns.Remove(column);
+
+        var selectedColumns = columnOrder ?? DefaultAttributeColumns;
+        foreach (var internalName in selectedColumns)
+            AddFrameAttributeColumn(internalName);
+    }
+
+    private void AddFrameAttributeColumn(PresetIProperty property) => AddFrameAttributeColumn(property.InventorPropertyName);
+
+    private void AddFrameAttributeColumn(string internalName)
+    {
+        if (FrameMembersGrid.Columns.Any(column => GetAttributeInternalName(column) == internalName)) return;
+        var metadata = PropertyMetadataRegistry.GetPropertyByInternalName(internalName);
+        if (metadata is null || metadata.Type is not (PropertyMetadataRegistry.PropertyType.IProperty or PropertyMetadataRegistry.PropertyType.UserDefined))
+            return;
+
+        FillFrameAttributeData(internalName);
+        var binding = new Binding($"AttributeValues[{internalName}]");
+        if (metadata.RequiresRounding) binding.StringFormat = $"F{metadata.RoundingDecimals}";
+        var column = new DataGridTextColumn
+        {
+            Header = metadata.ColumnHeader,
+            Binding = binding,
+            SortMemberPath = $"AttributeValues[{internalName}]",
+            CanUserSort = metadata.IsSortable,
+            IsReadOnly = true,
+            ElementStyle = FrameMembersGrid.FindResource("CenteredCellStyle") as WpfStyle
+        };
+        var insertionIndex = FrameMembersGrid.Columns
+            .Select((existing, index) => (existing, index))
+            .FirstOrDefault(item => item.existing.SortMemberPath == "LengthMm").index;
+        FrameMembersGrid.Columns.Insert(Math.Max(1, insertionIndex), column);
+    }
+
+    private void AddFrameUserDefinedAttributeColumn(string propertyName)
+    {
+        PropertyMetadataRegistry.AddUserDefinedProperty(propertyName);
+        AddFrameAttributeColumn($"UDP_{propertyName}");
+        RefreshAvailableNameTokens();
+    }
+
+    private void RemoveFrameAttributeColumn(string internalName, bool _)
+    {
+        var column = FrameMembersGrid.Columns.FirstOrDefault(item => GetAttributeInternalName(item) == internalName);
+        if (column is not null) FrameMembersGrid.Columns.Remove(column);
+    }
+
+    private void FillFrameAttributeData(string internalName)
+    {
+        foreach (var member in _members)
+        {
+            if (!_documents.TryGetValue(member.DocumentKey, out var document)) continue;
+            var value = new FlatPatternExporter.Core.PropertyManager((Document)document).GetMappedProperty(internalName);
+            member.SetAttributeValue(internalName, value);
+            if (PropertyMetadataRegistry.IsUserDefinedProperty(internalName))
+                member.UserDefinedProperties[PropertyMetadataRegistry.GetInventorNameFromUserDefinedInternalName(internalName)] = value;
+        }
+    }
+
+    private void RefreshAttributeColumnHeaders()
+    {
+        foreach (var column in FrameMembersGrid.Columns)
+        {
+            var internalName = GetAttributeInternalName(column);
+            if (internalName is not null)
+                column.Header = PropertyMetadataRegistry.GetPropertyByInternalName(internalName)?.ColumnHeader ?? column.Header;
+        }
+    }
+
+    private static string? GetAttributeInternalName(DataGridColumn column)
+    {
+        const string prefix = "AttributeValues[";
+        var path = column.SortMemberPath;
+        return path.StartsWith(prefix, StringComparison.Ordinal) && path.EndsWith(']')
+            ? path[prefix.Length..^1]
+            : null;
+    }
+
+    private static ObservableCollection<PresetIProperty> GetFrameSelectableProperties() => new(
+        PropertyMetadataRegistry.Properties.Values
+            .Where(property => property.Type == PropertyMetadataRegistry.PropertyType.IProperty)
+            .OrderBy(property => property.Category)
+            .ThenBy(property => property.DisplayName)
+            .Select(property => new PresetIProperty { InventorPropertyName = property.InternalName }));
 
     private void FramePresetListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -736,6 +852,31 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         var invalid = IOPath.GetInvalidFileNameChars();
         value = new string(value.Select(character => invalid.Contains(character) ? '_' : character).ToArray()).Trim();
         return string.IsNullOrWhiteSpace(value) ? fallback : value;
+    }
+
+    private IReadOnlyList<FrameBomColumn> GetSelectedBomColumns() => FrameMembersGrid.Columns
+        .OrderBy(column => column.DisplayIndex)
+        .Select(CreateBomColumn)
+        .Where(column => column is not null)
+        .Cast<FrameBomColumn>()
+        .ToList();
+
+    private static FrameBomColumn? CreateBomColumn(DataGridColumn column)
+    {
+        var header = column.Header?.ToString() ?? "";
+        var attributeName = GetAttributeInternalName(column);
+        if (attributeName is not null)
+            return new FrameBomColumn(header, member => member.AttributeValues.GetValueOrDefault(attributeName, ""));
+
+        return column.SortMemberPath switch
+        {
+            "ProcessingStatus" => new FrameBomColumn(header, member => member.ProcessingStatusText),
+            "LengthMm" => new FrameBomColumn(header, member => member.LengthMm),
+            "Quantity" => new FrameBomColumn(header, member => member.Quantity),
+            "FileName" => new FrameBomColumn(header, member => member.FileName),
+            "OutputFile" => new FrameBomColumn(header, member => member.OutputFile),
+            _ => null
+        };
     }
 
     private string GetSelectedExtension() => (FrameExportFormat)Math.Max(0, ExportFormatComboBox?.SelectedIndex ?? 0) switch

@@ -1,12 +1,10 @@
 ﻿using System.Drawing.Imaging;
 using System.IO;
-using System.Windows;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using DxfRenderer;
 using FlatPatternExporter.Converters;
 using FlatPatternExporter.Services;
-using FlatPatternExporter.UI.Windows;
 using Inventor;
 using Microsoft.WindowsAPICodePack.Shell;
 using Svg.Skia;
@@ -98,8 +96,8 @@ public class ThumbnailGenerator
         {
             dispatcher.Invoke(() =>
             {
-                CustomMessageBox.Show(LocalizationManager.Instance.GetString("Error_ThumbnailGeneration", ex.Message), LocalizationManager.Instance.GetString("Error_Title"), MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                UserDialogService.Show(LocalizationManager.Instance.GetString("Error_ThumbnailGeneration", ex.Message), LocalizationManager.Instance.GetString("Error_Title"), UserDialogButtons.Ok,
+                    UserDialogIcon.Error);
             });
             return null;
         }
@@ -138,8 +136,8 @@ public class ThumbnailGenerator
         {
             dispatcher.Invoke(() =>
             {
-                CustomMessageBox.Show(LocalizationManager.Instance.GetString("Error_ThumbnailObtaining", ex.Message), LocalizationManager.Instance.GetString("Error_Title"), MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                UserDialogService.Show(LocalizationManager.Instance.GetString("Error_ThumbnailObtaining", ex.Message), LocalizationManager.Instance.GetString("Error_Title"), UserDialogButtons.Ok,
+                    UserDialogIcon.Error);
             });
             return null;
         }

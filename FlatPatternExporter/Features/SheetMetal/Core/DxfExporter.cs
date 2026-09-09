@@ -2,12 +2,10 @@
 using System.Globalization;
 using System.IO;
 using System.Text;
-using System.Windows;
 using System.Windows.Threading;
 using FlatPatternExporter.Enums;
 using FlatPatternExporter.Models;
 using FlatPatternExporter.Services;
-using FlatPatternExporter.UI.Windows;
 using FlatPatternExporter.Utilities;
 using Inventor;
 using Path = System.IO.Path;
@@ -568,26 +566,26 @@ public class DxfExporter
         {
             if (exportOptions.ShowFileLockedDialogs)
             {
-                var result = CustomMessageBox.Show(
+                var result = UserDialogService.Show(
                     LocalizationManager.Instance.GetString("Warning_FileLocked", filePath),
                     LocalizationManager.Instance.GetString("MessageBox_Warning"),
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Warning);
+                    UserDialogButtons.YesNo,
+                    UserDialogIcon.Warning);
 
-                if (result == MessageBoxResult.Yes)
+                if (result == UserDialogResult.Yes)
                 {
                     throw new OperationCanceledException();
                 }
 
                 while (IsFileLockedInternal(filePath))
                 {
-                    var waitResult = CustomMessageBox.Show(
+                    var waitResult = UserDialogService.Show(
                         LocalizationManager.Instance.GetString("Info_WaitingForFileUnlock"),
                         LocalizationManager.Instance.GetString("MessageBox_Info"),
-                        MessageBoxButton.OKCancel,
-                        MessageBoxImage.Information);
+                        UserDialogButtons.OkCancel,
+                        UserDialogIcon.Information);
 
-                    if (waitResult == MessageBoxResult.Cancel)
+                    if (waitResult == UserDialogResult.Cancel)
                     {
                         throw new OperationCanceledException();
                     }

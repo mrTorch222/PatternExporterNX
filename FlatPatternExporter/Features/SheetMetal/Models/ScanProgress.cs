@@ -1,4 +1,4 @@
-namespace FlatPatternExporter.Models;
+﻿namespace FlatPatternExporter.Models;
 
 public class ScanProgress
 {

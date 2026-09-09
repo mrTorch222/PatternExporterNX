@@ -1,4 +1,4 @@
-using Inventor;
+﻿using Inventor;
 
 namespace FlatPatternExporter.Core;
 

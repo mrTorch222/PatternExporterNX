@@ -1,8 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Windows;
-using FlatPatternExporter.UI.Windows;
 
 namespace FlatPatternExporter.Services;
 
@@ -140,13 +138,13 @@ public class TemplatePresetManager : INotifyPropertyChanged
         if (SelectedTemplatePreset == null)
             return false;
 
-        var result = CustomMessageBox.Show(
+        var result = UserDialogService.Show(
             _localizationManager.GetString("Confirm_DeletePreset", SelectedTemplatePreset.Name),
             _localizationManager.GetString("Confirm_DeletePresetTitle"),
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
+            UserDialogButtons.YesNo,
+            UserDialogIcon.Question);
 
-        if (result == MessageBoxResult.Yes)
+        if (result == UserDialogResult.Yes)
         {
             TemplatePresets.Remove(SelectedTemplatePreset);
             SelectedTemplatePreset = null;

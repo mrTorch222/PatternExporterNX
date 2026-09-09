@@ -34,7 +34,7 @@ The upstream project documents development with assistance from [Claude Code](ht
 
 ## System Requirements
 - Windows 10/11 x64
-- .NET 8.0 Desktop Runtime; development uses .NET SDK 9.0.317 x64 (pinned in `global.json`) and Visual Studio Code or Visual Studio 2022
+- .NET 8.0 Desktop Runtime; development uses .NET SDK 8.0.424 x64 (pinned in `global.json`) and Visual Studio Code or Visual Studio 2022
 - Autodesk Inventor 2027 installed locally; build, external interop loading and DXF export are verified. Cutting-software acceptance remains pending
 - Git in `PATH` if you want build numbers populated by the MSBuild `SetVersionInfo` target
 - Standalone ApprenticeServer (optional) – recommended for reliable saved-file thumbnails; Inventor 2026 and later require the separately installed, Windows-registered Apprentice Server for external applications. Windows Shell API is used automatically if it is unavailable.
@@ -69,7 +69,7 @@ dotnet build FlatPatternExporter/FlatPatternExporter.csproj -c Release -p:Produc
 ```
 
 `SheetMetal` exposes only the flat-pattern workspace and produces `PatternExporterNX.SheetMetal.exe`; `Frame` exposes only the Frame Generator workspace and produces `PatternExporterNX.Frame.exe`. The default `Combined` edition keeps both tabs. Each edition preserves the hidden module's saved settings, which allows the sheet-metal and frame branches to diverge without corrupting a shared user configuration.
-The solution uses .NET SDK 9.0.317 (`global.json`), C# 12 and `net8.0-windows10.0.26100.0`. `NuGet.Config` provides nuget.org without changing global NuGet settings. `InventorInstallDir` defaults to `%ProgramW6432%\Autodesk\Inventor 2027`; MSBuild reports a clear error if interop is absent. At runtime, interop is loaded from the `InventorInstallDir` environment variable, the Inventor 2027 installation registry entry, or the default install directory. A command-line MSBuild property applies only to the build; use the environment variable for a custom runtime location. Autodesk interop remains `Private=false` and is not redistributed.
+The solution uses .NET SDK 8.0.424 (`global.json`), C# 12 and `net8.0-windows10.0.26100.0`. `NuGet.Config` provides nuget.org without changing global NuGet settings. `InventorInstallDir` defaults to `%ProgramW6432%\Autodesk\Inventor 2027`; MSBuild reports a clear error if interop is absent. At runtime, interop is loaded from the `InventorInstallDir` environment variable, the Inventor 2027 installation registry entry, or the default install directory. A command-line MSBuild property applies only to the build; use the environment variable for a custom runtime location. Autodesk interop remains `Private=false` and is not redistributed.
 
 ### Portable build / publish
 Use the included publish profiles under `FlatPatternExporter/Properties/PublishProfiles` or run:
@@ -133,7 +133,7 @@ Frame detection follows Inventor's Frame Generator document interest identifier,
 ### Export Options at a Glance
 - **Component filters**: exclude reference, purchased, phantom, and library parts from the export queue.
 - **Organization**: create material/thickness subfolders or route files to a custom project/workspace directory.
-- **DXF formatting**: merge profiles into polylines, rebase geometry to origin, trim centerlines, and atomically post-process DXFs with `Utilities/DxfPostProcessor`.
+- **DXF formatting**: merge profiles into polylines, rebase geometry to origin, trim centerlines, and atomically post-process DXFs with `Features/SheetMetal/Utilities/DxfPostProcessor`.
 - **Spline handling**: replace splines with lines or arcs, or preserve SPLINE entities while converting control points to fit points with a checked tolerance.
 - **Diagnostics and metrics**: select document-unit, cut-length, bend-count, longest-bend and up/down bend columns. Bend lengths are measured from the current Inventor flat pattern in millimeters.
 - **Flat-pattern top side**: keep the model orientation or temporarily flip the active flat-pattern orientation so most bends point up or down. The original orientation is restored immediately after DXF creation.

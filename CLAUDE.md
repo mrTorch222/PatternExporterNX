@@ -4,7 +4,7 @@
 
 PatternExporterNX — независимый MIT-форк `isinicyn/FlatPatternExporter`. Автор исходного проекта: Sinicyn Ivan Victorovich. Сопровождение форка: mrTorch222, https://github.com/mrTorch222/PatternExporterNX. Сохраняйте `LICENSE.txt` без изменений и включайте его вместе с `NOTICE.md` во все дистрибутивы.
 
-Продукт и исполняемые файлы: `PatternExporterNX` и `PatternExporterNX.Updater`. Каталоги проектов, пространства имен `FlatPatternExporter` и путь `%AppData%\FlatPatternExporter\settings.json` сохранены для совместимости. Целевая CAD — Inventor 2027; сборка использует SDK 9.0.317 (`global.json`) и `InventorInstallDir`. Interop загружается из установленного Inventor, не копируется в дистрибутив. Приемка описана в `IMPLEMENTATION_PLAN.md`, состояние проверки — в `FORK_BASELINE.md`.
+Продукт и исполняемые файлы: `PatternExporterNX` и `PatternExporterNX.Updater`. Каталоги проектов, пространства имен `FlatPatternExporter` и путь `%AppData%\FlatPatternExporter\settings.json` сохранены для совместимости. Целевая CAD — Inventor 2027; сборка использует SDK 8.0.424 (`global.json`) и `InventorInstallDir`. Interop загружается из установленного Inventor, не копируется в дистрибутив. Приемка описана в `IMPLEMENTATION_PLAN.md`, состояние проверки — в `FORK_BASELINE.md`.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -173,7 +173,7 @@ dotnet run --project FlatPatternExporter\FlatPatternExporter.csproj
 
 ### Зависимости проекта
 - Autodesk Inventor 2027 Interop: `$(InventorInstallDir)\Bin\Public Assemblies\Autodesk.Inventor.Interop.dll`; по умолчанию `%ProgramW6432%\Autodesk\Inventor 2027`. `Private=false`; при запуске `InventorAssemblyResolver` использует переменную окружения `InventorInstallDir`, реестр установки Inventor 2027 или стандартный каталог.
-- .NET SDK 9.0.317, закреплен в `global.json`; источник пакетов задан в `NuGet.Config`.
+- .NET SDK 8.0.424, закреплен в `global.json`; источник пакетов задан в `NuGet.Config`.
 - netDxf.netstandard (v3.0.1) для работы с DXF файлами
 - Svg.Skia (v3.0.6) для конвертации SVG в PNG/BitmapImage
 - ClosedXML (v0.105.0) для экспорта данных в Excel

@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using FlatPatternExporter.Features;
 using FlatPatternExporter.Services;
+using FlatPatternExporter.UI.Services;
 using FlatPatternExporter.UI.Windows;
 
 namespace FlatPatternExporter;
@@ -13,6 +14,8 @@ public partial class App
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        UserDialogService.Current = new WpfUserDialogService();
 
         // Load settings ONCE at application startup
         var settings = SettingsService.Instance.Settings;

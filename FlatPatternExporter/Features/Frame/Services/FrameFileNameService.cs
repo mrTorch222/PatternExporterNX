@@ -2,12 +2,13 @@
 using System.IO;
 using System.Text.RegularExpressions;
 using FlatPatternExporter.Features.Frame.Models;
+using FlatPatternExporter.Services;
 
 namespace FlatPatternExporter.Features.Frame.Services;
 
 public static partial class FrameFileNameService
 {
-    public const string DefaultTemplate = "{StockNumber}_{Material}_L{Length}_Q{Qty}";
+    public const string DefaultTemplate = FrameExportSettings.DefaultFileNameTemplate;
 
     public static string Resolve(string? template, FrameMemberData member)
     {

@@ -40,6 +40,7 @@ public sealed class SettingsCompatibilityTests
         Assert.Equal("0.02", settings.Spline.SplineTolerance);
         Assert.NotNull(settings.Interface);
         Assert.NotNull(settings.FrameExport);
+        Assert.True(settings.FrameExport.EnableFileNameConstructor);
         Assert.Equal(FrameFileNameService.DefaultTemplate, settings.FrameExport.FileNameTemplate);
         Assert.True(settings.Hierarchy.MergeDuplicateFiles);
         Assert.Empty(settings.FrameExport.TemplatePresets);
@@ -66,6 +67,7 @@ public sealed class SettingsCompatibilityTests
             Hierarchy = new HierarchySettings { MergeDuplicateFiles = false },
             FrameExport = new FrameExportSettings
             {
+                EnableFileNameConstructor = false,
                 ExportFormat = FrameExportFormat.Step,
                 TemplatePresets = [new TemplatePresetData { Name = "Workshop", Template = "{StockNumber}_{Length}" }],
                 SelectedTemplatePresetIndex = 0
@@ -84,6 +86,7 @@ public sealed class SettingsCompatibilityTests
         var restored = JsonSerializer.Deserialize<ApplicationSettings>(JsonSerializer.Serialize(settings))!;
 
         Assert.Equal(FrameExportFormat.Step, restored.FrameExport.ExportFormat);
+        Assert.False(restored.FrameExport.EnableFileNameConstructor);
         Assert.Equal(ProcessingMethod.Hierarchy, restored.SelectedProcessingMethod);
         Assert.False(restored.Hierarchy.MergeDuplicateFiles);
         Assert.Equal("Workshop", Assert.Single(restored.FrameExport.TemplatePresets).Name);

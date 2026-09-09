@@ -91,6 +91,13 @@ public sealed class FrameMemberScanner
             Quantity = 1
         };
 
+        foreach (var property in PropertyMetadataRegistry.UserDefinedProperties)
+        {
+            var propertyName = property.InventorPropertyName;
+            if (string.IsNullOrWhiteSpace(propertyName)) continue;
+            member.UserDefinedProperties[propertyName] = propertyManager.GetMappedProperty(property.InternalName);
+        }
+
         members.Add(documentKey, member);
         documents.Add(documentKey, partDocument);
     }

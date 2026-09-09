@@ -107,6 +107,7 @@ public record FrameExportSettings
     public const string DefaultFileNameTemplate = "{StockNumber}_{Material}_L{Length}_Q{Qty}";
 
     public string OutputFolder { get; init; } = "";
+    public bool EnableFileNameConstructor { get; init; } = true;
     public string FileNameTemplate { get; init; } = DefaultFileNameTemplate;
     public int GeometryType { get; init; }
     public int SolidFaceType { get; init; } = 1;

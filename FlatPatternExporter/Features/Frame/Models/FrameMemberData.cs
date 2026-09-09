@@ -24,6 +24,7 @@ public sealed class FrameMemberData : INotifyPropertyChanged
     public string Description { get; init; } = "";
     public double? LengthMm { get; init; }
     public int Quantity { get; set; }
+    public Dictionary<string, string> UserDefinedProperties { get; init; } = new(StringComparer.OrdinalIgnoreCase);
 
     public ProcessingStatus ProcessingStatus
     {

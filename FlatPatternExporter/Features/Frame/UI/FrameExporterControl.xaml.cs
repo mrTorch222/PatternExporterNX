@@ -1,34 +1,64 @@
 ﻿using System.Collections.ObjectModel;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 using FlatPatternExporter.Core;
 using FlatPatternExporter.Enums;
 using FlatPatternExporter.Features.Frame.Core;
 using FlatPatternExporter.Features.Frame.Models;
 using FlatPatternExporter.Features.Frame.Services;
+using FlatPatternExporter.Models;
 using FlatPatternExporter.Services;
 using FlatPatternExporter.UI.Windows;
 using Inventor;
 using IOPath = System.IO.Path;
+using WpfBorder = System.Windows.Controls.Border;
+using WpfBrush = System.Windows.Media.Brush;
+using WpfStyle = System.Windows.Style;
 
 namespace FlatPatternExporter.Features.Frame.UI;
 
 public partial class FrameExporterControl : System.Windows.Controls.UserControl
 {
+    private static readonly Regex TemplateSegmentRegex = new(
+        @"\{CUSTOM:(?<custom>[^}]*)\}|\{(?<token>[^{}:]+)\}",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex TrailingCustomTextRegex = new(
+        @"\{CUSTOM:(?<custom>[^}]*)\}$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
     private readonly ObservableCollection<FrameMemberData> _members = [];
     private readonly Dictionary<string, PartDocument> _documents = new(StringComparer.OrdinalIgnoreCase);
     private readonly LocalizationManager _localization = LocalizationManager.Instance;
     private readonly TemplatePresetManager _presetManager = new();
+    private readonly ObservableCollection<FrameNameTokenDefinition> _availableNameTokens = [];
+    private readonly ObservableCollection<FrameNameTokenDefinition> _userDefinedNameTokens = [];
     private InventorManager? _inventorManager;
+    private string _fileNameTemplate = FrameFileNameService.DefaultTemplate;
     private bool _isBusy;
+    private bool _isUpdatingPresetState;
 
     public FrameExporterControl()
     {
         InitializeComponent();
         FrameMembersGrid.ItemsSource = _members;
-        FramePresetComboBox.ItemsSource = _presetManager.TemplatePresets;
-        NameTemplateTextBox.Text = FrameFileNameService.DefaultTemplate;
+        FrameTemplatePresetsListBox.ItemsSource = _presetManager.TemplatePresets;
+        FrameAvailableTokensListBox.ItemsSource = _availableNameTokens;
+        FrameUserDefinedTokensListBox.ItemsSource = _userDefinedNameTokens;
+        _presetManager.TemplatePresets.CollectionChanged += (_, _) => UpdatePresetControls();
+        PropertyMetadataRegistry.UserDefinedProperties.CollectionChanged += (_, _) => RefreshAvailableNameTokens();
+        _localization.LanguageChanged += (_, _) =>
+        {
+            RefreshAvailableNameTokens();
+            RenderFileNameTemplate();
+            UpdatePreview();
+        };
+        RefreshAvailableNameTokens();
+        RenderFileNameTemplate();
+        UpdatePresetControls();
         UpdatePreview();
     }
 
@@ -45,19 +75,22 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         SolidFaceTypeComboBox.SelectedIndex = ClampIndex(settings.SolidFaceType, SolidFaceTypeComboBox.Items.Count, 1);
         SurfaceTypeComboBox.SelectedIndex = ClampIndex(settings.SurfaceType, SurfaceTypeComboBox.Items.Count, 1);
         ExportFormatComboBox.SelectedIndex = ClampIndex((int)settings.ExportFormat, ExportFormatComboBox.Items.Count, 0);
+        FrameEnableFileNameConstructorCheckBox.IsChecked = settings.EnableFileNameConstructor;
         _presetManager.LoadPresets(settings.TemplatePresets, settings.SelectedTemplatePresetIndex);
-        FramePresetComboBox.SelectedItem = _presetManager.SelectedTemplatePreset;
-        NameTemplateTextBox.Text = string.IsNullOrWhiteSpace(settings.FileNameTemplate)
+        FrameTemplatePresetsListBox.SelectedItem = _presetManager.SelectedTemplatePreset;
+        SetFileNameTemplate(string.IsNullOrWhiteSpace(settings.FileNameTemplate)
             ? FrameFileNameService.DefaultTemplate
-            : settings.FileNameTemplate;
+            : settings.FileNameTemplate);
         UpdateFormatControls();
+        UpdatePresetControls();
         UpdatePreview();
     }
 
     public FrameExportSettings CollectSettings() => new()
     {
         OutputFolder = OutputFolderTextBox.Text.Trim(),
-        FileNameTemplate = NameTemplateTextBox.Text,
+        EnableFileNameConstructor = FrameEnableFileNameConstructorCheckBox.IsChecked == true,
+        FileNameTemplate = _fileNameTemplate,
         GeometryType = GeometryTypeComboBox.SelectedIndex,
         SolidFaceType = SolidFaceTypeComboBox.SelectedIndex,
         SurfaceType = SurfaceTypeComboBox.SelectedIndex,
@@ -119,9 +152,17 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         {
             SetBusy(true);
             StatusTextBlock.Text = _localization.GetString("Frame_StatusExporting");
+            var effectiveTemplate = FrameEnableFileNameConstructorCheckBox.IsChecked == true
+                ? _fileNameTemplate
+                : FrameFileNameService.FallbackTemplate;
+            if (!FrameFileNameService.ValidateTemplate(effectiveTemplate))
+            {
+                ShowError(_localization.GetString("Error_UnknownTokens"));
+                return;
+            }
             var options = new FrameExportOptions(
                 outputFolder,
-                NameTemplateTextBox.Text,
+                effectiveTemplate,
                 GeometryTypeComboBox.SelectedIndex,
                 SolidFaceTypeComboBox.SelectedIndex,
                 SurfaceTypeComboBox.SelectedIndex,
@@ -189,60 +230,277 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         UpdatePreview();
     }
 
-    private void NameTemplateTextBox_TextChanged(object sender, TextChangedEventArgs e) => UpdatePreview();
+    private void FrameEnableFileNameConstructorCheckBox_Changed(object sender, RoutedEventArgs e) => UpdatePreview();
 
-    private void NameTokenButton_Click(object sender, RoutedEventArgs e)
+    private void FrameTokenListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if (sender is System.Windows.Controls.Button { Tag: string token }) InsertNameTemplateText(token);
+        if (sender is ListBox { SelectedItem: FrameNameTokenDefinition token })
+            AddFileNameToken(token.TokenName);
     }
 
-    private void AddCustomNameTextButton_Click(object sender, RoutedEventArgs e)
+    private void AddFrameCustomTextButton_Click(object sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrEmpty(CustomNameTextBox.Text)) return;
-        InsertNameTemplateText(CustomNameTextBox.Text);
-        CustomNameTextBox.Clear();
+        AddCustomText(FrameCustomTextBox.Text);
+        FrameCustomTextBox.Clear();
     }
 
-    private void InsertNameTemplateText(string value)
+    private void AddFrameSymbolButton_Click(object sender, RoutedEventArgs e)
     {
-        var start = NameTemplateTextBox.SelectionStart;
-        var length = NameTemplateTextBox.SelectionLength;
-        var text = NameTemplateTextBox.Text;
-        NameTemplateTextBox.Text = text.Remove(start, length).Insert(start, value);
-        NameTemplateTextBox.SelectionStart = start + value.Length;
-        NameTemplateTextBox.Focus();
+        if (sender is System.Windows.Controls.Button { Tag: string symbol }) AddCustomText(symbol);
     }
 
-    private void FramePresetComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void FrameCustomTextBox_KeyDown(object sender, KeyEventArgs e)
     {
-        if (FramePresetComboBox.SelectedItem is not TemplatePreset preset) return;
-        _presetManager.SelectedTemplatePreset = preset;
-        FramePresetNameTextBox.Text = preset.Name;
-        NameTemplateTextBox.Text = preset.Template;
+        if (e.Key != Key.Enter) return;
+        AddFrameCustomTextButton_Click(sender, new RoutedEventArgs());
+        e.Handled = true;
+    }
+
+    private void AddFrameUserPropertyButton_Click(object sender, RoutedEventArgs e)
+    {
+        var properties = PropertyMetadataRegistry.GetPresetProperties();
+        var window = new SelectIPropertyWindow(
+            properties,
+            _ => true,
+            _ => { },
+            _ => RefreshAvailableNameTokens(),
+            (_, _) => RefreshAvailableNameTokens(),
+            "UserProperties")
+        {
+            Owner = Window.GetWindow(this)
+        };
+        window.ShowDialog();
+        RefreshMemberUserDefinedProperties();
+        RefreshAvailableNameTokens();
+        UpdatePreview();
+    }
+
+    private void RefreshMemberUserDefinedProperties()
+    {
+        foreach (var member in _members)
+        {
+            if (!_documents.TryGetValue(member.DocumentKey, out var document)) continue;
+            var propertyManager = new FlatPatternExporter.Core.PropertyManager((Document)document);
+            foreach (var property in PropertyMetadataRegistry.UserDefinedProperties)
+            {
+                if (property.InventorPropertyName is not { Length: > 0 } propertyName) continue;
+                member.UserDefinedProperties[propertyName] = propertyManager.GetMappedProperty(property.InternalName);
+            }
+        }
+    }
+
+    private void FramePresetListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_isUpdatingPresetState) return;
+
+        _presetManager.SelectedTemplatePreset = FrameTemplatePresetsListBox.SelectedItem as TemplatePreset;
+        var selected = _presetManager.SelectedTemplatePreset;
+        _isUpdatingPresetState = true;
+        try
+        {
+            FramePresetNameTextBox.Text = selected?.Name ?? "";
+            if (selected is not null) SetFileNameTemplate(selected.Template);
+        }
+        finally
+        {
+            _isUpdatingPresetState = false;
+        }
+        UpdatePresetControls();
     }
 
     private void CreateFramePresetButton_Click(object sender, RoutedEventArgs e)
     {
         var name = FramePresetNameTextBox.Text.Trim();
         if (string.IsNullOrEmpty(name)) return;
-        _presetManager.CreatePreset(name, NameTemplateTextBox.Text, out _);
-        FramePresetComboBox.SelectedItem = _presetManager.SelectedTemplatePreset;
+        if (!_presetManager.CreatePreset(name, _fileNameTemplate, out _)) return;
+        FrameTemplatePresetsListBox.SelectedItem = _presetManager.SelectedTemplatePreset;
+        UpdatePresetControls();
     }
 
     private void UpdateFramePresetButton_Click(object sender, RoutedEventArgs e)
     {
         if (_presetManager.SelectedTemplatePreset is null) return;
-        _presetManager.UpdateSelectedTemplate(NameTemplateTextBox.Text);
-        var name = FramePresetNameTextBox.Text.Trim();
-        if (!string.IsNullOrEmpty(name)) _presetManager.RenameSelected(name, out _);
-        FramePresetComboBox.Items.Refresh();
+        _presetManager.UpdateSelectedTemplate(_fileNameTemplate);
+        FrameTemplatePresetsListBox.Items.Refresh();
+        UpdatePresetControls();
+    }
+
+    private void RenameFramePresetButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_presetManager.SelectedTemplatePreset is null) return;
+        if (!_presetManager.RenameSelected(FramePresetNameTextBox.Text.Trim(), out _)) return;
+        FrameTemplatePresetsListBox.Items.Refresh();
+        UpdatePresetControls();
+    }
+
+    private void DuplicateFramePresetButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_presetManager.SelectedTemplatePreset is null) return;
+        _presetManager.DuplicateSelected();
+        FrameTemplatePresetsListBox.SelectedItem = _presetManager.SelectedTemplatePreset;
+        UpdatePresetControls();
     }
 
     private void DeleteFramePresetButton_Click(object sender, RoutedEventArgs e)
     {
         if (!_presetManager.DeleteSelectedPreset()) return;
-        FramePresetComboBox.SelectedItem = null;
+        FrameTemplatePresetsListBox.SelectedItem = null;
         FramePresetNameTextBox.Clear();
+        UpdatePresetControls();
+    }
+
+    private void FramePresetNameTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_isUpdatingPresetState) UpdatePresetControls();
+    }
+
+    private void RefreshAvailableNameTokens()
+    {
+        if (FrameAvailableTokensListBox is null || FrameUserDefinedTokensListBox is null) return;
+
+        _availableNameTokens.Clear();
+        AddStandardToken("PartNumber", "PartNumber");
+        AddStandardToken("StockNumber", "StockNumber");
+        AddStandardToken("Material", "Material");
+        AddStandardToken("Description", "Description");
+        _availableNameTokens.Add(new FrameNameTokenDefinition(
+            "Length", _localization.GetString("Frame_ColumnLength")));
+        AddStandardToken("Qty", "Quantity");
+        AddStandardToken("FileName", "FileName");
+
+        _userDefinedNameTokens.Clear();
+        foreach (var property in PropertyMetadataRegistry.UserDefinedProperties.OrderBy(item => item.DisplayName))
+            _userDefinedNameTokens.Add(new FrameNameTokenDefinition(property.TokenName, property.DisplayName, true));
+
+        RenderFileNameTemplate();
+    }
+
+    private void AddStandardToken(string tokenName, string propertyName)
+    {
+        var displayName = PropertyMetadataRegistry.GetPropertyByInternalName(propertyName)?.DisplayName ?? tokenName;
+        _availableNameTokens.Add(new FrameNameTokenDefinition(tokenName, displayName));
+    }
+
+    private void AddFileNameToken(string tokenName)
+    {
+        if (string.IsNullOrWhiteSpace(tokenName)) return;
+        SetFileNameTemplate($"{_fileNameTemplate}{{{tokenName}}}");
+    }
+
+    private void AddCustomText(string customText)
+    {
+        if (string.IsNullOrEmpty(customText)) return;
+
+        var trailingCustomText = TrailingCustomTextRegex.Match(_fileNameTemplate);
+        if (trailingCustomText.Success)
+        {
+            var combined = trailingCustomText.Groups["custom"].Value + customText;
+            SetFileNameTemplate(string.Concat(
+                _fileNameTemplate.AsSpan(0, trailingCustomText.Index),
+                $"{{CUSTOM:{combined}}}"));
+        }
+        else
+        {
+            SetFileNameTemplate($"{_fileNameTemplate}{{CUSTOM:{customText}}}");
+        }
+    }
+
+    private void SetFileNameTemplate(string template)
+    {
+        _fileNameTemplate = template ?? "";
+        RenderFileNameTemplate();
+        UpdatePreview();
+        UpdatePresetControls();
+    }
+
+    private void RenderFileNameTemplate()
+    {
+        if (FrameTokenContainer is null) return;
+
+        FrameTokenContainer.Children.Clear();
+        var cursor = 0;
+        foreach (Match match in TemplateSegmentRegex.Matches(_fileNameTemplate))
+        {
+            if (match.Index > cursor)
+            {
+                var literal = _fileNameTemplate[cursor..match.Index];
+                AddTemplateSegment(cursor, literal.Length, literal, true, false);
+            }
+
+            if (match.Groups["custom"].Success)
+            {
+                AddTemplateSegment(match.Index, match.Length, match.Groups["custom"].Value, true, false);
+            }
+            else
+            {
+                var tokenName = match.Groups["token"].Value;
+                var token = FindNameToken(tokenName);
+                AddTemplateSegment(match.Index, match.Length, token?.DisplayName ?? tokenName, false, token?.IsUserDefined == true);
+            }
+            cursor = match.Index + match.Length;
+        }
+
+        if (cursor < _fileNameTemplate.Length)
+        {
+            var literal = _fileNameTemplate[cursor..];
+            AddTemplateSegment(cursor, literal.Length, literal, true, false);
+        }
+    }
+
+    private void AddTemplateSegment(int startIndex, int length, string displayText, bool isCustom, bool isUserDefined)
+    {
+        if (FrameTokenContainer is null || length == 0) return;
+
+        var border = new WpfBorder
+        {
+            Style = FrameTokenContainer.FindResource("TokenBlockStyle") as WpfStyle,
+            Tag = isCustom ? "CustomText" : isUserDefined ? "UserDefined" : null,
+            ToolTip = _fileNameTemplate.Substring(startIndex, length)
+        };
+        border.Child = new TextBlock
+        {
+            Text = displayText,
+            Style = FrameTokenContainer.FindResource("TokenTextStyle") as WpfStyle
+        };
+        border.MouseDown += (_, args) =>
+        {
+            if (args.ClickCount != 2 || startIndex + length > _fileNameTemplate.Length) return;
+            SetFileNameTemplate(_fileNameTemplate.Remove(startIndex, length));
+        };
+        FrameTokenContainer.Children.Add(border);
+    }
+
+    private FrameNameTokenDefinition? FindNameToken(string tokenName) =>
+        _availableNameTokens.Concat(_userDefinedNameTokens)
+            .FirstOrDefault(item => string.Equals(item.TokenName, tokenName, StringComparison.OrdinalIgnoreCase));
+
+    private void UpdatePresetControls()
+    {
+        if (FrameEmptyStatePanel is null || FrameTemplatePresetsListBox is null) return;
+
+        var isEmpty = _presetManager.TemplatePresets.Count == 0;
+        FrameEmptyStatePanel.Visibility = isEmpty ? Visibility.Visible : Visibility.Collapsed;
+        FrameTemplatePresetsListBox.Visibility = isEmpty ? Visibility.Collapsed : Visibility.Visible;
+
+        var selected = _presetManager.SelectedTemplatePreset;
+        var name = FramePresetNameTextBox?.Text.Trim() ?? "";
+        var duplicateName = _presetManager.TemplatePresets.Any(
+            preset => !ReferenceEquals(preset, selected) &&
+                      string.Equals(preset.Name, name, StringComparison.OrdinalIgnoreCase));
+
+        if (CreateFramePresetButton is not null)
+            CreateFramePresetButton.IsEnabled = !string.IsNullOrWhiteSpace(name) &&
+                                                !_presetManager.PresetNameExists(name) &&
+                                                FrameFileNameService.ValidateTemplate(_fileNameTemplate);
+        if (SaveFramePresetButton is not null)
+            SaveFramePresetButton.IsEnabled = selected is not null && selected.Template != _fileNameTemplate;
+        if (RenameFramePresetButton is not null)
+            RenameFramePresetButton.IsEnabled = selected is not null &&
+                                                !string.IsNullOrWhiteSpace(name) &&
+                                                !duplicateName &&
+                                                !string.Equals(selected.Name, name, StringComparison.Ordinal);
+        if (DuplicateFramePresetButton is not null) DuplicateFramePresetButton.IsEnabled = selected is not null;
+        if (DeleteFramePresetButton is not null) DeleteFramePresetButton.IsEnabled = selected is not null;
     }
 
     private void ExportFormatComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -255,12 +513,46 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
 
     private void UpdatePreview()
     {
-        if (NamePreviewTextBlock is null || NameTemplateTextBox is null) return;
+        if (NamePreviewTextBlock is null) return;
+        if (FrameEnableFileNameConstructorCheckBox?.IsChecked != true)
+        {
+            NamePreviewTextBlock.Text = _localization.GetString("Text_FunctionDisabled");
+            NamePreviewTextBlock.Foreground = FindResource("TextMutedBrush") as WpfBrush;
+            SetPreviewAppearance(false);
+            return;
+        }
+
+        if (!FrameFileNameService.ValidateTemplate(_fileNameTemplate))
+        {
+            NamePreviewTextBlock.Text = _localization.GetString("Error_UnknownTokens");
+            NamePreviewTextBlock.Foreground = FindResource("ErrorBrush") as WpfBrush;
+            SetPreviewAppearance(false);
+            return;
+        }
+
         var member = FrameMembersGrid?.SelectedItem as FrameMemberData ?? _members.FirstOrDefault();
         NamePreviewTextBlock.Text = member is null
-            ? ""
-            : FrameFileNameService.Resolve(NameTemplateTextBox.Text, member) + GetSelectedExtension();
+            ? CreatePlaceholderPreview() + GetSelectedExtension()
+            : FrameFileNameService.Resolve(_fileNameTemplate, member) + GetSelectedExtension();
+        NamePreviewTextBlock.Foreground = FindResource("TextSecondaryBrush") as WpfBrush;
+        SetPreviewAppearance(true);
     }
+
+    private void SetPreviewAppearance(bool isValid)
+    {
+        if (FrameFileNamePreviewBorder is null) return;
+        FrameFileNamePreviewBorder.Background = FindResource(
+            isValid ? "PreviewValidBackgroundBrush" : "PreviewWarningBackgroundBrush") as WpfBrush;
+        FrameFileNamePreviewBorder.BorderBrush = FindResource(
+            isValid ? "PreviewValidBorderBrush" : "PreviewWarningBorderBrush") as WpfBrush;
+    }
+
+    private string CreatePlaceholderPreview() => TemplateSegmentRegex.Replace(_fileNameTemplate, match =>
+    {
+        if (match.Groups["custom"].Success) return match.Groups["custom"].Value;
+        var tokenName = match.Groups["token"].Value;
+        return FindNameToken(tokenName)?.DisplayName ?? tokenName;
+    });
 
     private void UpdateFormatControls()
     {
@@ -306,3 +598,5 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
 
     private static int ClampIndex(int value, int count, int fallback) => value >= 0 && value < count ? value : fallback;
 }
+
+public sealed record FrameNameTokenDefinition(string TokenName, string DisplayName, bool IsUserDefined = false);

@@ -234,8 +234,8 @@
                                        Foreground="{DynamicResource TextMutedBrush}"
                                        FontWeight="SemiBold"
                                        TextWrapping="Wrap">
-                                <Run Text="• .NET 8 / C# 12"/><LineBreak/>
-                                <Run Text="• SDK 9.0.317"/><LineBreak/>
+                                <Run Text="• .NET 10 / C# 12"/><LineBreak/>
+                                <Run Text="• SDK 10.0.401"/><LineBreak/>
                                 <Run Text="• OpenAI Codex"/>
                             </TextBlock>
                         </Border>

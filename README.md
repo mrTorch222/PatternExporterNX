@@ -34,8 +34,8 @@ The upstream project documents development with assistance from [Claude Code](ht
 
 ## System Requirements
 - Windows 10/11 x64
-- .NET 8.0 Desktop Runtime; development uses .NET SDK 8.0.424 x64 (pinned in `global.json`) and Visual Studio Code or Visual Studio 2022
-- Autodesk Inventor 2027 installed locally; build, external interop loading and DXF export are verified. Cutting-software acceptance remains pending
+- .NET 10.0 Desktop Runtime; development uses .NET SDK 10.0.401 x64 (pinned in `global.json`) and Visual Studio Code or a compatible Visual Studio version
+- Autodesk Inventor 2027 installed locally. Interop loading and export were verified before the .NET 10 migration; manual Inventor and cutting-software acceptance must be repeated for the migrated build
 - Git in `PATH` if you want build numbers populated by the MSBuild `SetVersionInfo` target
 - Standalone ApprenticeServer (optional) – recommended for reliable saved-file thumbnails; Inventor 2026 and later require the separately installed, Windows-registered Apprentice Server for external applications. Windows Shell API is used automatically if it is unavailable.
 
@@ -69,7 +69,7 @@ dotnet build FlatPatternExporter/FlatPatternExporter.csproj -c Release -p:Produc
 ```
 
 `SheetMetal` exposes only the flat-pattern workspace and produces `PatternExporterNX.SheetMetal.exe`; `Frame` exposes only the Frame Generator workspace and produces `PatternExporterNX.Frame.exe`. The default `Combined` edition keeps both tabs. Each edition preserves the hidden module's saved settings, which allows the sheet-metal and frame branches to diverge without corrupting a shared user configuration.
-The solution uses .NET SDK 8.0.424 (`global.json`), C# 12 and `net8.0-windows10.0.26100.0`. `NuGet.Config` provides nuget.org without changing global NuGet settings. `InventorInstallDir` defaults to `%ProgramW6432%\Autodesk\Inventor 2027`; MSBuild reports a clear error if interop is absent. At runtime, interop is loaded from the `InventorInstallDir` environment variable, the Inventor 2027 installation registry entry, or the default install directory. A command-line MSBuild property applies only to the build; use the environment variable for a custom runtime location. Autodesk interop remains `Private=false` and is not redistributed.
+The solution uses .NET SDK 10.0.401 (`global.json`), C# 12 and `net10.0-windows10.0.26100.0`. `NuGet.Config` provides nuget.org without changing global NuGet settings. `InventorInstallDir` defaults to `%ProgramW6432%\Autodesk\Inventor 2027`; MSBuild reports a clear error if interop is absent. At runtime, interop is loaded from the `InventorInstallDir` environment variable, the Inventor 2027 installation registry entry, or the default install directory. A command-line MSBuild property applies only to the build; use the environment variable for a custom runtime location. Autodesk interop remains `Private=false` and is not redistributed.
 
 ### Portable build / publish
 Use the included publish profiles under `FlatPatternExporter/Properties/PublishProfiles` or run:
@@ -178,4 +178,4 @@ Copyright © 2025 Sinicyn Ivan Victorovich
 ---
 
 ## 🇷🇺 Кратко
-**PatternExporterNX**, независимый форк проекта Синицына Ивана Викторовича, подключается к Autodesk Inventor и автоматизирует экспорт разверток листового металла в DXF. Приложение сканирует сборки (BOM или обходом), фильтрует детали, выявляет конфликтующие обозначения, предлагает тонкие настройки DXF (слои, версии AutoCAD, полилинии, оптимизацию) и формирует имена файлов по токенам, включая пользовательские iProperties. Все настройки, пресеты и параметры интерфейса сохраняются в `%AppData%\FlatPatternExporter\settings.json`. Для сборки установите .NET 8, Visual Studio 2022 и убедитесь, что `Autodesk.Inventor.Interop.dll` ссылается на установленную версию Inventor. Подробные инструкции и структура проекта описаны в разделах выше.
+**PatternExporterNX**, независимый форк проекта Синицына Ивана Викторовича, подключается к Autodesk Inventor и автоматизирует экспорт разверток листового металла в DXF. Приложение сканирует сборки (BOM или обходом), фильтрует детали, выявляет конфликтующие обозначения, предлагает тонкие настройки DXF (слои, версии AutoCAD, полилинии, оптимизацию) и формирует имена файлов по токенам, включая пользовательские iProperties. Все настройки, пресеты и параметры интерфейса сохраняются в `%AppData%\FlatPatternExporter\settings.json`. Для сборки установите .NET 10 SDK и убедитесь, что `Autodesk.Inventor.Interop.dll` ссылается на установленную версию Inventor. Подробные инструкции и структура проекта описаны в разделах выше.

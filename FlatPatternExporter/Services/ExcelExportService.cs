@@ -5,6 +5,7 @@ using FlatPatternExporter.Core;
 using FlatPatternExporter.Enums;
 using FlatPatternExporter.Models;
 using ClosedXML.Excel;
+using WpfDataGrid = System.Windows.Controls.DataGrid;
 
 namespace FlatPatternExporter.Services;
 
@@ -25,7 +26,7 @@ public class ExcelExportService
     private static double PixelsToPoints(int pixels) => pixels * 72.0 / 96.0;
     private static double PixelsToColumnWidth(int pixels) => pixels / 7.0;
 
-    public void ExportToExcel(string filePath, DataGrid dataGrid, IEnumerable view)
+    public void ExportToExcel(string filePath, WpfDataGrid dataGrid, IEnumerable view)
     {
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add(_localizationManager.GetString("Excel_SheetName"));
@@ -105,7 +106,7 @@ public class ExcelExportService
         workbook.SaveAs(filePath);
     }
 
-    public void ExportToCsv(string filePath, DataGrid dataGrid, IEnumerable view, string delimiter)
+    public void ExportToCsv(string filePath, WpfDataGrid dataGrid, IEnumerable view, string delimiter)
     {
         using var writer = new System.IO.StreamWriter(filePath, false, System.Text.Encoding.UTF8);
 

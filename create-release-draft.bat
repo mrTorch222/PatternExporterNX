@@ -230,7 +230,7 @@ echo ### Archives
 echo.
 echo - **Deploy** - For installers ^(Inno Setup, WiX, NSIS^)
 echo - **Portable** - Single executable, no installation required
-echo - **FrameworkDependent** - Requires .NET 8.0 Runtime
+echo - **FrameworkDependent** - Requires .NET 10.0 Runtime
 echo - **Updater** - For automatic updates
 ) > "%NOTES_FILE%"
 

@@ -97,8 +97,8 @@ public class DxfExporter
         switch (exportOptions.SelectedExportFolder)
         {
             case ExportFolderType.ChooseFolder:
-                var dialog = new FolderBrowserDialog();
-                if (dialog.ShowDialog() == DialogResult.OK)
+                var dialog = new System.Windows.Forms.FolderBrowserDialog();
+                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                     targetDir = dialog.SelectedPath;
                 else
                     return false;

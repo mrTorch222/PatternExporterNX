@@ -1,8 +1,10 @@
 ﻿using stdole;
 
+using System.Drawing;
+
 namespace FlatPatternExporter.Converters;
 
-public class IPictureDispConverter : AxHost
+public class IPictureDispConverter : System.Windows.Forms.AxHost
 {
     private IPictureDispConverter() : base("")
     {

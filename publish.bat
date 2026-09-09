@@ -23,7 +23,7 @@ echo Select publish profile:
 echo.
 echo 1. Deploy          - Ready files for installer (zip archive with separate DLLs)
 echo 2. Portable        - Portable version (zip archive with single .exe file)
-echo 3. Framework       - Depends on .NET 8 Runtime (zip archive, minimal size)
+echo 3. Framework       - Depends on .NET 10 Runtime (zip archive, minimal size)
 echo 4. Updater Portable - Updater archive only (for deployment)
 echo 5. All             - Publish all profiles
 echo 6. Exit            - Exit

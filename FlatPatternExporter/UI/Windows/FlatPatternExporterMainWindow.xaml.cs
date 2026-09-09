@@ -2521,7 +2521,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
 
     private void SelectFixedFolderButton_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new FolderBrowserDialog();
+        var dialog = new System.Windows.Forms.FolderBrowserDialog();
         if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
         {
             FixedFolderPath = dialog.SelectedPath;

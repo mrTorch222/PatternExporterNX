@@ -60,7 +60,7 @@ Publishes the application without including .NET Runtime.
 - Output: `FlatPatternExporter\bin\publish\framework-dependent\`
 
 **Characteristics:**
-- ⚠️ Requires .NET 8.0 Runtime on target machine
+- ⚠️ Requires .NET 10.0 Runtime on target machine
 - ✅ Minimal size
 - ✅ Separate DLL files
 - 📦 Size: ~5-10 MB
@@ -119,7 +119,7 @@ Menu:
 ```
 1. Deploy          - Ready files for installer (zip archive with separate DLLs)
 2. Portable        - Portable version (zip archive with single .exe file)
-3. Framework       - Depends on .NET 8 Runtime (zip archive, minimal size)
+3. Framework       - Depends on .NET 10 Runtime (zip archive, minimal size)
 4. Updater Portable - Updater archive only (for deployment)
 5. All             - Publish all profiles
 6. Exit            - Exit
@@ -210,7 +210,7 @@ The `.buildtype` marker file enables automatic update system to download correct
 ✅ **Use FrameworkDependent Profile**
 - Minimal size
 - Centralized .NET Runtime management
-- Requires .NET 8.0 Runtime installation
+- Requires .NET 10.0 Runtime installation
 - Extract zip archive contents for deployment
 
 ---
@@ -230,7 +230,7 @@ The `.buildtype` marker file enables automatic update system to download correct
 ## Additional Information
 
 ### Target Platform
-- **Framework:** .NET 8.0 Windows
+- **Framework:** .NET 10.0 Windows
 - **Runtime:** win-x64
 - **OS Version:** Windows 10.0.26100.0+
 
@@ -254,8 +254,8 @@ Application version is generated automatically based on Git:
 - Make sure projects are compiled in Release configuration
 - Verify all dependencies are present
 
-### Error: "The framework 'Microsoft.NETCore.App' version '8.0.0' was not found"
-- Install .NET 8.0 SDK: https://dotnet.microsoft.com/download/dotnet/8.0
+### Error: "The framework 'Microsoft.NETCore.App' version '10.0.0' was not found"
+- Install .NET 10.0 SDK: https://dotnet.microsoft.com/download/dotnet/10.0
 
 ### Error: "git is not recognized"
 - Make sure Git is installed and added to PATH

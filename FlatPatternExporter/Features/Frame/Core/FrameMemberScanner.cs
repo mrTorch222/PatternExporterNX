@@ -91,11 +91,19 @@ public sealed class FrameMemberScanner
             Quantity = 1
         };
 
+        foreach (var property in PropertyMetadataRegistry.Properties.Values
+                     .Where(property => property.Type == PropertyMetadataRegistry.PropertyType.IProperty))
+        {
+            member.SetAttributeValue(property.InternalName, propertyManager.GetMappedProperty(property.InternalName));
+        }
+
         foreach (var property in PropertyMetadataRegistry.UserDefinedProperties)
         {
             var propertyName = property.InventorPropertyName;
             if (string.IsNullOrWhiteSpace(propertyName)) continue;
-            member.UserDefinedProperties[propertyName] = propertyManager.GetMappedProperty(property.InternalName);
+            var value = propertyManager.GetMappedProperty(property.InternalName);
+            member.UserDefinedProperties[propertyName] = value;
+            member.SetAttributeValue(property.InternalName, value);
         }
 
         members.Add(documentKey, member);

@@ -78,4 +78,29 @@ public sealed class FrameBomExportServiceTests
             if (File.Exists(filePath)) File.Delete(filePath);
         }
     }
+
+    [Fact]
+    public void CsvExportsOnlySelectedColumnsInTheirDisplayOrder()
+    {
+        var filePath = Path.Combine(Path.GetTempPath(), $"frame-bom-{Guid.NewGuid():N}.csv");
+        try
+        {
+            FrameBomExportService.ExportCsv(
+                filePath,
+                [Member],
+                ";",
+                [
+                    new FrameBomColumn("Material", member => member.Material),
+                    new FrameBomColumn("Part", member => member.PartNumber)
+                ]);
+            var lines = File.ReadAllLines(filePath, Encoding.UTF8);
+
+            Assert.Equal("Material;Part", lines[0]);
+            Assert.Equal("Steel;\"PN;42\"", lines[1]);
+        }
+        finally
+        {
+            if (File.Exists(filePath)) File.Delete(filePath);
+        }
+    }
 }

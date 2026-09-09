@@ -1,7 +1,10 @@
 ﻿<UserControl x:Class="FlatPatternExporter.Features.Frame.UI.FrameExporterControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:FlatPatternExporter.Converters"
+             xmlns:enums="clr-namespace:FlatPatternExporter.Enums"
              xmlns:extensions="clr-namespace:FlatPatternExporter.Extensions"
+             xmlns:services="clr-namespace:FlatPatternExporter.Services"
              Background="{DynamicResource BackgroundPrimaryBrush}"
              Foreground="{DynamicResource TextSecondaryBrush}">
     <Grid>
@@ -25,65 +28,116 @@
 
         <TabControl Grid.Row="1" Margin="{StaticResource StandardPaddingThickness}">
             <TabItem Header="{extensions:Localize Header_Main}">
-                <Border Background="{DynamicResource BackgroundTertiaryBrush}"
-                        BorderBrush="{DynamicResource BorderSecondaryBrush}"
-                        BorderThickness="1" CornerRadius="3" Padding="8">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="360"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="220"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <WrapPanel Margin="{StaticResource UniformStandardMarginThickness}">
+                        <GroupBox Header="{extensions:Localize Header_ExportPlacement}" Margin="{StaticResource RightStandardMarginThickness}">
+                            <Grid Margin="{StaticResource SectionContentMarginThickness}" MinWidth="395">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <RadioButton x:Name="FrameChooseFolderRadioButton" Content="{extensions:Localize UI_ChooseFolder}" GroupName="FrameExportFolderOptions" Checked="FrameExportPlacement_Changed" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <RadioButton x:Name="FrameComponentFolderRadioButton" Content="{extensions:Localize UI_ComponentFolder}" GroupName="FrameExportFolderOptions" Checked="FrameExportPlacement_Changed" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <RadioButton x:Name="FramePartFolderRadioButton" Content="{extensions:Localize UI_PartFolder}" GroupName="FrameExportFolderOptions" Checked="FrameExportPlacement_Changed" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <RadioButton x:Name="FrameProjectFolderRadioButton" Content="{extensions:Localize UI_ProjectFolder}" GroupName="FrameExportFolderOptions" Checked="FrameExportPlacement_Changed" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <RadioButton x:Name="FrameFixedFolderRadioButton" Content="{extensions:Localize UI_FixedFolder}" GroupName="FrameExportFolderOptions" Checked="FrameExportPlacement_Changed" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                </StackPanel>
+                                <Separator Grid.Column="1" Style="{StaticResource VerticalSeparatorStyle}" Margin="{StaticResource VerticalSeparatorCenteredMarginThickness}"/>
+                                <StackPanel Grid.Column="2">
+                                    <CheckBox x:Name="FrameEnableSubfolderCheckBox" Content="{extensions:Localize UI_CreateSubfolder}" Checked="FrameSubfolder_Changed" Unchecked="FrameSubfolder_Changed" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <TextBox x:Name="FrameSubfolderNameTextBox" Style="{StaticResource BaseTextBoxStyle}" TextChanged="FrameSubfolderNameTextBox_TextChanged" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <CheckBox x:Name="FrameOrganizeByMaterialCheckBox" Content="{extensions:Localize UI_OrganizeByMaterial}" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <CheckBox x:Name="FrameOrganizeByStockNumberCheckBox" Content="{extensions:Localize Frame_OrganizeByStockNumber}" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                </StackPanel>
+                                <Grid Grid.Row="1" Grid.ColumnSpan="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Button x:Name="FrameSelectFixedFolderButton" Content="..." Width="34" Click="BrowseOutputFolder_Click" Margin="0,0,8,0"/>
+                                    <TextBox x:Name="OutputFolderTextBox" Grid.Column="1" IsReadOnly="True"/>
+                                </Grid>
+                            </Grid>
+                        </GroupBox>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{extensions:Localize Frame_LabelOutputFolder}"
-                                   VerticalAlignment="Center" Margin="0,0,8,6"/>
-                        <TextBox x:Name="OutputFolderTextBox" Grid.Row="0" Grid.Column="1" Margin="0,0,8,6"/>
-                        <Button Grid.Row="0" Grid.Column="2" Content="..." Click="BrowseOutputFolder_Click"
-                                Width="34" Margin="0,0,16,6"/>
+                        <GroupBox Header="{extensions:Localize Header_ExcelExportSettings}" Margin="{StaticResource RightStandardMarginThickness}">
+                            <Grid Margin="{StaticResource SectionContentMarginThickness}" MinWidth="350">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Label Content="{extensions:Localize Label_DefaultExportFormat}" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <RadioButton x:Name="FrameExcelFormatRadioButton" Content="{extensions:Localize UI_ExportFormatExcel}" GroupName="FrameBomFormat" Checked="FrameBomFormat_Changed" Margin="0,0,12,0"/>
+                                    <RadioButton x:Name="FrameCsvFormatRadioButton" Content="{extensions:Localize UI_ExportFormatCsv}" GroupName="FrameBomFormat" Checked="FrameBomFormat_Changed"/>
+                                </StackPanel>
+                                <Label Grid.Row="1" Content="{extensions:Localize Label_CsvDelimiter}" VerticalAlignment="Center"/>
+                                <ComboBox x:Name="FrameCsvDelimiterComboBox" Grid.Row="1" Grid.Column="1" Width="180" Style="{StaticResource BaseComboBoxStyle}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock>
+                                                <TextBlock.Text>
+                                                    <MultiBinding>
+                                                        <MultiBinding.Converter><converters:EnumToDisplayNameConverter/></MultiBinding.Converter>
+                                                        <Binding/>
+                                                        <Binding Path="CurrentCulture" Source="{x:Static services:LocalizationManager.Instance}"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                    <enums:CsvDelimiterType>Comma</enums:CsvDelimiterType>
+                                    <enums:CsvDelimiterType>Semicolon</enums:CsvDelimiterType>
+                                    <enums:CsvDelimiterType>Tab</enums:CsvDelimiterType>
+                                    <enums:CsvDelimiterType>Pipe</enums:CsvDelimiterType>
+                                </ComboBox>
+                                <Label Grid.Row="2" Content="{extensions:Localize Label_ExportFileName}" VerticalAlignment="Center"/>
+                                <ComboBox x:Name="FrameBomFileNameComboBox" Grid.Row="2" Grid.Column="1" Width="180" Style="{StaticResource BaseComboBoxStyle}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock>
+                                                <TextBlock.Text>
+                                                    <MultiBinding>
+                                                        <MultiBinding.Converter><converters:EnumToDisplayNameConverter/></MultiBinding.Converter>
+                                                        <Binding/>
+                                                        <Binding Path="CurrentCulture" Source="{x:Static services:LocalizationManager.Instance}"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                    <enums:ExcelExportFileNameType>DateTimeFormat</enums:ExcelExportFileNameType>
+                                    <enums:ExcelExportFileNameType>FileName</enums:ExcelExportFileNameType>
+                                    <enums:ExcelExportFileNameType>PartNumber</enums:ExcelExportFileNameType>
+                                </ComboBox>
+                            </Grid>
+                        </GroupBox>
 
-                        <StackPanel Grid.Row="0" Grid.Column="3" Orientation="Horizontal" Margin="0,0,16,6">
-                            <TextBlock Text="{extensions:Localize Frame_LabelFormat}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <ComboBox x:Name="ExportFormatComboBox" Width="100" SelectedIndex="0"
-                                      SelectionChanged="ExportFormatComboBox_SelectionChanged">
-                                <ComboBoxItem Content="IGES"/>
-                                <ComboBoxItem Content="STEP"/>
-                                <ComboBoxItem Content="SAT"/>
-                                <ComboBoxItem Content="STL"/>
-                            </ComboBox>
-                        </StackPanel>
-
-                        <WrapPanel x:Name="IgesOptionsPanel" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5">
-                            <StackPanel Orientation="Horizontal" Margin="0,0,16,6">
-                                <TextBlock Text="{extensions:Localize Frame_LabelGeometryType}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <ComboBox x:Name="GeometryTypeComboBox" Width="120" SelectedIndex="0">
-                                    <ComboBoxItem Content="{extensions:Localize Frame_GeometrySurfaces}"/>
-                                    <ComboBoxItem Content="{extensions:Localize Frame_GeometrySolids}"/>
-                                    <ComboBoxItem Content="{extensions:Localize Frame_GeometryWireframe}"/>
+                        <GroupBox Header="{extensions:Localize Frame_LabelFormat}">
+                            <StackPanel Margin="{StaticResource SectionContentMarginThickness}">
+                                <ComboBox x:Name="ExportFormatComboBox" Width="120" HorizontalAlignment="Left" SelectedIndex="0" SelectionChanged="ExportFormatComboBox_SelectionChanged">
+                                    <ComboBoxItem Content="IGES"/><ComboBoxItem Content="STEP"/><ComboBoxItem Content="SAT"/><ComboBoxItem Content="STL"/>
                                 </ComboBox>
+                                <WrapPanel x:Name="IgesOptionsPanel" Margin="0,8,0,0">
+                                    <StackPanel Margin="0,0,12,0"><TextBlock Text="{extensions:Localize Frame_LabelGeometryType}"/><ComboBox x:Name="GeometryTypeComboBox" Width="120" SelectedIndex="0"><ComboBoxItem Content="{extensions:Localize Frame_GeometrySurfaces}"/><ComboBoxItem Content="{extensions:Localize Frame_GeometrySolids}"/><ComboBoxItem Content="{extensions:Localize Frame_GeometryWireframe}"/></ComboBox></StackPanel>
+                                    <StackPanel Margin="0,0,12,0"><TextBlock Text="{extensions:Localize Frame_LabelSolidFaces}"/><ComboBox x:Name="SolidFaceTypeComboBox" Width="110" SelectedIndex="1"><ComboBoxItem Content="{extensions:Localize Frame_FacesNurbs}"/><ComboBoxItem Content="{extensions:Localize Frame_FacesAnalytic}"/></ComboBox></StackPanel>
+                                    <StackPanel><TextBlock Text="{extensions:Localize Frame_LabelSurfaces}"/><ComboBox x:Name="SurfaceTypeComboBox" Width="100" SelectedIndex="1"><ComboBoxItem Content="IGES 143"/><ComboBoxItem Content="IGES 144"/></ComboBox></StackPanel>
+                                </WrapPanel>
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,16,6">
-                                <TextBlock Text="{extensions:Localize Frame_LabelSolidFaces}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <ComboBox x:Name="SolidFaceTypeComboBox" Width="100" SelectedIndex="1">
-                                    <ComboBoxItem Content="{extensions:Localize Frame_FacesNurbs}"/>
-                                    <ComboBoxItem Content="{extensions:Localize Frame_FacesAnalytic}"/>
-                                </ComboBox>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                <TextBlock Text="{extensions:Localize Frame_LabelSurfaces}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <ComboBox x:Name="SurfaceTypeComboBox" Width="90" SelectedIndex="1">
-                                    <ComboBoxItem Content="IGES 143"/>
-                                    <ComboBoxItem Content="IGES 144"/>
-                                </ComboBox>
-                            </StackPanel>
-                        </WrapPanel>
-                    </Grid>
-                </Border>
+                        </GroupBox>
+                    </WrapPanel>
+                </ScrollViewer>
             </TabItem>
 
             <TabItem Header="{extensions:Localize Header_FileName}">

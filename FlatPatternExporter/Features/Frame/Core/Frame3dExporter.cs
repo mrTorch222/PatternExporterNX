@@ -1,8 +1,6 @@
 ﻿using System.IO;
 using FlatPatternExporter.Core;
 using FlatPatternExporter.Enums;
-using System.Globalization;
-using System.Text;
 using FlatPatternExporter.Features.Frame.Models;
 using FlatPatternExporter.Features.Frame.Services;
 using FlatPatternExporter.Services;
@@ -33,72 +31,49 @@ public sealed class Frame3dExporter(InventorManager inventorManager)
         var translator = (TranslatorAddIn)application.ApplicationAddIns.ItemById[GetTranslatorId(options.ExportFormat)];
         if (!translator.Activated) translator.Activate();
 
-        Directory.CreateDirectory(options.OutputFolder);
         var errors = new List<string>();
         var exportedCount = 0;
         var reservedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var log = new List<string>
-        {
-            "Frame Generator 3D Exporter",
-            $"Time={DateTime.Now:yyyy-MM-dd HH:mm:ss}",
-            $"Format={options.ExportFormat}",
-            $"IGES options: GeometryType={options.GeometryType}, SolidFaceType={options.SolidFaceType}, SurfaceType={options.SurfaceType}, IncludeSketches=False, ToleranceCm={ExportFitToleranceCm.ToString(CultureInfo.InvariantCulture)}"
-        };
 
-        try
+        foreach (var member in members)
         {
-            foreach (var member in members)
+            cancellationToken.ThrowIfCancellationRequested();
+            member.ProcessingStatus = ProcessingStatus.Pending;
+            member.OutputFile = "";
+
+            if (!documents.TryGetValue(member.DocumentKey, out var document))
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                member.ProcessingStatus = ProcessingStatus.Pending;
-                member.OutputFile = "";
-
-                if (!documents.TryGetValue(member.DocumentKey, out var document))
-                {
-                    member.ProcessingStatus = ProcessingStatus.Skipped;
-                    errors.Add($"{member.FileName}: {LocalizationManager.Instance.GetString("Frame_ErrorDocumentUnavailable")}");
-                    log.Add($"SKIPPED | {member.FileName} | {errors[^1]}");
-                    continue;
-                }
-
-                var baseName = FrameFileNameService.Resolve(options.FileNameTemplate, member);
-                var uniqueName = FrameFileNameService.MakeUnique(baseName, reservedNames);
-                var extension = GetFileExtension(options.ExportFormat);
-                var outputPath = IOPath.Combine(options.OutputFolder, uniqueName + extension);
-                var temporaryPath = IOPath.Combine(options.OutputFolder, $".{uniqueName}.{Guid.NewGuid():N}.tmp{extension}");
-
-                try
-                {
-                    if (!document.Update2(false))
-                        throw new InvalidOperationException(LocalizationManager.Instance.GetString("Frame_ErrorModelUpdate"));
-                    var geometrySummary = ValidateAndDescribeGeometry(document);
-                    ExportDocument(application, translator, (Document)document, temporaryPath, options);
-                    ValidateOutput(temporaryPath);
-                    var outputSize = new FileInfo(temporaryPath).Length;
-                    IOFile.Move(temporaryPath, outputPath, true);
-                    member.OutputFile = outputPath;
-                    member.ProcessingStatus = ProcessingStatus.Success;
-                    exportedCount++;
-                    log.Add($"OK | {member.FileName} | {geometrySummary} | Bytes={outputSize} | {outputPath}");
-                }
-                catch (Exception ex)
-                {
-                    TryDelete(temporaryPath);
-                    member.ProcessingStatus = ProcessingStatus.Skipped;
-                    errors.Add($"{member.FileName}: {ex.Message}");
-                    log.Add($"EXPORT ERROR | {member.FileName} | {ex.Message.ReplaceLineEndings(" ")}");
-                }
+                member.ProcessingStatus = ProcessingStatus.Skipped;
+                errors.Add($"{member.FileName}: {LocalizationManager.Instance.GetString("Frame_ErrorDocumentUnavailable")}");
+                continue;
             }
-        }
-        finally
-        {
+
+            var outputFolder = ResolveOutputFolder(member, options);
+            Directory.CreateDirectory(outputFolder);
+            TryDelete(IOPath.Combine(outputFolder, "3D_EXPORT_LOG.txt"));
+            var baseName = FrameFileNameService.Resolve(options.FileNameTemplate, member);
+            var uniqueName = FrameFileNameService.MakeUnique(baseName, reservedNames);
+            var extension = GetFileExtension(options.ExportFormat);
+            var outputPath = IOPath.Combine(outputFolder, uniqueName + extension);
+            var temporaryPath = IOPath.Combine(outputFolder, $".{uniqueName}.{Guid.NewGuid():N}.tmp{extension}");
+
             try
             {
-                IOFile.WriteAllLines(IOPath.Combine(options.OutputFolder, "3D_EXPORT_LOG.txt"), log, new UTF8Encoding(false));
+                if (!document.Update2(false))
+                    throw new InvalidOperationException(LocalizationManager.Instance.GetString("Frame_ErrorModelUpdate"));
+                ValidateGeometry(document);
+                ExportDocument(application, translator, (Document)document, temporaryPath, options);
+                ValidateOutput(temporaryPath);
+                IOFile.Move(temporaryPath, outputPath, true);
+                member.OutputFile = outputPath;
+                member.ProcessingStatus = ProcessingStatus.Success;
+                exportedCount++;
             }
             catch (Exception ex)
             {
-                errors.Add(LocalizationManager.Instance.GetString("Frame_ErrorLogWrite", ex.Message));
+                TryDelete(temporaryPath);
+                member.ProcessingStatus = ProcessingStatus.Skipped;
+                errors.Add($"{member.FileName}: {ex.Message}");
             }
         }
 
@@ -142,7 +117,7 @@ public sealed class Frame3dExporter(InventorManager inventorManager)
         translator.SaveCopyAs(document, context, translatorOptions, dataMedium);
     }
 
-    private static string ValidateAndDescribeGeometry(PartDocument document)
+    private static void ValidateGeometry(PartDocument document)
     {
         var definition = document.ComponentDefinition;
         if (definition.SurfaceBodies.Count != 1 || definition.HasMultipleSolidBodies)
@@ -152,20 +127,6 @@ public sealed class Frame3dExporter(InventorManager inventorManager)
         if (!body.IsSolid)
             throw new InvalidOperationException(LocalizationManager.Instance.GetString("Frame_ErrorOpenSurfaceBody"));
 
-        double? volume = null;
-        try { volume = body.Volume[0.01]; }
-        catch { }
-
-        var unhealthy = new List<string>();
-        try
-        {
-            foreach (PartFeature feature in definition.Features)
-                if (feature.HealthStatus != HealthStatusEnum.kUpToDateHealth)
-                    unhealthy.Add($"{feature.Name}={feature.HealthStatus}");
-        }
-        catch { }
-
-        return $"Solids=1, Faces={body.Faces.Count}, Edges={body.Edges.Count}, VolumeCm3={volume?.ToString("0.######", CultureInfo.InvariantCulture) ?? "unknown"}, NonUpToDateFeatures={(unhealthy.Count == 0 ? "none" : string.Join(",", unhealthy))}";
     }
 
     private static string GetTranslatorId(FrameExportFormat format) => format switch
@@ -176,6 +137,28 @@ public sealed class Frame3dExporter(InventorManager inventorManager)
         FrameExportFormat.Stl => StlTranslatorId,
         _ => throw new ArgumentOutOfRangeException(nameof(format))
     };
+
+    private static string ResolveOutputFolder(FrameMemberData member, FrameExportOptions options)
+    {
+        var folder = options.UsePartFolder
+            ? IOPath.GetDirectoryName(member.FullFileName)
+            : options.OutputFolder;
+        if (string.IsNullOrWhiteSpace(folder)) folder = options.OutputFolder;
+        if (options.EnableSubfolder && !string.IsNullOrWhiteSpace(options.SubfolderName))
+            folder = IOPath.Combine(folder, SanitizeFolderName(options.SubfolderName));
+        if (options.OrganizeByMaterial && !string.IsNullOrWhiteSpace(member.Material))
+            folder = IOPath.Combine(folder, SanitizeFolderName(member.Material));
+        if (options.OrganizeByStockNumber && !string.IsNullOrWhiteSpace(member.StockNumber))
+            folder = IOPath.Combine(folder, SanitizeFolderName(member.StockNumber));
+        return folder;
+    }
+
+    private static string SanitizeFolderName(string value)
+    {
+        var invalid = IOPath.GetInvalidFileNameChars();
+        var sanitized = new string(value.Trim().Select(character => invalid.Contains(character) ? '_' : character).ToArray());
+        return string.IsNullOrWhiteSpace(sanitized) ? "_" : sanitized;
+    }
 
     private static string GetFileExtension(FrameExportFormat format) => format switch
     {
@@ -211,6 +194,11 @@ public sealed record FrameExportOptions(
     int GeometryType,
     int SolidFaceType,
     int SurfaceType,
-    FrameExportFormat ExportFormat = FrameExportFormat.Iges);
+    FrameExportFormat ExportFormat = FrameExportFormat.Iges,
+    bool UsePartFolder = false,
+    bool EnableSubfolder = false,
+    string SubfolderName = "",
+    bool OrganizeByMaterial = false,
+    bool OrganizeByStockNumber = false);
 
 public sealed record FrameExportResult(int ExportedCount, IReadOnlyList<string> Errors);

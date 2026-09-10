@@ -42,6 +42,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     private readonly ObservableCollection<FrameNameTokenDefinition> _userDefinedNameTokens = [];
     private InventorManager? _inventorManager;
     private string _fileNameTemplate = FrameFileNameService.DefaultTemplate;
+    private CancellationTokenSource? _operationCancellation;
     private bool _isBusy;
     private bool _isUpdatingPresetState;
 
@@ -77,6 +78,8 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     {
         _inventorManager = inventorManager;
     }
+
+    public void CancelActiveOperation() => _operationCancellation?.Cancel();
 
     public void ApplySettings(FrameExportSettings? settings)
     {
@@ -147,6 +150,8 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
 
         try
         {
+            _operationCancellation = new CancellationTokenSource();
+            var cancellationToken = _operationCancellation.Token;
             SetBusy(true);
             StatusTextBlock.Text = _localization.GetString("Frame_StatusScanning");
 
@@ -157,7 +162,10 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
                 return;
             }
 
-            var result = await StaTaskRunner.RunAsync(() => new FrameMemberScanner().Scan(assemblyDocument));
+            var requestedAttributes = GetRequestedAttributes();
+            var result = await StaTaskRunner.RunAsync(
+                () => new FrameMemberScanner().Scan(assemblyDocument, requestedAttributes, cancellationToken),
+                cancellationToken);
             _members.Clear();
             _documents.Clear();
             foreach (var member in result.Members) _members.Add(member);
@@ -169,12 +177,18 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
             else if (result.Errors.Count > 0) ShowErrors(result.Errors);
             UpdatePreview();
         }
+        catch (OperationCanceledException)
+        {
+            StatusTextBlock.Text = _localization.GetString("Frame_StatusCancelled");
+        }
         catch (Exception ex)
         {
             ShowError(_localization.GetString("Frame_Error", ex.Message));
         }
         finally
         {
+            _operationCancellation?.Dispose();
+            _operationCancellation = null;
             SetBusy(false);
         }
     }
@@ -192,6 +206,8 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
 
         try
         {
+            _operationCancellation = new CancellationTokenSource();
+            var cancellationToken = _operationCancellation.Token;
             SetBusy(true);
             StatusTextBlock.Text = _localization.GetString("Frame_StatusExporting");
             var effectiveTemplate = FrameEnableFileNameConstructorCheckBox.IsChecked == true
@@ -220,7 +236,15 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
                 member.ProcessingStatus = ProcessingStatus.Pending;
                 member.OutputFile = "";
             }
-            var result = await StaTaskRunner.RunAsync(() => exporter.Export(_members, _documents, options));
+            var progress = new Progress<FrameExportProgress>(value =>
+                StatusTextBlock.Text = _localization.GetString(
+                    "Frame_StatusExportProgress",
+                    value.Completed,
+                    value.Total,
+                    value.MemberName));
+            var result = await StaTaskRunner.RunAsync(
+                () => exporter.Export(_members, _documents, options, cancellationToken, progress),
+                cancellationToken);
             foreach (var item in result.Items)
             {
                 var member = _members.FirstOrDefault(candidate => candidate.DocumentKey == item.DocumentKey);
@@ -228,8 +252,21 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
                 member.OutputFile = item.OutputFile;
                 member.ProcessingStatus = item.Status;
             }
+            if (result.WasCancelled)
+            {
+                foreach (var member in _members.Where(item => item.ProcessingStatus == ProcessingStatus.Pending))
+                    member.ProcessingStatus = ProcessingStatus.Interrupted;
+                StatusTextBlock.Text = _localization.GetString("Frame_StatusCancelled");
+                return;
+            }
             StatusTextBlock.Text = _localization.GetString("Frame_StatusExportComplete", result.ExportedCount, result.Errors.Count);
             if (result.Errors.Count > 0) ShowErrors(result.Errors);
+        }
+        catch (OperationCanceledException)
+        {
+            foreach (var member in _members.Where(item => item.ProcessingStatus == ProcessingStatus.Pending))
+                member.ProcessingStatus = ProcessingStatus.Interrupted;
+            StatusTextBlock.Text = _localization.GetString("Frame_StatusCancelled");
         }
         catch (Exception ex)
         {
@@ -237,6 +274,8 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         }
         finally
         {
+            _operationCancellation?.Dispose();
+            _operationCancellation = null;
             SetBusy(false);
         }
     }
@@ -313,6 +352,34 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         StatusTextBlock.Text = "";
         UpdateButtons();
         UpdatePreview();
+    }
+
+    private void CancelFrameButton_Click(object sender, RoutedEventArgs e)
+    {
+        CancelFrameButton.IsEnabled = false;
+        _operationCancellation?.Cancel();
+    }
+
+    private HashSet<string> GetRequestedAttributes()
+    {
+        var attributes = FrameMembersGrid.Columns
+            .Select(GetAttributeInternalName)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Select(name => name!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (FrameEnableFileNameConstructorCheckBox.IsChecked != true) return attributes;
+
+        var templateTokens = TemplateSegmentRegex.Matches(_fileNameTemplate)
+            .Select(match => match.Groups["token"].Value)
+            .Where(token => !string.IsNullOrWhiteSpace(token))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var property in PropertyMetadataRegistry.UserDefinedProperties)
+        {
+            if (templateTokens.Contains(property.TokenName)) attributes.Add(property.InternalName);
+        }
+
+        return attributes;
     }
 
     private void FrameEnableFileNameConstructorCheckBox_Changed(object sender, RoutedEventArgs e) => UpdatePreview();
@@ -947,6 +1014,9 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         ScanFrameButton.IsEnabled = !_isBusy;
         Export3dButton.IsEnabled = !_isBusy && _members.Count > 0;
         ExportBomButton.IsEnabled = !_isBusy && _members.Count > 0;
+        ClearFrameButton.IsEnabled = !_isBusy;
+        CancelFrameButton.Visibility = _isBusy ? Visibility.Visible : Visibility.Collapsed;
+        CancelFrameButton.IsEnabled = _isBusy && _operationCancellation?.IsCancellationRequested != true;
     }
 
     private void ShowError(string message)

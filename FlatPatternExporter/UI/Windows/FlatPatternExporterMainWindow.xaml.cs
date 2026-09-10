@@ -367,9 +367,6 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
 
             // Update settings
             AutoUpdateCheck = settings.Update.AutoUpdateCheck;
-            if (_featureProfile.FrameEnabled)
-                FrameExporter.ApplySettings(settings.FrameExport);
-
             // User-defined properties
             PropertyMetadataRegistry.UserDefinedProperties.Clear();
             foreach (var userProperty in settings.Interface.UserDefinedProperties)
@@ -382,6 +379,10 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             PropertyMetadataRegistry.PropertySubstitutions.Clear();
             foreach (var kvp in settings.Interface.PropertySubstitutions)
                 PropertyMetadataRegistry.PropertySubstitutions[kvp.Key] = kvp.Value;
+
+            // Frame settings depend on the restored user-defined property registry.
+            if (_featureProfile.FrameEnabled)
+                FrameExporter.ApplySettings(settings.FrameExport);
 
             foreach (var property in PresetIProperties)
             {
@@ -403,7 +404,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                         AddUserDefinedIPropertyColumn(propertyDef.InventorPropertyName ?? internalName);
                     else
                         if (presetLookup[internalName].FirstOrDefault() is { } presetProperty)
-                        AddIPropertyColumn(presetProperty);
+                            AddIPropertyColumn(presetProperty);
                 }
             }
 

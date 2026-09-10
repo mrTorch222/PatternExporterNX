@@ -21,8 +21,10 @@
                     Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}"/>
             <Button x:Name="Export3dButton" Content="{extensions:Localize Frame_ButtonExport3d}" Click="Export3dButton_Click"
                     Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}" IsEnabled="False"/>
-            <Button Content="{extensions:Localize Button_Clear}" Click="ClearButton_Click"
-                    Style="{StaticResource LargeSquareButtonStyle}"/>
+            <Button x:Name="ClearFrameButton" Content="{extensions:Localize Button_Clear}" Click="ClearButton_Click"
+                    Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}"/>
+            <Button x:Name="CancelFrameButton" Content="{extensions:Localize Frame_ButtonCancel}" Click="CancelFrameButton_Click"
+                    Style="{StaticResource LargeSquareButtonStyle}" Visibility="Collapsed"/>
         </WrapPanel>
 
         <TabControl Grid.Row="1" Margin="{StaticResource StandardPaddingThickness}">

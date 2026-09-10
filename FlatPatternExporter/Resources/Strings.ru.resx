@@ -2004,6 +2004,9 @@
   <data name="Frame_ErrorOpenSurfaceBody" xml:space="preserve"><value>Обнаружено незамкнутое surface-тело.</value></data>
   <data name="Frame_ErrorTranslatorOptions" xml:space="preserve"><value>Выбранный транслятор не предоставляет параметры экспорта для этой детали.</value></data>
   <data name="Frame_ButtonExport3d" xml:space="preserve"><value>Экспорт 3D</value></data>
+  <data name="Frame_ButtonCancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="Frame_StatusCancelled" xml:space="preserve"><value>Операция отменена.</value></data>
+  <data name="Frame_StatusExportProgress" xml:space="preserve"><value>Экспорт {0} из {1}: {2}</value></data>
   <data name="Frame_LabelFormat" xml:space="preserve"><value>Формат</value></data>
   <data name="Header_Development" xml:space="preserve"><value>Разработка</value></data>
   <data name="Header_FlatPatternOrientation" xml:space="preserve"><value>Верхняя сторона развертки</value></data>

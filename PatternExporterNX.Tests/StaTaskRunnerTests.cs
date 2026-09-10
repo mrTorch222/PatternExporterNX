@@ -1,4 +1,4 @@
-using FlatPatternExporter.Core;
+﻿using FlatPatternExporter.Core;
 
 namespace PatternExporterNX.Tests;
 
@@ -10,5 +10,29 @@ public sealed class StaTaskRunnerTests
         var apartment = await StaTaskRunner.RunAsync(() => Thread.CurrentThread.GetApartmentState());
 
         Assert.Equal(ApartmentState.STA, apartment);
+    }
+
+    [Fact]
+    public async Task CancellationBeforeStartReturnsCancelledTask()
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            StaTaskRunner.RunAsync(() => 1, cancellation.Token));
+    }
+
+    [Fact]
+    public async Task CompletedActionKeepsItsResultWhenCancellationArrivesDuringExecution()
+    {
+        using var cancellation = new CancellationTokenSource();
+
+        var result = await StaTaskRunner.RunAsync(() =>
+        {
+            cancellation.Cancel();
+            return 42;
+        }, cancellation.Token);
+
+        Assert.Equal(42, result);
     }
 }

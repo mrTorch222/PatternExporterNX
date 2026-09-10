@@ -80,4 +80,30 @@ public sealed class FrameFileNameServiceTests
         Assert.Equal("tube_2", FrameFileNameService.MakeUnique("tube", reserved));
         Assert.Equal("Tube_3", FrameFileNameService.MakeUnique("Tube", reserved));
     }
+
+    [Theory]
+    [InlineData("CON", "_CON")]
+    [InlineData("CON.txt", "_CON.txt")]
+    [InlineData("nul", "_nul")]
+    [InlineData("valid-name", "valid-name")]
+    public void ResolveAvoidsWindowsReservedDeviceNames(string source, string expected)
+    {
+        var member = new FrameMemberData { PartNumber = source };
+
+        Assert.Equal(expected, FrameFileNameService.Resolve("{PartNumber}", member));
+    }
+
+    [Fact]
+    public void ResolveAndUniqueSuffixRespectMaximumBaseNameLength()
+    {
+        var member = new FrameMemberData { PartNumber = new string('A', 300) };
+        var baseName = FrameFileNameService.Resolve("{PartNumber}", member);
+        var reserved = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { baseName };
+
+        var uniqueName = FrameFileNameService.MakeUnique(baseName, reserved);
+
+        Assert.Equal(FrameFileNameService.MaximumBaseNameLength, baseName.Length);
+        Assert.Equal(FrameFileNameService.MaximumBaseNameLength, uniqueName.Length);
+        Assert.EndsWith("_2", uniqueName);
+    }
 }

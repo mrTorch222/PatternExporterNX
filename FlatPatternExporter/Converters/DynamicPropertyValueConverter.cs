@@ -8,16 +8,8 @@ public class DynamicPropertyValueConverter : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
-        if (values is [PartData partData, string propPath])
-        {
-            if (propPath.StartsWith("UserDefinedProperties["))
-            {
-                var key = propPath["UserDefinedProperties[".Length..].TrimEnd(']');
-                return partData.UserDefinedProperties.TryGetValue(key, out var v) ? v : string.Empty;
-            }
-            var pi = typeof(PartData).GetProperty(propPath);
-            return pi?.GetValue(partData)?.ToString() ?? string.Empty;
-        }
+        if (values is [IDynamicPropertyValueSource item, string propPath])
+            return item.GetDynamicPropertyValue(propPath);
         return string.Empty;
     }
 

@@ -8,7 +8,7 @@ using FlatPatternExporter.Utilities;
 
 namespace FlatPatternExporter.Models;
 
-public class PartData : INotifyPropertyChanged
+public class PartData : INotifyPropertyChanged, IDynamicPropertyValueSource
 {
     private int item;
     private int quantity;
@@ -230,6 +230,17 @@ public class PartData : INotifyPropertyChanged
     /// </summary>
     public bool IsPropertyExpression(string propertyName) =>
         _isExpressionFlags.TryGetValue(propertyName, out var isExpression) && isExpression;
+
+    public string GetDynamicPropertyValue(string propertyPath)
+    {
+        if (propertyPath.StartsWith("UserDefinedProperties[", StringComparison.Ordinal))
+        {
+            var key = propertyPath["UserDefinedProperties[".Length..].TrimEnd(']');
+            return UserDefinedProperties.TryGetValue(key, out var value) ? value : string.Empty;
+        }
+
+        return GetType().GetProperty(propertyPath)?.GetValue(this)?.ToString() ?? string.Empty;
+    }
 
     /// <summary>
     /// Sets the expression state for a property

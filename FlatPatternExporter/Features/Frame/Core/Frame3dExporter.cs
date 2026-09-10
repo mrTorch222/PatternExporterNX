@@ -22,7 +22,8 @@ public sealed class Frame3dExporter(InventorManager inventorManager)
         IEnumerable<FrameMemberData> members,
         IReadOnlyDictionary<string, PartDocument> documents,
         FrameExportOptions options,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IProgress<FrameExportProgress>? progress = null)
     {
         if (!inventorManager.EnsureInventorConnection())
             throw new InvalidOperationException(LocalizationManager.Instance.GetString("Error_InventorConnectionFailed"));
@@ -35,15 +36,18 @@ public sealed class Frame3dExporter(InventorManager inventorManager)
         var itemResults = new List<FrameExportItemResult>();
         var exportedCount = 0;
         var reservedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var memberList = members.ToList();
+        var completed = 0;
 
-        foreach (var member in members)
+        foreach (var member in memberList)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested) break;
             if (!documents.TryGetValue(member.DocumentKey, out var document))
             {
                 var error = $"{member.FileName}: {LocalizationManager.Instance.GetString("Frame_ErrorDocumentUnavailable")}";
                 errors.Add(error);
                 itemResults.Add(new FrameExportItemResult(member.DocumentKey, "", ProcessingStatus.Failed, error));
+                progress?.Report(new FrameExportProgress(++completed, memberList.Count, member.FileName));
                 continue;
             }
 
@@ -67,6 +71,11 @@ public sealed class Frame3dExporter(InventorManager inventorManager)
                 itemResults.Add(new FrameExportItemResult(member.DocumentKey, outputPath, ProcessingStatus.Success, null));
                 exportedCount++;
             }
+            catch (OperationCanceledException)
+            {
+                TryDelete(temporaryPath);
+                throw;
+            }
             catch (Exception ex)
             {
                 TryDelete(temporaryPath);
@@ -74,9 +83,11 @@ public sealed class Frame3dExporter(InventorManager inventorManager)
                 errors.Add(error);
                 itemResults.Add(new FrameExportItemResult(member.DocumentKey, "", ProcessingStatus.Failed, error));
             }
+
+            progress?.Report(new FrameExportProgress(++completed, memberList.Count, member.FileName));
         }
 
-        return new FrameExportResult(exportedCount, errors, itemResults);
+        return new FrameExportResult(exportedCount, errors, itemResults, cancellationToken.IsCancellationRequested);
     }
 
     private static void ExportDocument(
@@ -154,8 +165,7 @@ public sealed class Frame3dExporter(InventorManager inventorManager)
 
     private static string SanitizeFolderName(string value)
     {
-        var invalid = IOPath.GetInvalidFileNameChars();
-        var sanitized = new string(value.Trim().Select(character => invalid.Contains(character) ? '_' : character).ToArray());
+        var sanitized = FrameFileNameService.SanitizePathSegment(value);
         return string.IsNullOrWhiteSpace(sanitized) ? "_" : sanitized;
     }
 
@@ -195,7 +205,10 @@ public sealed record FrameExportOptions(
 
 public sealed record FrameExportItemResult(string DocumentKey, string OutputFile, ProcessingStatus Status, string? Error);
 
+public sealed record FrameExportProgress(int Completed, int Total, string MemberName);
+
 public sealed record FrameExportResult(
     int ExportedCount,
     IReadOnlyList<string> Errors,
-    IReadOnlyList<FrameExportItemResult> Items);
+    IReadOnlyList<FrameExportItemResult> Items,
+    bool WasCancelled);

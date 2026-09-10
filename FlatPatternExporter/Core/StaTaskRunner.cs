@@ -1,4 +1,4 @@
-namespace FlatPatternExporter.Core;
+﻿namespace FlatPatternExporter.Core;
 
 public static class StaTaskRunner
 {
@@ -15,7 +15,6 @@ public static class StaTaskRunner
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var result = action();
-                cancellationToken.ThrowIfCancellationRequested();
                 completion.TrySetResult(result);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

@@ -8,16 +8,24 @@ namespace FlatPatternExporter.Features.Frame.Services;
 
 public static partial class FrameFileNameService
 {
+    public const int MaximumBaseNameLength = 180;
     public const string DefaultTemplate = FrameExportSettings.DefaultFileNameTemplate;
     public const string FallbackTemplate = "{PartNumber}";
+    private static readonly HashSet<string> ReservedDeviceNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "CON", "PRN", "AUX", "NUL",
+        "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+    };
 
     public static string Resolve(string? template, FrameMemberData member)
     {
         var source = string.IsNullOrWhiteSpace(template) ? DefaultTemplate : template;
         var resolved = TokenRegex().Replace(source, match => ResolveToken(match.Groups[1].Value, member));
         resolved = CustomTextRegex().Replace(resolved, match => match.Groups[1].Value);
-        resolved = Sanitize(resolved);
-        return string.IsNullOrWhiteSpace(resolved) ? "FrameMember" : resolved;
+        resolved = SanitizePathSegment(resolved);
+        if (string.IsNullOrWhiteSpace(resolved)) resolved = "FrameMember";
+        return Truncate(resolved, MaximumBaseNameLength);
     }
 
     public static bool ValidateTemplate(string? template)
@@ -33,11 +41,13 @@ public static partial class FrameFileNameService
 
     public static string MakeUnique(string baseName, ISet<string> reservedNames)
     {
+        baseName = Truncate(baseName, MaximumBaseNameLength);
         var candidate = baseName;
         var suffix = 2;
         while (!reservedNames.Add(candidate))
         {
-            candidate = $"{baseName}_{suffix}";
+            var suffixText = $"_{suffix}";
+            candidate = Truncate(baseName, MaximumBaseNameLength - suffixText.Length) + suffixText;
             suffix++;
         }
 
@@ -71,15 +81,20 @@ public static partial class FrameFileNameService
         PropertyMetadataRegistry.UserDefinedProperties.Any(
             item => string.Equals(item.TokenName, token, StringComparison.OrdinalIgnoreCase));
 
-    private static string Sanitize(string value)
+    public static string SanitizePathSegment(string value)
     {
         foreach (var invalidCharacter in Path.GetInvalidFileNameChars())
             value = value.Replace(invalidCharacter, '_');
 
         value = WhitespaceRegex().Replace(value.Trim(), "_");
         value = RepeatedUnderscoreRegex().Replace(value, "_");
-        return value.Trim(' ', '.', '_');
+        value = value.Trim(' ', '.', '_');
+        var deviceStem = value.Split('.', 2)[0];
+        return ReservedDeviceNames.Contains(deviceStem) ? "_" + value : value;
     }
+
+    private static string Truncate(string value, int maximumLength) =>
+        value.Length <= maximumLength ? value : value[..maximumLength].TrimEnd(' ', '.', '_');
 
     [GeneratedRegex(@"\{([^{}:]+)\}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex TokenRegex();

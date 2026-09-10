@@ -2004,6 +2004,9 @@ Possible solutions:
   <data name="Frame_ErrorOpenSurfaceBody" xml:space="preserve"><value>An open surface body was found.</value></data>
   <data name="Frame_ErrorTranslatorOptions" xml:space="preserve"><value>The selected translator does not provide export options for this document.</value></data>
   <data name="Frame_ButtonExport3d" xml:space="preserve"><value>Export 3D</value></data>
+  <data name="Frame_ButtonCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Frame_StatusCancelled" xml:space="preserve"><value>Operation cancelled.</value></data>
+  <data name="Frame_StatusExportProgress" xml:space="preserve"><value>Exporting {0} of {1}: {2}</value></data>
   <data name="Frame_LabelFormat" xml:space="preserve"><value>Format</value></data>
   <data name="Header_Development" xml:space="preserve"><value>Development</value></data>
   <data name="Header_FlatPatternOrientation" xml:space="preserve"><value>Flat pattern top side</value></data>

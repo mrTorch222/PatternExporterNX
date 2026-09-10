@@ -59,7 +59,7 @@
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <Button x:Name="FrameSelectFixedFolderButton" Content="..." Width="34" Click="BrowseOutputFolder_Click" Margin="0,0,8,0"/>
+                                    <Button x:Name="FrameSelectFixedFolderButton" Content="..." Width="{StaticResource SmallButtonWidth}" Click="BrowseOutputFolder_Click" Style="{StaticResource InteractiveActionButtonStyle}" Margin="{StaticResource LeftTinyRightStandardMarginThickness}"/>
                                     <TextBox x:Name="OutputFolderTextBox" Grid.Column="1" IsReadOnly="True"/>
                                 </Grid>
                             </Grid>

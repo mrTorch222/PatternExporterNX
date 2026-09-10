@@ -31,6 +31,24 @@
             <TabItem Header="{extensions:Localize Header_Main}">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <WrapPanel Margin="{StaticResource UniformStandardMarginThickness}">
+                        <GroupBox Header="{extensions:Localize Tube_RecognitionMode}" Margin="{StaticResource RightStandardMarginThickness}">
+                            <StackPanel Margin="{StaticResource SectionContentMarginThickness}" MinWidth="330">
+                                <RadioButton x:Name="FrameGeneratorModeRadioButton"
+                                             Content="{extensions:Localize Tube_ModeFrameGenerator}"
+                                             GroupName="TubeRecognitionMode"
+                                             IsChecked="True"
+                                             Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                <RadioButton x:Name="TubeJointPropertiesModeRadioButton"
+                                             Content="{extensions:Localize Tube_ModeTubeJointProperties}"
+                                             GroupName="TubeRecognitionMode"
+                                             Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                <TextBlock Text="{extensions:Localize Tube_ModeTubeJointPropertiesHint}"
+                                           Foreground="{DynamicResource TextMutedBrush}"
+                                           TextWrapping="Wrap"
+                                           MaxWidth="330"/>
+                            </StackPanel>
+                        </GroupBox>
+
                         <GroupBox Header="{extensions:Localize Header_ExportPlacement}" Margin="{StaticResource RightStandardMarginThickness}">
                             <Grid Margin="{StaticResource SectionContentMarginThickness}" MinWidth="395">
                                 <Grid.RowDefinitions>

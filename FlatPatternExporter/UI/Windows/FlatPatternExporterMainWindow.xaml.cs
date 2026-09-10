@@ -208,9 +208,6 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
 
         InitializeComponent();
         ConfigureFeatureTabs();
-        if (_featureProfile.FrameEnabled)
-            FrameExporter.Initialize(_inventorManager);
-
         // Initialize hotkey dictionary
         _hotKeyActions = new Dictionary<Key, Func<Task>>
         {

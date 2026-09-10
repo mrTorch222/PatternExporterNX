@@ -107,6 +107,7 @@ public record FrameExportSettings
     public const string DefaultFileNameTemplate = "{StockNumber}_{Material}_L{Length}_Q{Qty}";
 
     public string OutputFolder { get; init; } = "";
+    public TubeRecognitionMode RecognitionMode { get; init; } = TubeRecognitionMode.FrameGenerator;
     public ExportFolderType? SelectedExportFolder { get; init; }
     public string FixedFolderPath { get; init; } = "";
     public bool EnableSubfolder { get; init; }

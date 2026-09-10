@@ -40,7 +40,11 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     private readonly TemplatePresetManager _presetManager = new();
     private readonly ObservableCollection<FrameNameTokenDefinition> _availableNameTokens = [];
     private readonly ObservableCollection<FrameNameTokenDefinition> _userDefinedNameTokens = [];
-    private InventorManager? _inventorManager;
+    private readonly InventorManager _inventorManager = new();
+    private string _assemblyFullFileName = "";
+    private string _assemblyDisplayName = "";
+    private string _assemblyPartNumber = "";
+    private string _projectWorkspacePath = "";
     private string _fileNameTemplate = FrameFileNameService.DefaultTemplate;
     private CancellationTokenSource? _operationCancellation;
     private bool _isBusy;
@@ -74,11 +78,6 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         };
     }
 
-    public void Initialize(InventorManager inventorManager)
-    {
-        _inventorManager = inventorManager;
-    }
-
     public void CancelActiveOperation() => _operationCancellation?.Cancel();
 
     public void ApplySettings(FrameExportSettings? settings)
@@ -87,6 +86,8 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         OutputFolderTextBox.Text = string.IsNullOrWhiteSpace(settings.FixedFolderPath)
             ? settings.OutputFolder
             : settings.FixedFolderPath;
+        FrameGeneratorModeRadioButton.IsChecked = settings.RecognitionMode == TubeRecognitionMode.FrameGenerator;
+        TubeJointPropertiesModeRadioButton.IsChecked = settings.RecognitionMode == TubeRecognitionMode.TubeJointProperties;
         SetSelectedExportFolder(settings.SelectedExportFolder
             ?? (string.IsNullOrWhiteSpace(OutputFolderTextBox.Text) ? ExportFolderType.ChooseFolder : ExportFolderType.FixedFolder));
         FrameEnableSubfolderCheckBox.IsChecked = settings.EnableSubfolder;
@@ -118,6 +119,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     public FrameExportSettings CollectSettings() => new()
     {
         OutputFolder = OutputFolderTextBox.Text.Trim(),
+        RecognitionMode = GetRecognitionMode(),
         SelectedExportFolder = GetSelectedExportFolder(),
         FixedFolderPath = OutputFolderTextBox.Text.Trim(),
         EnableSubfolder = FrameEnableSubfolderCheckBox.IsChecked == true,
@@ -146,7 +148,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
 
     private async void ScanFrameButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_isBusy || _inventorManager is null) return;
+        if (_isBusy) return;
 
         try
         {
@@ -155,23 +157,33 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
             SetBusy(true);
             StatusTextBlock.Text = _localization.GetString("Frame_StatusScanning");
 
-            var validation = _inventorManager.ValidateActiveDocument();
-            if (!validation.IsValid || validation.Document is not AssemblyDocument assemblyDocument)
+            var requestedAttributes = GetRequestedAttributes();
+            var recognitionMode = GetRecognitionMode();
+            var result = await StaTaskRunner.RunAsync(
+                () =>
+                {
+                    if (!_inventorManager.EnsureInventorConnection())
+                        throw new InvalidOperationException(_localization.GetString("Error_InventorConnectionFailed"));
+                    if (_inventorManager.Application?.ActiveDocument is not AssemblyDocument assemblyDocument)
+                        return null;
+                    return new FrameMemberScanner().Scan(assemblyDocument, recognitionMode, requestedAttributes, cancellationToken);
+                },
+                cancellationToken);
+            if (result is null)
             {
                 ShowError(_localization.GetString("Frame_ErrorAssemblyRequired"));
                 return;
             }
-
-            var requestedAttributes = GetRequestedAttributes();
-            var result = await StaTaskRunner.RunAsync(
-                () => new FrameMemberScanner().Scan(assemblyDocument, requestedAttributes, cancellationToken),
-                cancellationToken);
             _members.Clear();
             _documents.Clear();
             foreach (var member in result.Members) _members.Add(member);
             foreach (var pair in result.Documents) _documents.Add(pair.Key, pair.Value);
+            _assemblyFullFileName = result.AssemblyFullFileName;
+            _assemblyDisplayName = result.AssemblyDisplayName;
+            _assemblyPartNumber = result.AssemblyPartNumber;
+            _projectWorkspacePath = _inventorManager.ProjectWorkspacePath;
 
-            SetDefaultOutputFolder(assemblyDocument);
+            SetDefaultOutputFolder(result.AssemblyFullFileName);
             StatusTextBlock.Text = _localization.GetString("Frame_StatusScanComplete", _members.Count, result.Errors.Count);
             if (_members.Count == 0) ShowError(_localization.GetString("Frame_InfoNoMembers"));
             else if (result.Errors.Count > 0) ShowErrors(result.Errors);
@@ -195,7 +207,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
 
     private async void Export3dButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_isBusy || _inventorManager is null || _members.Count == 0) return;
+        if (_isBusy || _members.Count == 0) return;
 
         if (!TryResolveExportFolder(out var outputFolder, out var usePartFolder)) return;
         if (string.IsNullOrWhiteSpace(outputFolder))
@@ -242,8 +254,10 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
                     value.Completed,
                     value.Total,
                     value.MemberName));
+            var members = _members.ToList();
+            var documents = new Dictionary<string, PartDocument>(_documents, StringComparer.OrdinalIgnoreCase);
             var result = await StaTaskRunner.RunAsync(
-                () => exporter.Export(_members, _documents, options, cancellationToken, progress),
+                () => exporter.Export(members, documents, options, cancellationToken, progress),
                 cancellationToken);
             foreach (var item in result.Items)
             {
@@ -349,6 +363,10 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     {
         _members.Clear();
         _documents.Clear();
+        _assemblyFullFileName = "";
+        _assemblyDisplayName = "";
+        _assemblyPartNumber = "";
+        _projectWorkspacePath = "";
         StatusTextBlock.Text = "";
         UpdateButtons();
         UpdatePreview();
@@ -382,6 +400,11 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         return attributes;
     }
 
+    private TubeRecognitionMode GetRecognitionMode() =>
+        TubeJointPropertiesModeRadioButton.IsChecked == true
+            ? TubeRecognitionMode.TubeJointProperties
+            : TubeRecognitionMode.FrameGenerator;
+
     private void FrameEnableFileNameConstructorCheckBox_Changed(object sender, RoutedEventArgs e) => UpdatePreview();
 
     private void FrameTokenListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -408,7 +431,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         e.Handled = true;
     }
 
-    private void AddFrameUserPropertyButton_Click(object sender, RoutedEventArgs e)
+    private async void AddFrameUserPropertyButton_Click(object sender, RoutedEventArgs e)
     {
         var properties = GetFrameSelectableProperties();
         var window = new SelectIPropertyWindow(
@@ -422,24 +445,42 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
             Owner = Window.GetWindow(this)
         };
         window.ShowDialog();
-        RefreshMemberUserDefinedProperties();
+        await RefreshMemberUserDefinedPropertiesAsync();
         RefreshAvailableNameTokens();
         UpdatePreview();
     }
 
-    private void RefreshMemberUserDefinedProperties()
+    private async Task RefreshMemberUserDefinedPropertiesAsync()
     {
-        foreach (var member in _members)
+        var documents = new Dictionary<string, PartDocument>(_documents, StringComparer.OrdinalIgnoreCase);
+        var properties = PropertyMetadataRegistry.UserDefinedProperties
+            .Where(property => property.InventorPropertyName is { Length: > 0 })
+            .Select(property => (property.InternalName, PropertyName: property.InventorPropertyName!))
+            .ToList();
+        try
         {
-            if (!_documents.TryGetValue(member.DocumentKey, out var document)) continue;
-            var propertyManager = new FlatPatternExporter.Core.PropertyManager((Document)document);
-            foreach (var property in PropertyMetadataRegistry.UserDefinedProperties)
+            var values = await StaTaskRunner.RunAsync(() =>
             {
-                if (property.InventorPropertyName is not { Length: > 0 } propertyName) continue;
-                var value = propertyManager.GetMappedProperty(property.InternalName);
-                member.UserDefinedProperties[propertyName] = value;
-                member.SetAttributeValue(property.InternalName, value);
+                var result = new List<(string DocumentKey, string InternalName, string PropertyName, string Value)>();
+                foreach (var document in documents)
+                {
+                    var propertyManager = new PropertyManager((Document)document.Value);
+                    foreach (var property in properties)
+                        result.Add((document.Key, property.InternalName, property.PropertyName, propertyManager.GetMappedProperty(property.InternalName)));
+                }
+                return result;
+            });
+            foreach (var value in values)
+            {
+                var member = _members.FirstOrDefault(item => item.DocumentKey == value.DocumentKey);
+                if (member is null) continue;
+                member.UserDefinedProperties[value.PropertyName] = value.Value;
+                member.SetAttributeValue(value.InternalName, value.Value);
             }
+        }
+        catch (Exception ex)
+        {
+            ShowError(_localization.GetString("Frame_Error", ex.Message));
         }
     }
 
@@ -544,15 +585,27 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         if (column is not null) FrameMembersGrid.Columns.Remove(column);
     }
 
-    private void FillFrameAttributeData(string internalName)
+    private async void FillFrameAttributeData(string internalName)
     {
-        foreach (var member in _members)
+        var documents = new Dictionary<string, PartDocument>(_documents, StringComparer.OrdinalIgnoreCase);
+        try
         {
-            if (!_documents.TryGetValue(member.DocumentKey, out var document)) continue;
-            var value = new FlatPatternExporter.Core.PropertyManager((Document)document).GetMappedProperty(internalName);
-            member.SetAttributeValue(internalName, value);
-            if (PropertyMetadataRegistry.IsUserDefinedProperty(internalName))
-                member.UserDefinedProperties[PropertyMetadataRegistry.GetInventorNameFromUserDefinedInternalName(internalName)] = value;
+            var values = await StaTaskRunner.RunAsync(() => documents.ToDictionary(
+                pair => pair.Key,
+                pair => new PropertyManager((Document)pair.Value).GetMappedProperty(internalName),
+                StringComparer.OrdinalIgnoreCase));
+            foreach (var value in values)
+            {
+                var member = _members.FirstOrDefault(item => item.DocumentKey == value.Key);
+                if (member is null) continue;
+                member.SetAttributeValue(internalName, value.Value);
+                if (PropertyMetadataRegistry.IsUserDefinedProperty(internalName))
+                    member.UserDefinedProperties[PropertyMetadataRegistry.GetInventorNameFromUserDefinedInternalName(internalName)] = value.Value;
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowError(_localization.GetString("Frame_Error", ex.Message));
         }
     }
 
@@ -896,10 +949,9 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     {
         outputFolder = "";
         usePartFolder = false;
-        var activeDocument = _inventorManager?.Application?.ActiveDocument;
-        var assemblyFolder = activeDocument is null || string.IsNullOrWhiteSpace(activeDocument.FullFileName)
+        var assemblyFolder = string.IsNullOrWhiteSpace(_assemblyFullFileName)
             ? ""
-            : IOPath.GetDirectoryName(activeDocument.FullFileName) ?? "";
+            : IOPath.GetDirectoryName(_assemblyFullFileName) ?? "";
 
         switch (GetSelectedExportFolder())
         {
@@ -922,8 +974,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
                 usePartFolder = true;
                 break;
             case ExportFolderType.ProjectFolder:
-                _inventorManager?.SetProjectFolderInfo();
-                outputFolder = _inventorManager?.ProjectWorkspacePath ?? "";
+                outputFolder = _projectWorkspacePath;
                 break;
             case ExportFolderType.FixedFolder:
                 outputFolder = OutputFolderTextBox.Text.Trim();
@@ -943,17 +994,16 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         var type = FrameBomFileNameComboBox.SelectedItem is ExcelExportFileNameType selected
             ? selected
             : ExcelExportFileNameType.DateTimeFormat;
-        var document = _inventorManager?.Application?.ActiveDocument;
-        if (document is null || type == ExcelExportFileNameType.DateTimeFormat) return fallback;
+        if (type == ExcelExportFileNameType.DateTimeFormat) return fallback;
 
         string value;
         if (type == ExcelExportFileNameType.FileName)
         {
-            value = IOPath.GetFileNameWithoutExtension(document.DisplayName);
+            value = IOPath.GetFileNameWithoutExtension(_assemblyDisplayName);
         }
         else
         {
-            value = new PropertyManager(document).GetMappedProperty("PartNumber");
+            value = _assemblyPartNumber;
         }
 
         var invalid = IOPath.GetInvalidFileNameChars();
@@ -995,10 +1045,9 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         _ => ".igs"
     };
 
-    private void SetDefaultOutputFolder(AssemblyDocument assemblyDocument)
+    private void SetDefaultOutputFolder(string assemblyPath)
     {
         if (!string.IsNullOrWhiteSpace(OutputFolderTextBox.Text)) return;
-        var assemblyPath = assemblyDocument.FullFileName;
         var parentFolder = string.IsNullOrWhiteSpace(assemblyPath) ? null : IOPath.GetDirectoryName(assemblyPath);
         OutputFolderTextBox.Text = IOPath.Combine(parentFolder ?? IOPath.GetTempPath(), "3D");
     }

@@ -33,6 +33,12 @@ public enum FrameExportFormat
     Stl = 3
 }
 
+public enum TubeRecognitionMode
+{
+    FrameGenerator = 0,
+    TubeJointProperties = 1
+}
+
 public enum FlatPatternTopSideMode
 {
     AsModeled = 0,

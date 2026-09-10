@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using FlatPatternExporter.Enums;
 using FlatPatternExporter.Features.Frame.Models;
 using FlatPatternExporter.Features.Frame.Services;
 using FlatPatternExporter.Services;
@@ -16,6 +17,7 @@ public sealed class FrameMemberScanner
 
     public FrameScanResult Scan(
         AssemblyDocument assemblyDocument,
+        TubeRecognitionMode recognitionMode = TubeRecognitionMode.FrameGenerator,
         IReadOnlyCollection<string>? requestedAttributes = null,
         CancellationToken cancellationToken = default)
     {
@@ -24,8 +26,15 @@ public sealed class FrameMemberScanner
         var errors = new List<string>();
 
         var attributes = requestedAttributes?.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
-        ScanOccurrences(assemblyDocument.ComponentDefinition.Occurrences, members, documents, errors, attributes, cancellationToken);
-        return new FrameScanResult(members.Values.OrderBy(member => member.StockNumber).ThenBy(member => member.LengthMm).ToList(), documents, errors);
+        ScanOccurrences(assemblyDocument.ComponentDefinition.Occurrences, members, documents, errors, recognitionMode, attributes, cancellationToken);
+        var assemblyDocumentObject = (Document)assemblyDocument;
+        return new FrameScanResult(
+            members.Values.OrderBy(member => member.StockNumber).ThenBy(member => member.LengthMm).ToList(),
+            documents,
+            errors,
+            assemblyDocument.FullFileName ?? "",
+            assemblyDocument.DisplayName ?? "",
+            new PropertyManager(assemblyDocumentObject).GetMappedProperty("PartNumber"));
     }
 
     private static void ScanOccurrences(
@@ -33,6 +42,7 @@ public sealed class FrameMemberScanner
         IDictionary<string, FrameMemberData> members,
         IDictionary<string, PartDocument> documents,
         ICollection<string> errors,
+        TubeRecognitionMode recognitionMode,
         IReadOnlySet<string> requestedAttributes,
         CancellationToken cancellationToken)
     {
@@ -45,13 +55,13 @@ public sealed class FrameMemberScanner
                 if (occurrence.Suppressed) continue;
 
                 var definitionDocument = occurrence.Definition.Document;
-                if (definitionDocument is PartDocument partDocument && IsFrameMember((Document)partDocument))
+                if (definitionDocument is PartDocument partDocument)
                 {
-                    AddMember(occurrence, partDocument, members, documents, requestedAttributes);
+                    TryAddMember(occurrence, partDocument, members, documents, errors, recognitionMode, requestedAttributes);
                 }
                 else if (definitionDocument is AssemblyDocument)
                 {
-                    ScanOccurrences(occurrence.SubOccurrences, members, documents, errors, requestedAttributes, cancellationToken);
+                    ScanOccurrences(occurrence.SubOccurrences, members, documents, errors, recognitionMode, requestedAttributes, cancellationToken);
                 }
             }
             catch (OperationCanceledException)
@@ -67,9 +77,50 @@ public sealed class FrameMemberScanner
         }
     }
 
+    private static void TryAddMember(
+        ComponentOccurrence occurrence,
+        PartDocument partDocument,
+        IDictionary<string, FrameMemberData> members,
+        IDictionary<string, PartDocument> documents,
+        ICollection<string> errors,
+        TubeRecognitionMode recognitionMode,
+        IReadOnlySet<string> requestedAttributes)
+    {
+        var document = (Document)partDocument;
+        var propertyManager = new PropertyManager(document);
+        double? lengthOverride = null;
+
+        if (recognitionMode != TubeRecognitionMode.TubeJointProperties)
+        {
+            if (!IsFrameMember(document)) return;
+        }
+        else
+        {
+            var recognition = TubeJointPropertyRecognizer.Recognize(
+                propertyName => propertyManager.GetMappedProperty($"UDP_{propertyName}"));
+            if (!recognition.IsCandidate) return;
+            if (!recognition.IsRecognized || recognition.Metadata is null)
+            {
+                errors.Add($"{TryGetOccurrenceName(occurrence)}: {recognition.Error}");
+                return;
+            }
+            if (!IsSingleSolid(partDocument))
+            {
+                errors.Add($"{TryGetOccurrenceName(occurrence)}: {LocalizationManager.Instance.GetString("Tube_ErrorSingleSolidRequired")}");
+                return;
+            }
+
+            lengthOverride = recognition.Metadata.LengthMm;
+        }
+
+        AddMember(occurrence, partDocument, propertyManager, lengthOverride, members, documents, requestedAttributes);
+    }
+
     private static void AddMember(
         ComponentOccurrence occurrence,
         PartDocument partDocument,
+        PropertyManager propertyManager,
+        double? lengthOverride,
         IDictionary<string, FrameMemberData> members,
         IDictionary<string, PartDocument> documents,
         IReadOnlySet<string> requestedAttributes)
@@ -77,7 +128,6 @@ public sealed class FrameMemberScanner
         var document = (Document)partDocument;
         var fullFileName = partDocument.FullFileName ?? "";
         var fileName = string.IsNullOrWhiteSpace(fullFileName) ? partDocument.DisplayName : IOPath.GetFileName(fullFileName);
-        var propertyManager = new PropertyManager(document);
         var modelState = GetModelState(occurrence, propertyManager);
         var documentKey = FrameMemberIdentity.Create(fullFileName, partDocument.DisplayName, modelState);
 
@@ -97,7 +147,7 @@ public sealed class FrameMemberScanner
             StockNumber = propertyManager.GetMappedProperty("StockNumber"),
             Material = propertyManager.GetMappedProperty("Material"),
             Description = propertyManager.GetMappedProperty("Description"),
-            LengthMm = GetLengthMm(partDocument),
+            LengthMm = lengthOverride ?? GetLengthMm(partDocument),
             Quantity = 1
         };
 
@@ -140,6 +190,12 @@ public sealed class FrameMemberScanner
         }
     }
 
+    private static bool IsSingleSolid(PartDocument document)
+    {
+        var definition = document.ComponentDefinition;
+        return definition.SurfaceBodies.Count == 1 && !definition.HasMultipleSolidBodies && definition.SurfaceBodies[1].IsSolid;
+    }
+
     private static double? GetLengthMm(PartDocument document)
     {
         try
@@ -170,4 +226,7 @@ public sealed class FrameMemberScanner
 public sealed record FrameScanResult(
     IReadOnlyList<FrameMemberData> Members,
     IReadOnlyDictionary<string, PartDocument> Documents,
-    IReadOnlyList<string> Errors);
+    IReadOnlyList<string> Errors,
+    string AssemblyFullFileName,
+    string AssemblyDisplayName,
+    string AssemblyPartNumber);

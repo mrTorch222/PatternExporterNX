@@ -15,7 +15,7 @@
 - Ограничения исходной сборки и ручной проверки: [FORK_BASELINE.md](FORK_BASELINE.md).
 
 ## Overview
-PatternExporterNX is a standalone WPF utility that connects to a running Autodesk Inventor session. It exports sheet-metal flat patterns to DXF and Frame Generator members to IGES. The tool scans assemblies or parts, resolves conflicts, and produces files with predictable naming. Settings, tokens, and UI preferences persist between sessions so teams can standardize their export pipeline.
+PatternExporterNX is a standalone WPF utility that connects to a running Autodesk Inventor session. It exports sheet-metal flat patterns to DXF and tube members to IGES, STEP, SAT or STL. Tube Export supports both native Frame Generator members and solid IPT parts recognized by `TubeJoint.*` iProperties. The tool scans assemblies or parts, resolves conflicts, and produces files with predictable naming. Settings, tokens, and UI preferences persist between sessions so teams can standardize their export pipeline.
 
 ## Highlights
 - Connects to Autodesk Inventor through the COM API and validates the active document before processing.
@@ -26,7 +26,7 @@ PatternExporterNX is a standalone WPF utility that connects to a running Autodes
 - Generates thumbnails for parts and exported DXF previews to aid validation. Uses a dual-method approach: ApprenticeServer API (primary, faster) with automatic fallback to Windows Shell API if ApprenticeServer is unavailable.
 - Reads `Part Img` from saved-file thumbnail data without opening a new Inventor view; DXF export creates a missing sheet-metal Flat Pattern in memory before calling `FlatPattern.DataIO.WriteDataToFile`.
 - Persists UI layout, column order, presets, themes, and localization preferences in `%AppData%\FlatPatternExporter\settings.json`.
-- Provides a separate Frame Generator workspace that finds unique frame-member IPT documents recursively, counts their occurrences, reads `G_L` in millimeters, exports IGES, STEP, SAT or STL, and writes the resulting BOM to Excel or CSV.
+- Provides a separate Tube Export workspace that recursively finds native Frame Generator members or solid IPT parts marked with `TubeJoint.*` iProperties, counts their occurrences, exports IGES, STEP, SAT or STL, and writes the resulting BOM to Excel or CSV.
 - Ships with English and Russian UI resources plus a light/dark theme switcher.
 
 ## Development
@@ -68,7 +68,7 @@ dotnet build FlatPatternExporter/FlatPatternExporter.csproj -c Release -p:Produc
 dotnet build FlatPatternExporter/FlatPatternExporter.csproj -c Release -p:ProductEdition=Frame
 ```
 
-`SheetMetal` exposes only the flat-pattern workspace and produces `PatternExporterNX.SheetMetal.exe`; `Frame` exposes only the Frame Generator workspace and produces `PatternExporterNX.Frame.exe`. The default `Combined` edition keeps both tabs. Each edition preserves the hidden module's saved settings, which allows the sheet-metal and frame branches to diverge without corrupting a shared user configuration.
+`SheetMetal` exposes only the flat-pattern workspace and produces `PatternExporterNX.SheetMetal.exe`; `Frame` exposes only the Tube Export workspace and produces `PatternExporterNX.Frame.exe`. The default `Combined` edition keeps both tabs. Each edition preserves the hidden module's saved settings, which allows the sheet-metal and frame branches to diverge without corrupting a shared user configuration.
 The solution uses .NET SDK 10.0.401 (`global.json`), C# 12 and `net10.0-windows10.0.26100.0`. `NuGet.Config` provides nuget.org without changing global NuGet settings. `InventorInstallDir` defaults to `%ProgramW6432%\Autodesk\Inventor 2027`; MSBuild reports a clear error if interop is absent. At runtime, interop is loaded from the `InventorInstallDir` environment variable, the Inventor 2027 installation registry entry, or the default install directory. A command-line MSBuild property applies only to the build; use the environment variable for a custom runtime location. Autodesk interop remains `Private=false` and is not redistributed.
 
 ### Portable build / publish
@@ -118,17 +118,18 @@ See [PUBLISH.md](PUBLISH.md) for detailed publishing documentation.
 6. Click **Export** to generate DXF files (and optional previews). Progress bars report the operation status and any skipped items.
 7. Use **Clear** to reset the session or adjust settings and re-export as needed.
 
-### Frame Generator members
+### Tube Export
 
-1. Open the main Frame Generator assembly and select the **Frame Generator** tab.
-2. Click **Scan frames**. Suppressed occurrences are ignored; repeated references to the same IPT are grouped and counted.
-3. Choose the 3D output folder and configure the file name on the **File Name** tab. The visual constructor supports presets, custom text, user-defined iProperties, live preview, and the tokens `{PartNumber}`, `{StockNumber}`, `{Material}`, `{Description}`, `{Length}`, `{Qty}`, and `{FileName}`.
-4. Choose IGES, STEP, SAT or STL and click **Export 3D**. For tube cutting through IGES, use **Surfaces / Analytic / IGES 144**. These are the IGES defaults for new settings; existing saved selections are retained. Files with duplicate resolved names receive `_2`, `_3`, and later suffixes.
-5. Click **Export BOM** to save the displayed grouped list as `.xlsx` or UTF-8 `.csv`.
+1. Open the main assembly and select the **Tube Export** tab.
+2. Select **Frame Generator members only** for native frame documents, or **Solids with TubeJoint iProperties** for recognized solid IPT parts.
+3. Click **Scan tubes**. Suppressed occurrences are ignored; repeated references to the same IPT and Model State are grouped and counted.
+4. Choose the 3D output folder and configure the file name on the **File Name** tab. The visual constructor supports presets, custom text, user-defined iProperties, live preview, and the tokens `{PartNumber}`, `{StockNumber}`, `{Material}`, `{Description}`, `{Length}`, `{Qty}`, and `{FileName}`.
+5. Choose IGES, STEP, SAT or STL and click **Export 3D**. For tube cutting through IGES, use **Surfaces / Analytic / IGES 144**. Files with duplicate resolved names receive `_2`, `_3`, and later suffixes.
+6. Click **Export BOM** to save the displayed grouped list as `.xlsx` or UTF-8 `.csv`.
 
-Before export, each part is updated with `Update2(false)` and must contain exactly one closed solid body. IGES excludes sketches and uses a fitting tolerance of 0.001 cm (0.01 mm). `3D_EXPORT_LOG.txt` records the selected format, geometry diagnostics, output sizes, and errors. Files are replaced only after a successful export to a nonempty temporary file.
+Before export, each part is updated with `Update2(false)` and must contain exactly one closed solid body. IGES excludes sketches and uses a fitting tolerance of 0.001 cm (0.01 mm). Files are validated in a temporary path and replace the destination only after successful validation.
 
-Frame detection follows Inventor's Frame Generator document interest identifier, and length is read from the `G_L` model parameter using Inventor's database units. IGES export requires a real Frame Generator assembly and the IGES Translator Add-In available in Inventor 2027.
+Strict Frame Generator detection follows Inventor's document interest identifier, and length is read from `G_L` using Inventor database units. TubeJoint detection accepts a single-solid IPT with `TubeJoint.ProfileType` (`Rectangular` or `Round`), `TubeJoint.Profile`, positive `TubeJoint.LengthMm`, `WidthMm`, `HeightMm`, `WallThicknessMm`, Boolean `TubeJoint.Normalized`, and supported `TubeJoint.RecognitionVersion = 1`. Decimal commas and decimal points are supported. The recognizer reads but does not modify the source iProperties. The selected recognition mode is saved in the existing settings file.
 
 ### Export Options at a Glance
 - **Component filters**: exclude reference, purchased, phantom, and library parts from the export queue.

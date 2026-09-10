@@ -1964,7 +1964,7 @@
   <data name="Unit_Foot" xml:space="preserve"><value>фут</value></data>
   <data name="Unit_Unknown" xml:space="preserve"><value>Неизвестно</value></data>
   <data name="MainTab_FlatPatterns" xml:space="preserve"><value>Листовой металл</value></data>
-  <data name="MainTab_FrameGenerator" xml:space="preserve"><value>Генератор рам</value></data>
+  <data name="MainTab_FrameGenerator" xml:space="preserve"><value>Экспорт труб</value></data>
   <data name="Frame_ButtonScan" xml:space="preserve"><value>Сканировать трубы</value></data>
   <data name="Frame_ButtonExportIges" xml:space="preserve"><value>Экспорт IGES</value></data>
   <data name="Frame_ButtonExportBom" xml:space="preserve"><value>Экспорт BOM</value></data>
@@ -1977,16 +1977,16 @@
   <data name="Frame_ColumnLength" xml:space="preserve"><value>Длина, мм</value></data>
   <data name="Frame_ColumnOutputFile" xml:space="preserve"><value>3D-файл</value></data>
   <data name="Frame_ColumnSourceFile" xml:space="preserve"><value>Исходный файл</value></data>
-  <data name="Frame_ErrorAssemblyRequired" xml:space="preserve"><value>Перед сканированием элементов Генератора рам откройте главную сборку.</value></data>
+  <data name="Frame_ErrorAssemblyRequired" xml:space="preserve"><value>Перед сканированием труб откройте главную сборку.</value></data>
   <data name="Frame_ErrorOutputFolder" xml:space="preserve"><value>Выберите папку экспорта 3D.</value></data>
-  <data name="Frame_InfoNoMembers" xml:space="preserve"><value>В сборке не найдены элементы Генератора рам.</value></data>
-  <data name="Frame_StatusScanning" xml:space="preserve"><value>Сканирование элементов Генератора рам...</value></data>
+  <data name="Frame_InfoNoMembers" xml:space="preserve"><value>В сборке не найдены трубы для выбранного режима распознавания.</value></data>
+  <data name="Frame_StatusScanning" xml:space="preserve"><value>Сканирование труб...</value></data>
   <data name="Frame_StatusScanComplete" xml:space="preserve"><value>Найдено: {0}; ошибок сканирования: {1}.</value></data>
-  <data name="Frame_StatusExporting" xml:space="preserve"><value>Экспорт элементов Генератора рам...</value></data>
+  <data name="Frame_StatusExporting" xml:space="preserve"><value>Экспорт труб...</value></data>
   <data name="Frame_StatusExportComplete" xml:space="preserve"><value>Экспортировано 3D-файлов: {0}; ошибок: {1}.</value></data>
   <data name="Frame_StatusBomExported" xml:space="preserve"><value>BOM элементов рам сохранён: {0}</value></data>
-  <data name="Frame_SelectOutputFolder" xml:space="preserve"><value>Выберите папку для 3D-файлов Генератора рам</value></data>
-  <data name="Frame_Error" xml:space="preserve"><value>Ошибка операции Генератора рам: {0}</value></data>
+  <data name="Frame_SelectOutputFolder" xml:space="preserve"><value>Выберите папку для 3D-файлов труб</value></data>
+  <data name="Frame_Error" xml:space="preserve"><value>Ошибка операции экспорта труб: {0}</value></data>
   <data name="Frame_ErrorInventorUnavailable" xml:space="preserve"><value>Inventor недоступен.</value></data>
   <data name="Frame_ErrorDocumentUnavailable" xml:space="preserve"><value>Исходный документ недоступен.</value></data>
   <data name="Frame_ErrorInvalidIges" xml:space="preserve"><value>Inventor не создал корректный 3D-файл.</value></data>
@@ -2007,6 +2007,11 @@
   <data name="Frame_ButtonCancel" xml:space="preserve"><value>Отмена</value></data>
   <data name="Frame_StatusCancelled" xml:space="preserve"><value>Операция отменена.</value></data>
   <data name="Frame_StatusExportProgress" xml:space="preserve"><value>Экспорт {0} из {1}: {2}</value></data>
+  <data name="Tube_RecognitionMode" xml:space="preserve"><value>Распознавание труб</value></data>
+  <data name="Tube_ModeFrameGenerator" xml:space="preserve"><value>Только элементы Frame Generator</value></data>
+  <data name="Tube_ModeTubeJointProperties" xml:space="preserve"><value>Солиды с iProperties TubeJoint</value></data>
+  <data name="Tube_ModeTubeJointPropertiesHint" xml:space="preserve"><value>Проверяются все вхождения IPT с солидом. Принимаются детали с корректным набором свойств TubeJoint.*.</value></data>
+  <data name="Tube_ErrorSingleSolidRequired" xml:space="preserve"><value>Деталь TubeJoint должна содержать ровно одно твёрдое тело.</value></data>
   <data name="Frame_LabelFormat" xml:space="preserve"><value>Формат</value></data>
   <data name="Header_Development" xml:space="preserve"><value>Разработка</value></data>
   <data name="Header_FlatPatternOrientation" xml:space="preserve"><value>Верхняя сторона развертки</value></data>

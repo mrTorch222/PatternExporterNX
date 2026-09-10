@@ -35,4 +35,13 @@ public sealed class StaTaskRunnerTests
 
         Assert.Equal(42, result);
     }
+
+    [Fact]
+    public async Task ConsecutiveActionsUseTheSameStaThread()
+    {
+        var firstThread = await StaTaskRunner.RunAsync(() => Environment.CurrentManagedThreadId);
+        var secondThread = await StaTaskRunner.RunAsync(() => Environment.CurrentManagedThreadId);
+
+        Assert.Equal(firstThread, secondThread);
+    }
 }

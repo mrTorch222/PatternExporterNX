@@ -50,6 +50,7 @@ public sealed class SettingsCompatibilityTests
         Assert.Equal(1, settings.FrameExport.SurfaceType);
         Assert.Equal(FrameExportFormat.Iges, settings.FrameExport.ExportFormat);
         Assert.Null(settings.FrameExport.SelectedExportFolder);
+        Assert.Equal(TubeRecognitionMode.FrameGenerator, settings.FrameExport.RecognitionMode);
         Assert.Equal(CsvDelimiterType.Tab, settings.FrameExport.CsvDelimiter);
         Assert.Equal(ExportFileFormat.Excel, settings.FrameExport.DefaultBomFormat);
         Assert.Equal(ExcelExportFileNameType.DateTimeFormat, settings.FrameExport.BomFileNameType);
@@ -73,6 +74,7 @@ public sealed class SettingsCompatibilityTests
             FrameExport = new FrameExportSettings
             {
                 EnableFileNameConstructor = false,
+                RecognitionMode = TubeRecognitionMode.TubeJointProperties,
                 ExportFormat = FrameExportFormat.Step,
                 SelectedExportFolder = ExportFolderType.ProjectFolder,
                 EnableSubfolder = true,
@@ -101,6 +103,7 @@ public sealed class SettingsCompatibilityTests
 
         Assert.Equal(FrameExportFormat.Step, restored.FrameExport.ExportFormat);
         Assert.False(restored.FrameExport.EnableFileNameConstructor);
+        Assert.Equal(TubeRecognitionMode.TubeJointProperties, restored.FrameExport.RecognitionMode);
         Assert.Equal(ExportFolderType.ProjectFolder, restored.FrameExport.SelectedExportFolder);
         Assert.True(restored.FrameExport.EnableSubfolder);
         Assert.Equal("3D", restored.FrameExport.SubfolderName);

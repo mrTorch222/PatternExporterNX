@@ -35,6 +35,7 @@ public sealed class Frame3dExporter(InventorManager inventorManager)
 
         Directory.CreateDirectory(options.OutputFolder);
         var errors = new List<string>();
+        var itemResults = new List<FrameExportItemResult>();
         var exportedCount = 0;
         var reservedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var log = new List<string>
@@ -50,13 +51,11 @@ public sealed class Frame3dExporter(InventorManager inventorManager)
             foreach (var member in members)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                member.ProcessingStatus = ProcessingStatus.Pending;
-                member.OutputFile = "";
-
                 if (!documents.TryGetValue(member.DocumentKey, out var document))
                 {
-                    member.ProcessingStatus = ProcessingStatus.Skipped;
-                    errors.Add($"{member.FileName}: {LocalizationManager.Instance.GetString("Frame_ErrorDocumentUnavailable")}");
+                    var error = $"{member.FileName}: {LocalizationManager.Instance.GetString("Frame_ErrorDocumentUnavailable")}";
+                    errors.Add(error);
+                    itemResults.Add(new FrameExportItemResult(member.DocumentKey, "", ProcessingStatus.Failed, error));
                     log.Add($"SKIPPED | {member.FileName} | {errors[^1]}");
                     continue;
                 }
@@ -73,19 +72,19 @@ public sealed class Frame3dExporter(InventorManager inventorManager)
                         throw new InvalidOperationException(LocalizationManager.Instance.GetString("Frame_ErrorModelUpdate"));
                     var geometrySummary = ValidateAndDescribeGeometry(document);
                     ExportDocument(application, translator, (Document)document, temporaryPath, options);
-                    ValidateOutput(temporaryPath);
+                    FrameExportValidator.Validate(temporaryPath, options.ExportFormat);
                     var outputSize = new FileInfo(temporaryPath).Length;
                     IOFile.Move(temporaryPath, outputPath, true);
-                    member.OutputFile = outputPath;
-                    member.ProcessingStatus = ProcessingStatus.Success;
+                    itemResults.Add(new FrameExportItemResult(member.DocumentKey, outputPath, ProcessingStatus.Success, null));
                     exportedCount++;
                     log.Add($"OK | {member.FileName} | {geometrySummary} | Bytes={outputSize} | {outputPath}");
                 }
                 catch (Exception ex)
                 {
                     TryDelete(temporaryPath);
-                    member.ProcessingStatus = ProcessingStatus.Skipped;
-                    errors.Add($"{member.FileName}: {ex.Message}");
+                    var error = $"{member.FileName}: {ex.Message}";
+                    errors.Add(error);
+                    itemResults.Add(new FrameExportItemResult(member.DocumentKey, "", ProcessingStatus.Failed, error));
                     log.Add($"EXPORT ERROR | {member.FileName} | {ex.Message.ReplaceLineEndings(" ")}");
                 }
             }
@@ -102,7 +101,7 @@ public sealed class Frame3dExporter(InventorManager inventorManager)
             }
         }
 
-        return new FrameExportResult(exportedCount, errors);
+        return new FrameExportResult(exportedCount, errors, itemResults);
     }
 
     private static void ExportDocument(
@@ -186,13 +185,6 @@ public sealed class Frame3dExporter(InventorManager inventorManager)
         _ => throw new ArgumentOutOfRangeException(nameof(format))
     };
 
-    private static void ValidateOutput(string filePath)
-    {
-        var file = new FileInfo(filePath);
-        if (!file.Exists || file.Length == 0)
-            throw new IOException(LocalizationManager.Instance.GetString("Frame_ErrorInvalidIges"));
-    }
-
     private static void TryDelete(string filePath)
     {
         try
@@ -213,4 +205,9 @@ public sealed record FrameExportOptions(
     int SurfaceType,
     FrameExportFormat ExportFormat = FrameExportFormat.Iges);
 
-public sealed record FrameExportResult(int ExportedCount, IReadOnlyList<string> Errors);
+public sealed record FrameExportItemResult(string DocumentKey, string OutputFile, ProcessingStatus Status, string? Error);
+
+public sealed record FrameExportResult(
+    int ExportedCount,
+    IReadOnlyList<string> Errors,
+    IReadOnlyList<FrameExportItemResult> Items);

@@ -2050,4 +2050,5 @@
   <data name="BendToken_Length" xml:space="preserve"><value>Длина гиба</value></data>
   <data name="Theme_KeyColor" xml:space="preserve"><value>Ключевой цвет темы</value></data>
   <data name="BendAnnotation_Enable" xml:space="preserve"><value>Добавлять надписи гибов в DXF</value></data>
+  <data name="ProcessingStatus_Failed" xml:space="preserve"><value>Ошибка</value></data>
 </root>

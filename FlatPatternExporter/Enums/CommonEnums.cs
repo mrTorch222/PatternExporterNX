@@ -79,7 +79,8 @@ public enum ProcessingStatus
     Pending,        // Pending export (yellow/orange)
     Success,        // Successfully exported (green)
     Skipped,        // Skipped (no flat pattern or error) (red)
-    Interrupted     // Export was interrupted (gray)
+    Interrupted,    // Export was interrupted (gray)
+    Failed          // Export failed (red)
 }
 
 public enum DocumentType

@@ -2050,4 +2050,5 @@ Possible solutions:
   <data name="BendToken_Length" xml:space="preserve"><value>Bend length</value></data>
   <data name="Theme_KeyColor" xml:space="preserve"><value>Theme accent color</value></data>
   <data name="BendAnnotation_Enable" xml:space="preserve"><value>Add bend annotations to DXF</value></data>
+  <data name="ProcessingStatus_Failed" xml:space="preserve"><value>Failed</value></data>
 </root>

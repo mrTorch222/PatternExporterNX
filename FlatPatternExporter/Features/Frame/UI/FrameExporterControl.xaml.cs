@@ -30,6 +30,10 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         FramePresetComboBox.ItemsSource = _presetManager.TemplatePresets;
         NameTemplateTextBox.Text = FrameFileNameService.DefaultTemplate;
         UpdatePreview();
+        _localization.LanguageChanged += (_, _) =>
+        {
+            foreach (var member in _members) member.RefreshLocalization();
+        };
     }
 
     public void Initialize(InventorManager inventorManager)
@@ -82,7 +86,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
                 return;
             }
 
-            var result = await Task.Run(() => new FrameMemberScanner().Scan(assemblyDocument));
+            var result = await StaTaskRunner.RunAsync(() => new FrameMemberScanner().Scan(assemblyDocument));
             _members.Clear();
             _documents.Clear();
             foreach (var member in result.Members) _members.Add(member);
@@ -91,7 +95,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
             SetDefaultOutputFolder(assemblyDocument);
             StatusTextBlock.Text = _localization.GetString("Frame_StatusScanComplete", _members.Count, result.Errors.Count);
             if (_members.Count == 0) ShowError(_localization.GetString("Frame_InfoNoMembers"));
-            else if (result.Errors.Count > 0) ShowError(result.Errors[0]);
+            else if (result.Errors.Count > 0) ShowErrors(result.Errors);
             UpdatePreview();
         }
         catch (Exception ex)
@@ -127,9 +131,21 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
                 SurfaceTypeComboBox.SelectedIndex,
                 (FrameExportFormat)ExportFormatComboBox.SelectedIndex);
             var exporter = new Frame3dExporter(_inventorManager);
-            var result = await Task.Run(() => exporter.Export(_members, _documents, options));
+            foreach (var member in _members)
+            {
+                member.ProcessingStatus = ProcessingStatus.Pending;
+                member.OutputFile = "";
+            }
+            var result = await StaTaskRunner.RunAsync(() => exporter.Export(_members, _documents, options));
+            foreach (var item in result.Items)
+            {
+                var member = _members.FirstOrDefault(candidate => candidate.DocumentKey == item.DocumentKey);
+                if (member is null) continue;
+                member.OutputFile = item.OutputFile;
+                member.ProcessingStatus = item.Status;
+            }
             StatusTextBlock.Text = _localization.GetString("Frame_StatusExportComplete", result.ExportedCount, result.Errors.Count);
-            if (result.Errors.Count > 0) ShowError(result.Errors[0]);
+            if (result.Errors.Count > 0) ShowErrors(result.Errors);
         }
         catch (Exception ex)
         {
@@ -302,6 +318,15 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     {
         StatusTextBlock.Text = message;
         CustomMessageBox.Show(message, _localization.GetString("MessageBox_Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+
+    private void ShowErrors(IReadOnlyList<string> errors)
+    {
+        var visibleErrors = errors.Take(10).ToList();
+        var message = string.Join(System.Environment.NewLine, visibleErrors);
+        if (errors.Count > visibleErrors.Count)
+            message += System.Environment.NewLine + $"… +{errors.Count - visibleErrors.Count}";
+        ShowError(message);
     }
 
     private static int ClampIndex(int value, int count, int fallback) => value >= 0 && value < count ? value : fallback;

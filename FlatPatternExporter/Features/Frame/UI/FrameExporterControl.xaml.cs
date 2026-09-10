@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.IO;
+using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -33,6 +34,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     private readonly ObservableCollection<FrameMemberData> _members = [];
+    private readonly ICollectionView _membersView;
     private readonly Dictionary<string, PartDocument> _documents = new(StringComparer.OrdinalIgnoreCase);
     private readonly LocalizationManager _localization = LocalizationManager.Instance;
     private readonly TemplatePresetManager _presetManager = new();
@@ -46,7 +48,9 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     public FrameExporterControl()
     {
         InitializeComponent();
-        FrameMembersGrid.ItemsSource = _members;
+        _membersView = CollectionViewSource.GetDefaultView(_members);
+        _membersView.Filter = FilterFrameMember;
+        FrameMembersGrid.ItemsSource = _membersView;
         FrameTemplatePresetsListBox.ItemsSource = _presetManager.TemplatePresets;
         FrameAvailableTokensListBox.ItemsSource = _availableNameTokens;
         FrameUserDefinedTokensListBox.ItemsSource = _userDefinedNameTokens;
@@ -369,6 +373,42 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
             Owner = Window.GetWindow(this)
         };
         window.ShowDialog();
+    }
+
+    private void FrameSearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (FrameClearSearchButton is null) return;
+        FrameClearSearchButton.IsEnabled = !string.IsNullOrWhiteSpace(FrameSearchTextBox.Text);
+        _membersView.Refresh();
+    }
+
+    private void FrameClearSearchButton_Click(object sender, RoutedEventArgs e)
+    {
+        FrameSearchTextBox.Clear();
+        FrameSearchTextBox.Focus();
+    }
+
+    private bool FilterFrameMember(object item)
+    {
+        if (item is not FrameMemberData member) return false;
+        var search = FrameSearchTextBox?.Text.Trim();
+        if (string.IsNullOrWhiteSpace(search)) return true;
+
+        return new[]
+            {
+                member.ProcessingStatusText,
+                member.PartNumber,
+                member.StockNumber,
+                member.Material,
+                member.Description,
+                member.LengthMm?.ToString(System.Globalization.CultureInfo.CurrentCulture) ?? "",
+                member.Quantity.ToString(System.Globalization.CultureInfo.CurrentCulture),
+                member.FileName,
+                member.OutputFile
+            }
+            .Concat(member.AttributeValues.Values)
+            .Concat(member.UserDefinedProperties.Values)
+            .Any(value => value.Contains(search, StringComparison.CurrentCultureIgnoreCase));
     }
 
     private void RestoreAttributeColumns(IReadOnlyCollection<string>? columnOrder)

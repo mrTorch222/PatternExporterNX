@@ -11,6 +11,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -20,10 +21,6 @@
                     Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}"/>
             <Button x:Name="Export3dButton" Content="{extensions:Localize Frame_ButtonExport3d}" Click="Export3dButton_Click"
                     Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}" IsEnabled="False"/>
-            <Button x:Name="ExportBomButton" Content="{extensions:Localize Frame_ButtonExportBom}" Click="ExportBomButton_Click"
-                    Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}" IsEnabled="False"/>
-            <Button Content="{extensions:Localize UI_AddColumns}" Click="AddFrameColumnsButton_Click"
-                    Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}"/>
             <Button Content="{extensions:Localize Button_Clear}" Click="ClearButton_Click"
                     Style="{StaticResource LargeSquareButtonStyle}"/>
         </WrapPanel>
@@ -349,7 +346,66 @@
             </TabItem>
         </TabControl>
 
-        <DataGrid x:Name="FrameMembersGrid" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True"
+        <Border Grid.Row="2"
+                Background="{DynamicResource BackgroundPrimaryBrush}"
+                BorderBrush="{DynamicResource BorderPrimaryBrush}"
+                BorderThickness="{StaticResource StandardTopBorderThicknessValue}"
+                CornerRadius="3,3,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left"
+                            Margin="{StaticResource StandardMarginThickness}" VerticalAlignment="Center">
+                    <Grid>
+                        <TextBox x:Name="FrameSearchTextBox" Width="200" Style="{StaticResource BaseTextBoxStyle}"
+                                 TextChanged="FrameSearchTextBox_TextChanged"/>
+                        <TextBlock Text="{extensions:Localize Text_Search}"
+                                   Foreground="{DynamicResource TextDisabledBrush}"
+                                   Margin="{StaticResource SmallMarginThickness}"
+                                   IsHitTestVisible="False" VerticalAlignment="Center"
+                                   Padding="{StaticResource PlaceholderPaddingThickness}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource BaseTextBlockStyle}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=FrameSearchTextBox}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                    <Border Width="{StaticResource StandardElementHeight}" Height="{StaticResource StandardElementHeight}"
+                            Margin="{StaticResource TinyMarginThickness}">
+                        <Button x:Name="FrameClearSearchButton" Click="FrameClearSearchButton_Click"
+                                Style="{StaticResource CloseIconButton}" IsEnabled="False"/>
+                    </Border>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right"
+                            Margin="{StaticResource StandardMarginThickness}" VerticalAlignment="Center">
+                    <Button x:Name="AddFramePropertyButton" Click="AddFrameColumnsButton_Click"
+                            Margin="{StaticResource RightStandardMarginThickness}"
+                            Style="{StaticResource InteractiveActionButtonStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Style="{StaticResource AddIconStyle}"
+                                  Margin="{StaticResource RightTinyPlusMarginThickness}" SnapsToDevicePixels="True"/>
+                            <TextBlock Text="{extensions:Localize UI_Property}"
+                                       VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="ExportBomButton" Click="ExportBomButton_Click" IsEnabled="False"
+                            Style="{StaticResource InteractiveActionButtonStyle}">
+                        <TextBlock Text="{extensions:Localize UI_ExportToExcel}"
+                                   TextAlignment="Center" VerticalAlignment="Center"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <DataGrid x:Name="FrameMembersGrid" Grid.Row="3" AutoGenerateColumns="False" IsReadOnly="True"
                   CanUserAddRows="False" SelectionMode="Extended" AlternationCount="2"
                   HeadersVisibility="Column" RowHeaderWidth="0"
                   SelectionChanged="FrameMembersGrid_SelectionChanged"
@@ -367,7 +423,7 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <StatusBar Grid.Row="3" Style="{StaticResource BaseStatusBarStyle}">
+        <StatusBar Grid.Row="4" Style="{StaticResource BaseStatusBarStyle}">
             <StatusBarItem Style="{StaticResource BaseStatusBarItemStyle}">
                 <TextBlock>
                     <Run Text="{extensions:Localize Text_Status}" FontWeight="Bold"/>

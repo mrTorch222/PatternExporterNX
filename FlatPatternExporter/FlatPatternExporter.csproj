@@ -116,10 +116,26 @@
 
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.105.0" />
-    <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.5" />
-    <PackageReference Include="netDxf.netstandard" Version="3.0.1" />
-    <PackageReference Include="Svg.Skia" Version="3.2.1" />
+    <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.5" Condition="'$(ProductEdition)' != 'Frame'" />
+    <PackageReference Include="netDxf.netstandard" Version="3.0.1" Condition="'$(ProductEdition)' != 'Frame'" />
+    <PackageReference Include="Svg.Skia" Version="3.2.1" Condition="'$(ProductEdition)' != 'Frame'" />
     <PackageReference Include="stdole" Version="17.14.40260" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(ProductEdition)' == 'Frame'">
+    <Compile Remove="Features\SheetMetal\**\*.cs" />
+    <Compile Remove="Core\ThumbnailGenerator.cs" />
+    <Compile Remove="Libraries\DxfRenderer.cs" />
+    <Compile Remove="Services\ExcelExportService.cs" />
+    <Compile Remove="Services\HierarchyQuantityCalculator.cs" />
+    <Compile Remove="Services\TokenService.cs" />
+    <Compile Remove="UI\Controls\HeaderAdorner.cs" />
+    <Compile Remove="UI\Controls\LayerSettingControl.xaml.cs" />
+    <Compile Remove="UI\Windows\ConflictDetailsWindow.xaml.cs" />
+    <Compile Remove="UI\Windows\FlatPatternExporterMainWindow.xaml.cs" />
+    <Page Remove="UI\Windows\ConflictDetailsWindow.xaml" />
+    <Page Remove="UI\Controls\LayerSettingControl.xaml" />
+    <Page Remove="UI\Windows\FlatPatternExporterMainWindow.xaml" />
   </ItemGroup>
 
 

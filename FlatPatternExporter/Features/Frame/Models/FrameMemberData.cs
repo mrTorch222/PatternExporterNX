@@ -10,20 +10,25 @@ public sealed class FrameMemberData : INotifyPropertyChanged
     private ProcessingStatus _processingStatus = ProcessingStatus.NotProcessed;
     private string _outputFile = "";
 
-    public FrameMemberData()
-    {
-        LocalizationManager.Instance.LanguageChanged += OnLanguageChanged;
-    }
-
     public string DocumentKey { get; init; } = "";
     public string FileName { get; init; } = "";
     public string FullFileName { get; init; } = "";
+    public string ModelState { get; init; } = "";
     public string PartNumber { get; init; } = "";
     public string StockNumber { get; init; } = "";
     public string Material { get; init; } = "";
     public string Description { get; init; } = "";
     public double? LengthMm { get; init; }
     public int Quantity { get; set; }
+    public Dictionary<string, string> UserDefinedProperties { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, string> AttributeValues { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public void SetAttributeValue(string internalName, string value)
+    {
+        AttributeValues[internalName] = value;
+        OnPropertyChanged($"AttributeValues[{internalName}]");
+        OnPropertyChanged("Item[]");
+    }
 
     public ProcessingStatus ProcessingStatus
     {
@@ -44,6 +49,7 @@ public sealed class FrameMemberData : INotifyPropertyChanged
         ProcessingStatus.Success => LocalizationManager.Instance.GetString("ProcessingStatus_Success"),
         ProcessingStatus.Skipped => LocalizationManager.Instance.GetString("ProcessingStatus_Skipped"),
         ProcessingStatus.Interrupted => LocalizationManager.Instance.GetString("ProcessingStatus_Interrupted"),
+        ProcessingStatus.Failed => LocalizationManager.Instance.GetString("ProcessingStatus_Failed"),
         _ => ProcessingStatus.ToString()
     };
 
@@ -60,7 +66,7 @@ public sealed class FrameMemberData : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    private void OnLanguageChanged(object? sender, EventArgs e) => OnPropertyChanged(nameof(ProcessingStatusText));
+    public void RefreshLocalization() => OnPropertyChanged(nameof(ProcessingStatusText));
 
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

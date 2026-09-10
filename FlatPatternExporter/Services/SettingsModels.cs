@@ -107,6 +107,18 @@ public record FrameExportSettings
     public const string DefaultFileNameTemplate = "{StockNumber}_{Material}_L{Length}_Q{Qty}";
 
     public string OutputFolder { get; init; } = "";
+    public TubeRecognitionMode RecognitionMode { get; init; } = TubeRecognitionMode.FrameGenerator;
+    public ExportFolderType? SelectedExportFolder { get; init; }
+    public string FixedFolderPath { get; init; } = "";
+    public bool EnableSubfolder { get; init; }
+    public string SubfolderName { get; init; } = "";
+    public bool OrganizeByMaterial { get; init; }
+    public bool OrganizeByStockNumber { get; init; }
+    public CsvDelimiterType CsvDelimiter { get; init; } = CsvDelimiterType.Tab;
+    public ExportFileFormat DefaultBomFormat { get; init; } = ExportFileFormat.Excel;
+    public ExcelExportFileNameType BomFileNameType { get; init; } = ExcelExportFileNameType.DateTimeFormat;
+    public List<string>? AttributeColumnOrder { get; init; }
+    public bool EnableFileNameConstructor { get; init; } = true;
     public string FileNameTemplate { get; init; } = DefaultFileNameTemplate;
     public int GeometryType { get; init; }
     public int SolidFaceType { get; init; } = 1;

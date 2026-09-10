@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using FlatPatternExporter.Features;
+using FlatPatternExporter.Features.Frame.UI;
 using FlatPatternExporter.Services;
 using FlatPatternExporter.UI.Services;
 using FlatPatternExporter.UI.Windows;
@@ -25,8 +26,14 @@ public partial class App
         ApplyLanguage(settings.Interface.SelectedLanguage);
 
         // Create and show main window with settings
-        var mainWindow = new FlatPatternExporterMainWindow(ProductFeatureProfile.Current);
-        mainWindow.ApplySettings(settings);
+        Window mainWindow;
+#if PATTERN_EXPORTER_FRAME
+        mainWindow = new FrameMainWindow();
+#else
+        var combinedWindow = new FlatPatternExporterMainWindow(ProductFeatureProfile.Current);
+        combinedWindow.ApplySettings(settings);
+        mainWindow = combinedWindow;
+#endif
         mainWindow.Show();
     }
 

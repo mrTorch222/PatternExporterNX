@@ -42,6 +42,24 @@ public sealed class FrameBomExportServiceTests
     }
 
     [Fact]
+    public void CsvUsesSelectedDelimiter()
+    {
+        var filePath = Path.Combine(Path.GetTempPath(), $"frame-bom-{Guid.NewGuid():N}.csv");
+        try
+        {
+            FrameBomExportService.ExportCsv(filePath, [Member], "\t");
+            var text = File.ReadAllText(filePath, Encoding.UTF8);
+
+            Assert.Contains("PN;42\tRHS 40x20", text);
+            Assert.DoesNotContain("\"PN;42\"", text);
+        }
+        finally
+        {
+            if (File.Exists(filePath)) File.Delete(filePath);
+        }
+    }
+
+    [Fact]
     public void ExcelWritesLengthAndQuantityAsNumbers()
     {
         var filePath = Path.Combine(Path.GetTempPath(), $"frame-bom-{Guid.NewGuid():N}.xlsx");
@@ -54,6 +72,31 @@ public sealed class FrameBomExportServiceTests
             Assert.Equal(1234.5, sheet.Cell(2, 5).GetDouble(), 6);
             Assert.Equal(4, sheet.Cell(2, 6).GetDouble());
             Assert.Equal(Member.OutputFile, sheet.Cell(2, 8).GetString());
+        }
+        finally
+        {
+            if (File.Exists(filePath)) File.Delete(filePath);
+        }
+    }
+
+    [Fact]
+    public void CsvExportsOnlySelectedColumnsInTheirDisplayOrder()
+    {
+        var filePath = Path.Combine(Path.GetTempPath(), $"frame-bom-{Guid.NewGuid():N}.csv");
+        try
+        {
+            FrameBomExportService.ExportCsv(
+                filePath,
+                [Member],
+                ";",
+                [
+                    new FrameBomColumn("Material", member => member.Material),
+                    new FrameBomColumn("Part", member => member.PartNumber)
+                ]);
+            var lines = File.ReadAllLines(filePath, Encoding.UTF8);
+
+            Assert.Equal("Material;Part", lines[0]);
+            Assert.Equal("Steel;\"PN;42\"", lines[1]);
         }
         finally
         {

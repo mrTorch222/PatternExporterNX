@@ -9,10 +9,8 @@ public class PropertyExpressionByNameConverter : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
-        if (values is [PartData partData, _, string propPath])
-        {
-            return partData.IsPropertyExpression(propPath) ? Visibility.Visible : Visibility.Collapsed;
-        }
+        if (values is [IDynamicPropertyValueSource item, _, string propPath])
+            return item.IsPropertyExpression(propPath) ? Visibility.Visible : Visibility.Collapsed;
         return Visibility.Collapsed;
     }
 

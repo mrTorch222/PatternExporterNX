@@ -1,5 +1,4 @@
-﻿using netDxf.Header;
-using FlatPatternExporter.Services;
+﻿using FlatPatternExporter.Services;
 
 namespace FlatPatternExporter.Enums;
 
@@ -32,6 +31,12 @@ public enum FrameExportFormat
     Step = 1,
     Sat = 2,
     Stl = 3
+}
+
+public enum TubeRecognitionMode
+{
+    FrameGenerator = 0,
+    TubeJointProperties = 1
 }
 
 public enum FlatPatternTopSideMode
@@ -79,7 +84,8 @@ public enum ProcessingStatus
     Pending,        // Pending export (yellow/orange)
     Success,        // Successfully exported (green)
     Skipped,        // Skipped (no flat pattern or error) (red)
-    Interrupted     // Export was interrupted (gray)
+    Interrupted,    // Export was interrupted (gray)
+    Failed          // Export failed (red)
 }
 
 public enum DocumentType
@@ -109,28 +115,6 @@ public enum OperationType
 {
     Scan,
     Export
-}
-
-public static class AcadVersionMapping
-{
-    private static readonly Dictionary<AcadVersionType, (string Name, DxfVersion? Dxf)> Map = new()
-    {
-        { AcadVersionType.V2018, ("2018", DxfVersion.AutoCad2018) },
-        { AcadVersionType.V2013, ("2013", DxfVersion.AutoCad2013) },
-        { AcadVersionType.V2010, ("2010", DxfVersion.AutoCad2010) },
-        { AcadVersionType.V2007, ("2007", DxfVersion.AutoCad2007) },
-        { AcadVersionType.V2004, ("2004", DxfVersion.AutoCad2004) },
-        { AcadVersionType.V2000, ("2000", DxfVersion.AutoCad2000) },
-        { AcadVersionType.R12,   ("R12",  null) }
-    };
-
-    public static string GetDisplayName(AcadVersionType type) => Map[type].Name;
-
-    public static string GetTranslatorCode(AcadVersionType type) => Map[type].Name;
-
-    public static bool SupportsOptimization(AcadVersionType type) => Map[type].Dxf.HasValue;
-
-    public static DxfVersion? GetDxfVersion(AcadVersionType type) => Map[type].Dxf;
 }
 
 public static class SplineReplacementMapping

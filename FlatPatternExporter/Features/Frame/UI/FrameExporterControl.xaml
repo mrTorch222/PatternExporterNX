@@ -1,11 +1,15 @@
 ﻿<UserControl x:Class="FlatPatternExporter.Features.Frame.UI.FrameExporterControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:FlatPatternExporter.Converters"
+             xmlns:enums="clr-namespace:FlatPatternExporter.Enums"
              xmlns:extensions="clr-namespace:FlatPatternExporter.Extensions"
+             xmlns:services="clr-namespace:FlatPatternExporter.Services"
              Background="{DynamicResource BackgroundPrimaryBrush}"
              Foreground="{DynamicResource TextSecondaryBrush}">
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -17,110 +21,413 @@
                     Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}"/>
             <Button x:Name="Export3dButton" Content="{extensions:Localize Frame_ButtonExport3d}" Click="Export3dButton_Click"
                     Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}" IsEnabled="False"/>
-            <Button x:Name="ExportBomButton" Content="{extensions:Localize Frame_ButtonExportBom}" Click="ExportBomButton_Click"
-                    Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}" IsEnabled="False"/>
-            <Button Content="{extensions:Localize Button_Clear}" Click="ClearButton_Click"
-                    Style="{StaticResource LargeSquareButtonStyle}"/>
+            <Button x:Name="ClearFrameButton" Content="{extensions:Localize Button_Clear}" Click="ClearButton_Click"
+                    Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}"/>
+            <Button x:Name="CancelFrameButton" Content="{extensions:Localize Frame_ButtonCancel}" Click="CancelFrameButton_Click"
+                    Style="{StaticResource LargeSquareButtonStyle}" Visibility="Collapsed"/>
         </WrapPanel>
 
-        <Expander Grid.Row="1" Header="{extensions:Localize Header_Settings}" IsExpanded="True"
-                  Margin="{StaticResource StandardPaddingThickness}" Padding="{StaticResource UniformSmallPaddingThickness}"
-                  FlowDirection="RightToLeft" Style="{StaticResource SquareExpanderStyle}">
-        <Border Background="{DynamicResource BackgroundTertiaryBrush}" FlowDirection="LeftToRight"
-                BorderBrush="{DynamicResource BorderSecondaryBrush}" BorderThickness="1" CornerRadius="3"
-                Padding="8">
+        <TabControl Grid.Row="1" Margin="{StaticResource StandardPaddingThickness}">
+            <TabItem Header="{extensions:Localize Header_Main}">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <WrapPanel Margin="{StaticResource UniformStandardMarginThickness}">
+                        <GroupBox Header="{extensions:Localize Tube_RecognitionMode}" Margin="{StaticResource RightStandardMarginThickness}">
+                            <StackPanel Margin="{StaticResource SectionContentMarginThickness}" MinWidth="330">
+                                <RadioButton x:Name="FrameGeneratorModeRadioButton"
+                                             Content="{extensions:Localize Tube_ModeFrameGenerator}"
+                                             GroupName="TubeRecognitionMode"
+                                             IsChecked="True"
+                                             Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                <RadioButton x:Name="TubeJointPropertiesModeRadioButton"
+                                             Content="{extensions:Localize Tube_ModeTubeJointProperties}"
+                                             GroupName="TubeRecognitionMode"
+                                             Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                <TextBlock Text="{extensions:Localize Tube_ModeTubeJointPropertiesHint}"
+                                           Foreground="{DynamicResource TextMutedBrush}"
+                                           TextWrapping="Wrap"
+                                           MaxWidth="330"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="{extensions:Localize Header_ExportPlacement}" Margin="{StaticResource RightStandardMarginThickness}">
+                            <Grid Margin="{StaticResource SectionContentMarginThickness}" MinWidth="395">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <RadioButton x:Name="FrameChooseFolderRadioButton" Content="{extensions:Localize UI_ChooseFolder}" GroupName="FrameExportFolderOptions" Checked="FrameExportPlacement_Changed" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <RadioButton x:Name="FrameComponentFolderRadioButton" Content="{extensions:Localize UI_ComponentFolder}" GroupName="FrameExportFolderOptions" Checked="FrameExportPlacement_Changed" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <RadioButton x:Name="FramePartFolderRadioButton" Content="{extensions:Localize UI_PartFolder}" GroupName="FrameExportFolderOptions" Checked="FrameExportPlacement_Changed" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <RadioButton x:Name="FrameProjectFolderRadioButton" Content="{extensions:Localize UI_ProjectFolder}" GroupName="FrameExportFolderOptions" Checked="FrameExportPlacement_Changed" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <RadioButton x:Name="FrameFixedFolderRadioButton" Content="{extensions:Localize UI_FixedFolder}" GroupName="FrameExportFolderOptions" Checked="FrameExportPlacement_Changed" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                </StackPanel>
+                                <Separator Grid.Column="1" Style="{StaticResource VerticalSeparatorStyle}" Margin="{StaticResource VerticalSeparatorCenteredMarginThickness}"/>
+                                <StackPanel Grid.Column="2">
+                                    <CheckBox x:Name="FrameEnableSubfolderCheckBox" Content="{extensions:Localize UI_CreateSubfolder}" Checked="FrameSubfolder_Changed" Unchecked="FrameSubfolder_Changed" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <TextBox x:Name="FrameSubfolderNameTextBox" Style="{StaticResource BaseTextBoxStyle}" TextChanged="FrameSubfolderNameTextBox_TextChanged" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <CheckBox x:Name="FrameOrganizeByMaterialCheckBox" Content="{extensions:Localize UI_OrganizeByMaterial}" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    <CheckBox x:Name="FrameOrganizeByStockNumberCheckBox" Content="{extensions:Localize Frame_OrganizeByStockNumber}" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                </StackPanel>
+                                <Grid Grid.Row="1" Grid.ColumnSpan="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Button x:Name="FrameSelectFixedFolderButton" Content="..." Width="34" Click="BrowseOutputFolder_Click" Margin="0,0,8,0"/>
+                                    <TextBox x:Name="OutputFolderTextBox" Grid.Column="1" IsReadOnly="True"/>
+                                </Grid>
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="{extensions:Localize Header_ExcelExportSettings}" Margin="{StaticResource RightStandardMarginThickness}">
+                            <Grid Margin="{StaticResource SectionContentMarginThickness}" MinWidth="350">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Label Content="{extensions:Localize Label_DefaultExportFormat}" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <RadioButton x:Name="FrameExcelFormatRadioButton" Content="{extensions:Localize UI_ExportFormatExcel}" GroupName="FrameBomFormat" Checked="FrameBomFormat_Changed" Margin="0,0,12,0"/>
+                                    <RadioButton x:Name="FrameCsvFormatRadioButton" Content="{extensions:Localize UI_ExportFormatCsv}" GroupName="FrameBomFormat" Checked="FrameBomFormat_Changed"/>
+                                </StackPanel>
+                                <Label Grid.Row="1" Content="{extensions:Localize Label_CsvDelimiter}" VerticalAlignment="Center"/>
+                                <ComboBox x:Name="FrameCsvDelimiterComboBox" Grid.Row="1" Grid.Column="1" Width="180" Style="{StaticResource BaseComboBoxStyle}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock>
+                                                <TextBlock.Text>
+                                                    <MultiBinding>
+                                                        <MultiBinding.Converter><converters:EnumToDisplayNameConverter/></MultiBinding.Converter>
+                                                        <Binding/>
+                                                        <Binding Path="CurrentCulture" Source="{x:Static services:LocalizationManager.Instance}"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                    <enums:CsvDelimiterType>Comma</enums:CsvDelimiterType>
+                                    <enums:CsvDelimiterType>Semicolon</enums:CsvDelimiterType>
+                                    <enums:CsvDelimiterType>Tab</enums:CsvDelimiterType>
+                                    <enums:CsvDelimiterType>Pipe</enums:CsvDelimiterType>
+                                </ComboBox>
+                                <Label Grid.Row="2" Content="{extensions:Localize Label_ExportFileName}" VerticalAlignment="Center"/>
+                                <ComboBox x:Name="FrameBomFileNameComboBox" Grid.Row="2" Grid.Column="1" Width="180" Style="{StaticResource BaseComboBoxStyle}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock>
+                                                <TextBlock.Text>
+                                                    <MultiBinding>
+                                                        <MultiBinding.Converter><converters:EnumToDisplayNameConverter/></MultiBinding.Converter>
+                                                        <Binding/>
+                                                        <Binding Path="CurrentCulture" Source="{x:Static services:LocalizationManager.Instance}"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                    <enums:ExcelExportFileNameType>DateTimeFormat</enums:ExcelExportFileNameType>
+                                    <enums:ExcelExportFileNameType>FileName</enums:ExcelExportFileNameType>
+                                    <enums:ExcelExportFileNameType>PartNumber</enums:ExcelExportFileNameType>
+                                </ComboBox>
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="{extensions:Localize Frame_LabelFormat}">
+                            <StackPanel Margin="{StaticResource SectionContentMarginThickness}">
+                                <ComboBox x:Name="ExportFormatComboBox" Width="120" HorizontalAlignment="Left" SelectedIndex="0" SelectionChanged="ExportFormatComboBox_SelectionChanged">
+                                    <ComboBoxItem Content="IGES"/><ComboBoxItem Content="STEP"/><ComboBoxItem Content="SAT"/><ComboBoxItem Content="STL"/>
+                                </ComboBox>
+                                <WrapPanel x:Name="IgesOptionsPanel" Margin="0,8,0,0">
+                                    <StackPanel Margin="0,0,12,0"><TextBlock Text="{extensions:Localize Frame_LabelGeometryType}"/><ComboBox x:Name="GeometryTypeComboBox" Width="120" SelectedIndex="0"><ComboBoxItem Content="{extensions:Localize Frame_GeometrySurfaces}"/><ComboBoxItem Content="{extensions:Localize Frame_GeometrySolids}"/><ComboBoxItem Content="{extensions:Localize Frame_GeometryWireframe}"/></ComboBox></StackPanel>
+                                    <StackPanel Margin="0,0,12,0"><TextBlock Text="{extensions:Localize Frame_LabelSolidFaces}"/><ComboBox x:Name="SolidFaceTypeComboBox" Width="110" SelectedIndex="1"><ComboBoxItem Content="{extensions:Localize Frame_FacesNurbs}"/><ComboBoxItem Content="{extensions:Localize Frame_FacesAnalytic}"/></ComboBox></StackPanel>
+                                    <StackPanel><TextBlock Text="{extensions:Localize Frame_LabelSurfaces}"/><ComboBox x:Name="SurfaceTypeComboBox" Width="100" SelectedIndex="1"><ComboBoxItem Content="IGES 143"/><ComboBoxItem Content="IGES 144"/></ComboBox></StackPanel>
+                                </WrapPanel>
+                            </StackPanel>
+                        </GroupBox>
+                    </WrapPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="{extensions:Localize Header_FileName}">
+                <Grid Margin="{StaticResource UniformStandardMarginThickness}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="{StaticResource BottomLargeMarginThickness}">
+                        <CheckBox x:Name="FrameEnableFileNameConstructorCheckBox"
+                                  Content="{extensions:Localize UI_EnableFileNameConstructor}"
+                                  IsChecked="True"
+                                  Checked="FrameEnableFileNameConstructorCheckBox_Changed"
+                                  Unchecked="FrameEnableFileNameConstructorCheckBox_Changed"
+                                  Margin="{StaticResource RightMediumMarginThickness}"
+                                  VerticalContentAlignment="Center" Padding="4,0,0,0"/>
+                        <TextBlock Text="ℹ" FontSize="{StaticResource LargeFontSize}"
+                                   Foreground="{DynamicResource TextDisabledBrush}" Cursor="Help"
+                                   Margin="{StaticResource RightLargeMarginThickness}" VerticalAlignment="Center">
+                            <TextBlock.ToolTip>
+                                <ToolTip>
+                                    <StackPanel>
+                                        <TextBlock Text="{extensions:Localize ToolTip_FileNameConstructorHelp}" FontWeight="Bold" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                        <TextBlock Text="{extensions:Localize ToolTip_FileNameInstructionDoubleClick}"/>
+                                        <TextBlock Text="{extensions:Localize ToolTip_FileNameInstructionDoubleClickRemove}"/>
+                                        <TextBlock Text="{extensions:Localize ToolTip_FileNameInstructionExample}" FontStyle="Italic" Margin="{StaticResource TopSmallMarginThickness}"/>
+                                    </StackPanel>
+                                </ToolTip>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
+                    </StackPanel>
+
+                    <Grid Grid.Row="1" IsEnabled="{Binding IsChecked, ElementName=FrameEnableFileNameConstructorCheckBox}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="300" MinWidth="300"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="1*" MinWidth="350"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="1*" MinWidth="400"/>
+                        </Grid.ColumnDefinitions>
+
+                        <GroupBox Grid.Column="0" Header="{extensions:Localize Header_TemplatePresetsManager}"
+                                  Style="{StaticResource BaseGroupBoxStyle}" Margin="{StaticResource RightSmallMarginThickness}">
+                            <StackPanel Margin="{StaticResource SectionContentMarginThickness}">
+                                <TextBlock Text="{extensions:Localize Text_SavedPresets}" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                <Grid Margin="{StaticResource BottomSmallMarginThickness}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <ListBox x:Name="FrameTemplatePresetsListBox" Grid.Column="0"
+                                             DisplayMemberPath="Name" SelectionChanged="FramePresetListBox_SelectionChanged"
+                                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                             Margin="{StaticResource BottomSmallMarginThickness}"
+                                             ToolTip="{extensions:Localize ToolTip_SelectPreset}" MaxHeight="140"/>
+
+                                    <Border x:Name="FrameEmptyStatePanel" Grid.Column="0"
+                                            Background="{DynamicResource BackgroundSecondaryBrush}"
+                                            BorderBrush="{DynamicResource BorderSecondaryBrush}"
+                                            BorderThickness="{StaticResource StandardBorderThicknessValue}"
+                                            CornerRadius="{StaticResource StandardCornerRadiusValue}"
+                                            Padding="{StaticResource StandardPaddingThickness}"
+                                            Margin="{StaticResource BottomSmallMarginThickness}" MaxHeight="140">
+                                        <TextBlock Text="{extensions:Localize Text_NoSavedPresets}"
+                                                   Style="{StaticResource OverlayHintTextStyle}" TextAlignment="Left"
+                                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                    </Border>
+
+                                    <StackPanel Grid.Column="1" Orientation="Vertical" Margin="{StaticResource LeftSmallMarginThickness}">
+                                        <Button x:Name="CreateFramePresetButton" Content="{extensions:Localize Button_Create}"
+                                                Click="CreateFramePresetButton_Click" Style="{StaticResource InteractiveActionButtonStyle}"
+                                                ToolTip="{extensions:Localize ToolTip_CreatePreset}" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                        <Button x:Name="SaveFramePresetButton" Content="{extensions:Localize Button_Save}"
+                                                Click="UpdateFramePresetButton_Click" Style="{StaticResource InteractiveActionButtonStyle}"
+                                                ToolTip="{extensions:Localize ToolTip_SavePreset}" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                        <Button x:Name="RenameFramePresetButton" Content="{extensions:Localize Button_Rename}"
+                                                Click="RenameFramePresetButton_Click" Style="{StaticResource InteractiveActionButtonStyle}"
+                                                ToolTip="{extensions:Localize ToolTip_RenamePreset}" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                        <Button x:Name="DuplicateFramePresetButton" Content="{extensions:Localize Button_Duplicate}"
+                                                Click="DuplicateFramePresetButton_Click" Style="{StaticResource InteractiveActionButtonStyle}"
+                                                ToolTip="{extensions:Localize ToolTip_DuplicatePreset}" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                        <Button x:Name="DeleteFramePresetButton" Content="{extensions:Localize Button_Delete}"
+                                                Click="DeleteFramePresetButton_Click" Style="{StaticResource WarningButtonStyle}"
+                                                ToolTip="{extensions:Localize ToolTip_DeletePreset}" Margin="{StaticResource BottomSmallMarginThickness}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="{extensions:Localize Text_PresetName}" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                <TextBox x:Name="FramePresetNameTextBox" Style="{StaticResource BaseTextBoxStyle}"
+                                         ToolTip="{extensions:Localize ToolTip_PresetName}"
+                                         Margin="{StaticResource BottomSmallMarginThickness}"
+                                         TextChanged="FramePresetNameTextBox_TextChanged"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GridSplitter Grid.Column="1" Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                                      Background="{DynamicResource StatusBarBackgroundBrush}" Margin="{StaticResource GridSplitterMarginThickness}"/>
+
+                        <GroupBox Grid.Column="2" Header="{extensions:Localize Header_DataSources}" Margin="{StaticResource HorizontalSmallMarginThickness}">
+                            <StackPanel Margin="{StaticResource SectionContentMarginThickness}">
+                                <TextBlock Text="{extensions:Localize Text_StandardProperties}" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                <ListBox x:Name="FrameAvailableTokensListBox" DisplayMemberPath="DisplayName"
+                                         Style="{StaticResource TokenListBoxStyle}"
+                                         MouseDoubleClick="FrameTokenListBox_MouseDoubleClick"
+                                         MinHeight="32" VerticalContentAlignment="Center" SnapsToDevicePixels="True"/>
+
+                                <TextBlock Text="{extensions:Localize Text_UserProperties}" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ListBox x:Name="FrameUserDefinedTokensListBox" Grid.Column="0" DisplayMemberPath="DisplayName"
+                                             Style="{StaticResource TokenListBoxStyle}"
+                                             MouseDoubleClick="FrameTokenListBox_MouseDoubleClick"
+                                             MinHeight="32" VerticalContentAlignment="Center" SnapsToDevicePixels="True"/>
+                                    <Button x:Name="AddFrameUserPropertyButton" Grid.Column="1"
+                                            Click="AddFrameUserPropertyButton_Click" Margin="{StaticResource LeftSmallMarginThickness}"
+                                            VerticalAlignment="Center" Style="{StaticResource AddIconButton}"/>
+                                </Grid>
+
+                                <TextBlock Text="{extensions:Localize Text_CustomTextAndSymbols}" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                        <TextBox x:Name="FrameCustomTextBox" Width="125" Style="{StaticResource BaseTextBoxStyle}"
+                                                 KeyDown="FrameCustomTextBox_KeyDown"
+                                                 ToolTip="{extensions:Localize ToolTip_EnterCustomText}"/>
+                                        <Button Content="{extensions:Localize Button_Add}" Style="{StaticResource InteractiveActionButtonStyle}"
+                                                Margin="{StaticResource LeftSmallMarginThickness}"
+                                                Click="AddFrameCustomTextButton_Click"
+                                                ToolTip="{extensions:Localize ToolTip_AddCustomToken}"/>
+                                    </StackPanel>
+                                    <Separator Grid.Column="1" Style="{StaticResource VerticalSeparatorStyle}"
+                                               Margin="{StaticResource VerticalSeparatorCenteredMarginThickness}"/>
+                                    <WrapPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button Content="-" Click="AddFrameSymbolButton_Click" Tag="-" ToolTip="{extensions:Localize ToolTip_Dash}" Style="{StaticResource SymbolButtonStyle}"/>
+                                        <Button Content="_" Click="AddFrameSymbolButton_Click" Tag="_" ToolTip="{extensions:Localize ToolTip_Underscore}" Style="{StaticResource SymbolButtonStyle}"/>
+                                        <Button Content="." Click="AddFrameSymbolButton_Click" Tag="." ToolTip="{extensions:Localize ToolTip_Dot}" Style="{StaticResource SymbolButtonStyle}"/>
+                                        <Button Content="␣" Click="AddFrameSymbolButton_Click" Tag=" " ToolTip="{extensions:Localize ToolTip_Space}" Style="{StaticResource SymbolButtonStyle}"/>
+                                        <Button Content="(" Click="AddFrameSymbolButton_Click" Tag="(" ToolTip="{extensions:Localize ToolTip_OpenParenthesis}" Style="{StaticResource SymbolButtonStyle}"/>
+                                        <Button Content=")" Click="AddFrameSymbolButton_Click" Tag=")" ToolTip="{extensions:Localize ToolTip_CloseParenthesis}" Style="{StaticResource SymbolButtonStyle}"/>
+                                        <Button Content="[" Click="AddFrameSymbolButton_Click" Tag="[" ToolTip="{extensions:Localize ToolTip_OpenBracket}" Style="{StaticResource SymbolButtonStyle}"/>
+                                        <Button Content="]" Click="AddFrameSymbolButton_Click" Tag="]" ToolTip="{extensions:Localize ToolTip_CloseBracket}" Style="{StaticResource SymbolButtonStyle}"/>
+                                        <Button Content="+" Click="AddFrameSymbolButton_Click" Tag="+" ToolTip="{extensions:Localize ToolTip_Plus}" Style="{StaticResource SymbolButtonStyle}"/>
+                                        <Button Content="=" Click="AddFrameSymbolButton_Click" Tag="=" ToolTip="{extensions:Localize ToolTip_Equals}" Style="{StaticResource SymbolButtonStyle}"/>
+                                        <Button Content="x" Click="AddFrameSymbolButton_Click" Tag="x" ToolTip="{extensions:Localize ToolTip_Multiply}" Style="{StaticResource SymbolButtonStyle}"/>
+                                        <Button Content="#" Click="AddFrameSymbolButton_Click" Tag="#" ToolTip="{extensions:Localize ToolTip_Hash}" Style="{StaticResource SymbolButtonStyle}"/>
+                                    </WrapPanel>
+                                </Grid>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GridSplitter Grid.Column="3" Width="1" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                                      Background="{DynamicResource StatusBarBackgroundBrush}" Margin="{StaticResource GridSplitterMarginThickness}"/>
+
+                        <GroupBox Grid.Column="4" Header="{extensions:Localize Header_TemplateAndPreview}" Margin="{StaticResource LeftSmallMarginThickness}">
+                            <StackPanel Margin="{StaticResource SectionContentMarginThickness}">
+                                <TextBlock Text="{extensions:Localize Text_FileNameTemplate}" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                <Border Background="{DynamicResource BackgroundPrimaryBrush}"
+                                        BorderBrush="{DynamicResource BorderPrimaryBrush}"
+                                        BorderThickness="{StaticResource StandardBorderThicknessValue}"
+                                        CornerRadius="{StaticResource StandardCornerRadiusValue}"
+                                        MinHeight="{StaticResource LargeElementHeight}"
+                                        Padding="{StaticResource TinyMarginThickness}">
+                                    <WrapPanel x:Name="FrameTokenContainer" Orientation="Horizontal" VerticalAlignment="Center"/>
+                                </Border>
+
+                                <WrapPanel Orientation="Horizontal" Margin="0,8,0,0" HorizontalAlignment="Left">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
+                                        <Border Style="{StaticResource TokenLegendColorBox}"
+                                                Background="{DynamicResource TokenBackgroundBrush}"
+                                                BorderBrush="{DynamicResource BorderPrimaryBrush}"/>
+                                        <TextBlock Style="{StaticResource TokenLegendText}" Text="{extensions:Localize Legend_StandardToken}"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
+                                        <Border Style="{StaticResource TokenLegendColorBox}"
+                                                Background="{DynamicResource TokenCustomBackgroundBrush}"
+                                                BorderBrush="{DynamicResource TokenCustomBorderBrush}"/>
+                                        <TextBlock Style="{StaticResource TokenLegendText}" Text="{extensions:Localize Legend_CustomText}"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Style="{StaticResource TokenLegendColorBox}"
+                                                Background="{DynamicResource TokenUserDefinedBackgroundBrush}"
+                                                BorderBrush="{DynamicResource TokenUserDefinedBorderBrush}"/>
+                                        <TextBlock Style="{StaticResource TokenLegendText}" Text="{extensions:Localize Legend_UserDefined}"/>
+                                    </StackPanel>
+                                </WrapPanel>
+
+                                <TextBlock Text="{extensions:Localize Text_Preview}" Style="{StaticResource SectionHeaderTextStyle}"/>
+                                <Border x:Name="FrameFileNamePreviewBorder" Style="{StaticResource FileNamePreviewBorderStyle}">
+                                    <TextBlock x:Name="NamePreviewTextBlock" Style="{StaticResource FileNamePreviewTextStyle}"
+                                               TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                                </Border>
+                            </StackPanel>
+                        </GroupBox>
+                    </Grid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <Border Grid.Row="2"
+                Background="{DynamicResource BackgroundPrimaryBrush}"
+                BorderBrush="{DynamicResource BorderPrimaryBrush}"
+                BorderThickness="{StaticResource StandardTopBorderThicknessValue}"
+                CornerRadius="3,3,0,0">
             <Grid>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="360"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="220"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="150"/>
                 </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="{extensions:Localize Frame_LabelOutputFolder}" VerticalAlignment="Center" Margin="0,0,8,6"/>
-                <TextBox x:Name="OutputFolderTextBox" Grid.Row="0" Grid.Column="1" Margin="0,0,8,6"/>
-                <Button Grid.Row="0" Grid.Column="2" Content="..." Click="BrowseOutputFolder_Click" Width="34" Margin="0,0,16,6"/>
-
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="{extensions:Localize Frame_LabelNameTemplate}" VerticalAlignment="Center" Margin="0,0,8,6"/>
-                <TextBox x:Name="NameTemplateTextBox" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
-                         TextChanged="NameTemplateTextBox_TextChanged" Margin="0,0,16,6"/>
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="{extensions:Localize Text_Preview}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <TextBlock x:Name="NamePreviewTextBlock" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
-                           TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
-
-                <TextBlock Grid.Row="0" Grid.Column="3" Grid.ColumnSpan="3" Text="{extensions:Localize Frame_TokensHint}"
-                           TextWrapping="Wrap" Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,6"/>
-                <StackPanel Grid.Row="2" Grid.Column="3" Orientation="Horizontal" Margin="0,0,16,0">
-                    <TextBlock Text="{extensions:Localize Frame_LabelFormat}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <ComboBox x:Name="ExportFormatComboBox" Width="100" SelectedIndex="0" SelectionChanged="ExportFormatComboBox_SelectionChanged">
-                        <ComboBoxItem Content="IGES"/>
-                        <ComboBoxItem Content="STEP"/>
-                        <ComboBoxItem Content="SAT"/>
-                        <ComboBoxItem Content="STL"/>
-                    </ComboBox>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left"
+                            Margin="{StaticResource StandardMarginThickness}" VerticalAlignment="Center">
+                    <Grid>
+                        <TextBox x:Name="FrameSearchTextBox" Width="200" Style="{StaticResource BaseTextBoxStyle}"
+                                 TextChanged="FrameSearchTextBox_TextChanged"/>
+                        <TextBlock Text="{extensions:Localize Text_Search}"
+                                   Foreground="{DynamicResource TextDisabledBrush}"
+                                   Margin="{StaticResource SmallMarginThickness}"
+                                   IsHitTestVisible="False" VerticalAlignment="Center"
+                                   Padding="{StaticResource PlaceholderPaddingThickness}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource BaseTextBlockStyle}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=FrameSearchTextBox}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                    <Border Width="{StaticResource StandardElementHeight}" Height="{StaticResource StandardElementHeight}"
+                            Margin="{StaticResource TinyMarginThickness}">
+                        <Button x:Name="FrameClearSearchButton" Click="FrameClearSearchButton_Click"
+                                Style="{StaticResource CloseIconButton}" IsEnabled="False"/>
+                    </Border>
                 </StackPanel>
-                <WrapPanel x:Name="IgesOptionsPanel" Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="3">
-                <StackPanel Orientation="Horizontal" Margin="0,0,16,6">
-                    <TextBlock Text="{extensions:Localize Frame_LabelGeometryType}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <ComboBox x:Name="GeometryTypeComboBox" Width="120" SelectedIndex="0">
-                        <ComboBoxItem Content="{extensions:Localize Frame_GeometrySurfaces}"/>
-                        <ComboBoxItem Content="{extensions:Localize Frame_GeometrySolids}"/>
-                        <ComboBoxItem Content="{extensions:Localize Frame_GeometryWireframe}"/>
-                    </ComboBox>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right"
+                            Margin="{StaticResource StandardMarginThickness}" VerticalAlignment="Center">
+                    <Button x:Name="AddFramePropertyButton" Click="AddFrameColumnsButton_Click"
+                            Margin="{StaticResource RightStandardMarginThickness}"
+                            Style="{StaticResource InteractiveActionButtonStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Style="{StaticResource AddIconStyle}"
+                                  Margin="{StaticResource RightTinyPlusMarginThickness}" SnapsToDevicePixels="True"/>
+                            <TextBlock Text="{extensions:Localize UI_Property}"
+                                       VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="ExportBomButton" Click="ExportBomButton_Click" IsEnabled="False"
+                            Style="{StaticResource InteractiveActionButtonStyle}">
+                        <TextBlock Text="{extensions:Localize UI_ExportToExcel}"
+                                   TextAlignment="Center" VerticalAlignment="Center"/>
+                    </Button>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,16,6">
-                    <TextBlock Text="{extensions:Localize Frame_LabelSolidFaces}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <ComboBox x:Name="SolidFaceTypeComboBox" Width="100" SelectedIndex="1">
-                        <ComboBoxItem Content="{extensions:Localize Frame_FacesNurbs}"/>
-                        <ComboBoxItem Content="{extensions:Localize Frame_FacesAnalytic}"/>
-                    </ComboBox>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                    <TextBlock Text="{extensions:Localize Frame_LabelSurfaces}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <ComboBox x:Name="SurfaceTypeComboBox" Width="90" SelectedIndex="1">
-                        <ComboBoxItem Content="IGES 143"/>
-                        <ComboBoxItem Content="IGES 144"/>
-                    </ComboBox>
-                </StackPanel>
-                </WrapPanel>
-
-                <WrapPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="6" Margin="0,8,0,0">
-                    <TextBlock Text="{extensions:Localize Frame_TokensHint}" VerticalAlignment="Center" Margin="0,0,8,4"/>
-                    <Button Content="{}{PartNumber}" Tag="{}{PartNumber}" Click="NameTokenButton_Click" Margin="0,0,4,4"/>
-                    <Button Content="{}{StockNumber}" Tag="{}{StockNumber}" Click="NameTokenButton_Click" Margin="0,0,4,4"/>
-                    <Button Content="{}{Material}" Tag="{}{Material}" Click="NameTokenButton_Click" Margin="0,0,4,4"/>
-                    <Button Content="{}{Description}" Tag="{}{Description}" Click="NameTokenButton_Click" Margin="0,0,4,4"/>
-                    <Button Content="{}{Length}" Tag="{}{Length}" Click="NameTokenButton_Click" Margin="0,0,4,4"/>
-                    <Button Content="{}{Qty}" Tag="{}{Qty}" Click="NameTokenButton_Click" Margin="0,0,4,4"/>
-                    <Button Content="{}{FileName}" Tag="{}{FileName}" Click="NameTokenButton_Click" Margin="0,0,12,4"/>
-                    <TextBox x:Name="CustomNameTextBox" Width="130" ToolTip="{extensions:Localize ToolTip_EnterCustomText}" Margin="0,0,4,4"/>
-                    <Button Content="+" Click="AddCustomNameTextButton_Click" ToolTip="{extensions:Localize ToolTip_AddCustomToken}" Width="28" Margin="0,0,4,4"/>
-                </WrapPanel>
-
-                <WrapPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="6" Margin="0,4,0,0">
-                    <TextBlock Text="{extensions:Localize Header_TemplatePresets}" VerticalAlignment="Center" Margin="0,0,8,4"/>
-                    <ComboBox x:Name="FramePresetComboBox" Width="180" DisplayMemberPath="Name"
-                              SelectionChanged="FramePresetComboBox_SelectionChanged" Margin="0,0,4,4"/>
-                    <TextBox x:Name="FramePresetNameTextBox" Width="140" ToolTip="{extensions:Localize ToolTip_PresetName}" Margin="0,0,4,4"/>
-                    <Button Content="+" Click="CreateFramePresetButton_Click" ToolTip="{extensions:Localize ToolTip_CreatePreset}" Width="30" Margin="0,0,4,4"/>
-                    <Button Content="{extensions:Localize Button_Save}" Click="UpdateFramePresetButton_Click" ToolTip="{extensions:Localize ToolTip_SavePreset}" Margin="0,0,4,4"/>
-                    <Button Content="×" Click="DeleteFramePresetButton_Click" ToolTip="{extensions:Localize ToolTip_DeletePreset}" Width="30" Margin="0,0,4,4"/>
-                </WrapPanel>
             </Grid>
         </Border>
-        </Expander>
 
-        <DataGrid x:Name="FrameMembersGrid" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True"
+        <DataGrid x:Name="FrameMembersGrid" Grid.Row="3" AutoGenerateColumns="False" IsReadOnly="True"
                   CanUserAddRows="False" SelectionMode="Extended" AlternationCount="2"
+                  HeadersVisibility="Column" RowHeaderWidth="0"
                   SelectionChanged="FrameMembersGrid_SelectionChanged"
                   Background="{DynamicResource BackgroundPrimaryBrush}"
                   BorderBrush="{DynamicResource BorderPrimaryBrush}" BorderThickness="1"
@@ -129,10 +436,6 @@
                   CellStyle="{StaticResource DataGridCellStyle}">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="{extensions:Localize Property_ProcessingStatus_ColumnHeader}" Binding="{Binding ProcessingStatusText}" SortMemberPath="ProcessingStatus"/>
-                <DataGridTextColumn Header="{extensions:Localize Property_PartNumber_ColumnHeader}" Binding="{Binding PartNumber}" SortMemberPath="PartNumber"/>
-                <DataGridTextColumn Header="{extensions:Localize Property_StockNumber_ColumnHeader}" Binding="{Binding StockNumber}" SortMemberPath="StockNumber"/>
-                <DataGridTextColumn Header="{extensions:Localize Property_Material_ColumnHeader}" Binding="{Binding Material}" SortMemberPath="Material"/>
-                <DataGridTextColumn Header="{extensions:Localize Property_Description_ColumnHeader}" Binding="{Binding Description}" SortMemberPath="Description"/>
                 <DataGridTextColumn Header="{extensions:Localize Frame_ColumnLength}" Binding="{Binding LengthMm, StringFormat=F2}" SortMemberPath="LengthMm"/>
                 <DataGridTextColumn Header="{extensions:Localize Property_Quantity_ColumnHeader}" Binding="{Binding Quantity}" SortMemberPath="Quantity"/>
                 <DataGridTextColumn Header="{extensions:Localize Property_FileName_ColumnHeader}" Binding="{Binding FileName}" SortMemberPath="FileName"/>
@@ -140,7 +443,7 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <StatusBar Grid.Row="3" Style="{StaticResource BaseStatusBarStyle}">
+        <StatusBar Grid.Row="4" Style="{StaticResource BaseStatusBarStyle}">
             <StatusBarItem Style="{StaticResource BaseStatusBarItemStyle}">
                 <TextBlock>
                     <Run Text="{extensions:Localize Text_Status}" FontWeight="Bold"/>

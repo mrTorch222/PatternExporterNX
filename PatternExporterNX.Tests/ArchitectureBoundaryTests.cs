@@ -47,6 +47,16 @@ public sealed class ArchitectureBoundaryTests
         AssertReferencesAbsent(root, ["FlatPatternExporter/Features/SheetMetal"], "FlatPatternExporter.Features.Frame.");
     }
 
+    [Fact]
+    public void FrameEditionPhysicallyExcludesSheetMetalImplementationAndDxfPackages()
+    {
+        string project = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "FlatPatternExporter", "FlatPatternExporter.csproj"));
+
+        Assert.Contains("<Compile Remove=\"Features\\SheetMetal\\**\\*.cs\" />", project, StringComparison.Ordinal);
+        Assert.Contains("Include=\"netDxf.netstandard\" Version=\"3.0.1\" Condition=\"'$(ProductEdition)' != 'Frame'\"", project, StringComparison.Ordinal);
+        Assert.Contains("Include=\"Svg.Skia\" Version=\"3.2.1\" Condition=\"'$(ProductEdition)' != 'Frame'\"", project, StringComparison.Ordinal);
+    }
+
     private static void AssertReferencesAbsent(string root, IEnumerable<string> directories, string forbiddenReference)
     {
         var violations = new List<string>();

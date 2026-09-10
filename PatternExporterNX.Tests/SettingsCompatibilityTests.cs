@@ -40,6 +40,7 @@ public sealed class SettingsCompatibilityTests
         Assert.Equal("0.02", settings.Spline.SplineTolerance);
         Assert.NotNull(settings.Interface);
         Assert.NotNull(settings.FrameExport);
+        Assert.True(settings.FrameExport.EnableFileNameConstructor);
         Assert.Equal(FrameFileNameService.DefaultTemplate, settings.FrameExport.FileNameTemplate);
         Assert.True(settings.Hierarchy.MergeDuplicateFiles);
         Assert.Empty(settings.FrameExport.TemplatePresets);
@@ -48,6 +49,12 @@ public sealed class SettingsCompatibilityTests
         Assert.Equal(1, settings.FrameExport.SolidFaceType);
         Assert.Equal(1, settings.FrameExport.SurfaceType);
         Assert.Equal(FrameExportFormat.Iges, settings.FrameExport.ExportFormat);
+        Assert.Null(settings.FrameExport.SelectedExportFolder);
+        Assert.Equal(TubeRecognitionMode.FrameGenerator, settings.FrameExport.RecognitionMode);
+        Assert.Equal(CsvDelimiterType.Tab, settings.FrameExport.CsvDelimiter);
+        Assert.Equal(ExportFileFormat.Excel, settings.FrameExport.DefaultBomFormat);
+        Assert.Equal(ExcelExportFileNameType.DateTimeFormat, settings.FrameExport.BomFileNameType);
+        Assert.Null(settings.FrameExport.AttributeColumnOrder);
         Assert.Equal(FlatPatternTopSideMode.AsModeled, settings.DxfExport.TopSideMode);
         Assert.Equal(AppTheme.Dark, settings.Interface.SelectedTheme);
         Assert.Equal("Arial", settings.BendAnnotations.FontFamily);
@@ -66,7 +73,18 @@ public sealed class SettingsCompatibilityTests
             Hierarchy = new HierarchySettings { MergeDuplicateFiles = false },
             FrameExport = new FrameExportSettings
             {
+                EnableFileNameConstructor = false,
+                RecognitionMode = TubeRecognitionMode.TubeJointProperties,
                 ExportFormat = FrameExportFormat.Step,
+                SelectedExportFolder = ExportFolderType.ProjectFolder,
+                EnableSubfolder = true,
+                SubfolderName = "3D",
+                OrganizeByMaterial = true,
+                OrganizeByStockNumber = true,
+                CsvDelimiter = CsvDelimiterType.Pipe,
+                DefaultBomFormat = ExportFileFormat.Csv,
+                BomFileNameType = ExcelExportFileNameType.PartNumber,
+                AttributeColumnOrder = ["Material", "PartNumber", "UDP_Workshop"],
                 TemplatePresets = [new TemplatePresetData { Name = "Workshop", Template = "{StockNumber}_{Length}" }],
                 SelectedTemplatePresetIndex = 0
             },
@@ -84,6 +102,17 @@ public sealed class SettingsCompatibilityTests
         var restored = JsonSerializer.Deserialize<ApplicationSettings>(JsonSerializer.Serialize(settings))!;
 
         Assert.Equal(FrameExportFormat.Step, restored.FrameExport.ExportFormat);
+        Assert.False(restored.FrameExport.EnableFileNameConstructor);
+        Assert.Equal(TubeRecognitionMode.TubeJointProperties, restored.FrameExport.RecognitionMode);
+        Assert.Equal(ExportFolderType.ProjectFolder, restored.FrameExport.SelectedExportFolder);
+        Assert.True(restored.FrameExport.EnableSubfolder);
+        Assert.Equal("3D", restored.FrameExport.SubfolderName);
+        Assert.True(restored.FrameExport.OrganizeByMaterial);
+        Assert.True(restored.FrameExport.OrganizeByStockNumber);
+        Assert.Equal(CsvDelimiterType.Pipe, restored.FrameExport.CsvDelimiter);
+        Assert.Equal(ExportFileFormat.Csv, restored.FrameExport.DefaultBomFormat);
+        Assert.Equal(ExcelExportFileNameType.PartNumber, restored.FrameExport.BomFileNameType);
+        Assert.Equal(["Material", "PartNumber", "UDP_Workshop"], restored.FrameExport.AttributeColumnOrder);
         Assert.Equal(ProcessingMethod.Hierarchy, restored.SelectedProcessingMethod);
         Assert.False(restored.Hierarchy.MergeDuplicateFiles);
         Assert.Equal("Workshop", Assert.Single(restored.FrameExport.TemplatePresets).Name);

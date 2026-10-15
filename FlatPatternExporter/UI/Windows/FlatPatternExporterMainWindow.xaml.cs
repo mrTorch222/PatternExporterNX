@@ -2241,6 +2241,10 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                 var itemCounter = 1;
                 var totalParts = SelectedProcessingMethod == ProcessingMethod.Hierarchy ? hierarchyRows.Count : sheetMetalParts.Count;
                 var processedParts = 0;
+                var displayedColumns = PartsDataGrid.Columns
+                    .Select(column => column.SortMemberPath)
+                    .Where(name => !string.IsNullOrWhiteSpace(name))
+                    .ToHashSet(StringComparer.Ordinal);
 
                 var partProgress = new Progress<PartData>(partData =>
                 {
@@ -2258,7 +2262,11 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                     {
                         cancellationToken.ThrowIfCancellationRequested();
 
-                        var partData = await _partDataReader.GetPartDataAsync(part.PartNumber, part.Quantity, itemCounter++);
+                        var partData = await _partDataReader.GetPartDataAsync(
+                            part.PartNumber,
+                            part.Quantity,
+                            itemCounter++,
+                            displayedColumns: displayedColumns);
                         if (partData != null)
                         {
                             partData.HierarchyKey = part.Key;
@@ -2362,9 +2370,17 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
             MergeHierarchyDuplicateFiles);
         var rebuilt = new List<PartData>();
         var item = 1;
+        var displayedColumns = PartsDataGrid.Columns
+            .Select(column => column.SortMemberPath)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .ToHashSet(StringComparer.Ordinal);
         foreach (var row in rows)
         {
-            var partData = await _partDataReader.GetPartDataAsync(row.PartNumber, row.Quantity, item++);
+            var partData = await _partDataReader.GetPartDataAsync(
+                row.PartNumber,
+                row.Quantity,
+                item++,
+                displayedColumns: displayedColumns);
             if (partData is null) continue;
             partData.HierarchyKey = row.Key;
             partData.StructurePath = row.StructurePath;

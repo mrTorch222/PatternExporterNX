@@ -2089,4 +2089,17 @@ Possible solutions:
   <data name="Acceptance_ShowMaterial" xml:space="preserve"><value>Material</value></data>
   <data name="Acceptance_ShowDetails" xml:space="preserve"><value>Details</value></data>
   <data name="Acceptance_ViewApplied" xml:space="preserve"><value>View settings applied to {0} parts.</value></data>
+  <data name="Acceptance_CardDesigner" xml:space="preserve"><value>Card designer</value></data>
+  <data name="Acceptance_Layout" xml:space="preserve"><value>Image placement</value></data>
+  <data name="Acceptance_Border" xml:space="preserve"><value>Border weight</value></data>
+  <data name="Acceptance_ShowFieldLabels" xml:space="preserve"><value>Show field labels</value></data>
+  <data name="Acceptance_QuantitySize" xml:space="preserve"><value>Quantity font size</value></data>
+  <data name="Acceptance_Fields" xml:space="preserve"><value>Fields and order</value></data>
+  <data name="Acceptance_CardPreview" xml:space="preserve"><value>Card preview</value></data>
+  <data name="Acceptance_Details" xml:space="preserve"><value>Details</value></data>
+  <data name="Acceptance_ImageLeft" xml:space="preserve"><value>Image on the left</value></data>
+  <data name="Acceptance_ImageTop" xml:space="preserve"><value>Image on top</value></data>
+  <data name="Acceptance_BorderThin" xml:space="preserve"><value>Thin</value></data>
+  <data name="Acceptance_BorderMedium" xml:space="preserve"><value>Medium</value></data>
+  <data name="Acceptance_BorderThick" xml:space="preserve"><value>Thick</value></data>
 </root>

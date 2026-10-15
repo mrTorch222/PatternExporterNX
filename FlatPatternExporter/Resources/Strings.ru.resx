@@ -2089,4 +2089,17 @@
   <data name="Acceptance_ShowMaterial" xml:space="preserve"><value>Материал</value></data>
   <data name="Acceptance_ShowDetails" xml:space="preserve"><value>Характеристики</value></data>
   <data name="Acceptance_ViewApplied" xml:space="preserve"><value>Настройки вида применены к деталям: {0}.</value></data>
+  <data name="Acceptance_CardDesigner" xml:space="preserve"><value>Конструктор карточки</value></data>
+  <data name="Acceptance_Layout" xml:space="preserve"><value>Расположение изображения</value></data>
+  <data name="Acceptance_Border" xml:space="preserve"><value>Толщина рамки</value></data>
+  <data name="Acceptance_ShowFieldLabels" xml:space="preserve"><value>Показывать названия полей</value></data>
+  <data name="Acceptance_QuantitySize" xml:space="preserve"><value>Размер количества</value></data>
+  <data name="Acceptance_Fields" xml:space="preserve"><value>Поля и порядок</value></data>
+  <data name="Acceptance_CardPreview" xml:space="preserve"><value>Предпросмотр карточки</value></data>
+  <data name="Acceptance_Details" xml:space="preserve"><value>Характеристики</value></data>
+  <data name="Acceptance_ImageLeft" xml:space="preserve"><value>Изображение слева</value></data>
+  <data name="Acceptance_ImageTop" xml:space="preserve"><value>Изображение сверху</value></data>
+  <data name="Acceptance_BorderThin" xml:space="preserve"><value>Тонкая</value></data>
+  <data name="Acceptance_BorderMedium" xml:space="preserve"><value>Средняя</value></data>
+  <data name="Acceptance_BorderThick" xml:space="preserve"><value>Толстая</value></data>
 </root>

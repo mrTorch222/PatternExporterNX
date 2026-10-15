@@ -35,6 +35,7 @@ public partial class AcceptanceSheetWindow : Window, INotifyPropertyChanged
     {
         Items = new ObservableCollection<AcceptanceSheetItem>(items);
         AcceptanceViewStateStore.Restore(Items);
+        LocalizeDesignerFields();
         _previewService = new AcceptancePreviewService(inventorManager);
         InitializeComponent();
         DataContext = this;
@@ -43,6 +44,7 @@ public partial class AcceptanceSheetWindow : Window, INotifyPropertyChanged
     private async void PartsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         SelectedItem = PartsList.SelectedItem as AcceptanceSheetItem;
+        UpdateDesignerPreviewValues();
         if (SelectedItem is { HasTransparentPreview: false }) await RenderSelectedAsync();
     }
 
@@ -146,6 +148,49 @@ public partial class AcceptanceSheetWindow : Window, INotifyPropertyChanged
         var next = Math.Min(PartsList.SelectedIndex + 1, Items.Count - 1);
         PartsList.SelectedIndex = next;
         PartsList.ScrollIntoView(PartsList.SelectedItem);
+    }
+
+    private void MoveFieldUp_Click(object sender, RoutedEventArgs e) => MoveField(sender, -1);
+    private void MoveFieldDown_Click(object sender, RoutedEventArgs e) => MoveField(sender, 1);
+
+    private void MoveField(object sender, int offset)
+    {
+        if (sender is not System.Windows.Controls.Button { Tag: AcceptanceCardFieldOption field }) return;
+        var oldIndex = Settings.Fields.IndexOf(field);
+        var newIndex = oldIndex + offset;
+        if (oldIndex < 0 || newIndex < 0 || newIndex >= Settings.Fields.Count) return;
+        Settings.Fields.Move(oldIndex, newIndex);
+    }
+
+    private void LocalizeDesignerFields()
+    {
+        foreach (var field in Settings.Fields)
+        {
+            field.Label = _localization.GetString(field.Field switch
+            {
+                AcceptanceCardField.PartNumber => "Property_PartNumber_ColumnHeader",
+                AcceptanceCardField.Description => "Property_Description_ColumnHeader",
+                AcceptanceCardField.Material => "Property_Material_ColumnHeader",
+                AcceptanceCardField.Details => "Acceptance_Details",
+                _ => "Acceptance_Details"
+            });
+        }
+    }
+
+    private void UpdateDesignerPreviewValues()
+    {
+        if (SelectedItem is null) return;
+        foreach (var field in Settings.Fields)
+        {
+            field.PreviewValue = field.Field switch
+            {
+                AcceptanceCardField.PartNumber => SelectedItem.PartNumber,
+                AcceptanceCardField.Description => SelectedItem.Description,
+                AcceptanceCardField.Material => SelectedItem.Material,
+                AcceptanceCardField.Details => SelectedItem.Details,
+                _ => ""
+            };
+        }
     }
 
     private async void CameraOption_Changed(object sender, RoutedEventArgs e)

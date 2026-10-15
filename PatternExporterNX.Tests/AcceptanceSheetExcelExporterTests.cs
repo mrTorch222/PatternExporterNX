@@ -75,11 +75,45 @@ public sealed class AcceptanceSheetExcelExporterTests
         }
     }
 
+    [Fact]
+    public void Export_AppliesCardDesignerOrderTopImageAndTypography()
+    {
+        var fileName = Path.Combine(Path.GetTempPath(), $"acceptance-designer-{Guid.NewGuid():N}.xlsx");
+        try
+        {
+            var settings = new AcceptanceSheetSettings
+            {
+                ImagePlacement = AcceptanceImagePlacement.Top,
+                BorderWeight = AcceptanceBorderWeight.Thick,
+                QuantityFontSize = 44,
+                ShowFieldLabels = true
+            };
+            var details = settings.Fields.Single(field => field.Field == AcceptanceCardField.Details);
+            settings.Fields.Move(settings.Fields.IndexOf(details), 0);
+
+            AcceptanceSheetExcelExporter.Export(fileName, [CreateItem("P-100", "Bracket", 7)], settings);
+
+            using var workbook = new XLWorkbook(fileName);
+            var sheet = workbook.Worksheet("Acceptance sheet");
+            Assert.Contains(sheet.MergedRanges, range => range.RangeAddress.ToString() == "A1:F7");
+            Assert.Equal("Details: L=250 mm", sheet.Cell("A8").GetString());
+            Assert.Equal("Part number: P-100", sheet.Cell("A9").GetString());
+            Assert.Equal(7, sheet.Cell("A13").GetValue<int>());
+            Assert.Equal(44, sheet.Cell("A13").Style.Font.FontSize);
+            Assert.Equal(XLBorderStyleValues.Thick, sheet.Cell("A1").Style.Border.TopBorder);
+        }
+        finally
+        {
+            if (File.Exists(fileName)) File.Delete(fileName);
+        }
+    }
+
     private static AcceptanceSheetItem CreateItem(string partNumber, string description, int quantity) => new()
     {
         PartNumber = partNumber,
         Description = description,
         Material = "Steel",
+        Details = "L=250 mm",
         Quantity = quantity
     };
 }

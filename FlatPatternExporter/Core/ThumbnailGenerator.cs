@@ -1,5 +1,6 @@
 ﻿using System.Drawing.Imaging;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using DxfRenderer;
@@ -13,6 +14,11 @@ namespace FlatPatternExporter.Core;
 
 public class ThumbnailGenerator
 {
+    private static readonly Guid InventorSummaryInformationId = new("3D38DE39-0588-4C14-BB37-18F4D5DD31C7");
+    private const int PidThumbnail = 0x11;
+    private const ushort VtClipboardData = 71;
+    private const int ThumbnailDecodeWidth = 256;
+
     private readonly ApprenticeServerComponent? _apprentice = CreateApprenticeServer();
 
     private static ApprenticeServerComponent? CreateApprenticeServer()
@@ -105,6 +111,9 @@ public class ThumbnailGenerator
 
     public async Task<BitmapImage?> GetThumbnailAsync(PartDocument document, Dispatcher dispatcher)
     {
+        if (ReadEmbeddedPng(document.FullFileName) is { } embeddedPng)
+            return CreateFrozenBitmap(embeddedPng, ThumbnailDecodeWidth);
+
         try
         {
             var inventorThumbnail = await GetThumbnailViaInventorAsync(document, dispatcher);
@@ -140,6 +149,65 @@ public class ThumbnailGenerator
                     UserDialogIcon.Error);
             });
             return null;
+        }
+    }
+
+    private static BitmapImage CreateFrozenBitmap(byte[] imageData, int decodePixelWidth = 0)
+    {
+        using var stream = new MemoryStream(imageData);
+        var bitmap = new BitmapImage();
+        bitmap.BeginInit();
+        bitmap.StreamSource = stream;
+        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+        bitmap.DecodePixelWidth = decodePixelWidth;
+        bitmap.EndInit();
+        bitmap.Freeze();
+        return bitmap;
+    }
+
+    private static byte[]? ReadEmbeddedPng(string filePath)
+    {
+        NativeMethods.IPropertySetStorage? storage = null;
+        NativeMethods.IPropertyStorage? propertyStorage = null;
+        var values = new NativeMethods.PropVariant[1];
+
+        try
+        {
+            NativeMethods.StgOpenStorage(
+                filePath,
+                IntPtr.Zero,
+                NativeMethods.StgmRead | NativeMethods.StgmShareDenyWrite,
+                IntPtr.Zero,
+                0,
+                out storage);
+            var formatId = InventorSummaryInformationId;
+            storage.Open(ref formatId, NativeMethods.StgmRead | NativeMethods.StgmShareExclusive, out propertyStorage);
+            propertyStorage.ReadMultiple(
+                1,
+                [new NativeMethods.PropSpec { Kind = NativeMethods.PropertySpecificationId, PropertyId = PidThumbnail }],
+                values);
+
+            if (values[0].VariantType != VtClipboardData || values[0].Pointer == IntPtr.Zero) return null;
+
+            const int clipFormatSize = 4;
+            const int headerSize = 12;
+            var clipData = Marshal.PtrToStructure<NativeMethods.ClipData>(values[0].Pointer);
+            var imageSize = (int)clipData.Size - clipFormatSize - headerSize;
+            if (imageSize <= NativeMethods.PngSignature.Length || clipData.Data == IntPtr.Zero) return null;
+
+            var image = new byte[imageSize];
+            Marshal.Copy(clipData.Data + headerSize, image, 0, imageSize);
+            return image.AsSpan().StartsWith(NativeMethods.PngSignature) ? image : null;
+        }
+        catch
+        {
+            return null;
+        }
+        finally
+        {
+            NativeMethods.PropVariantClear(ref values[0]);
+            if (propertyStorage is not null) Marshal.ReleaseComObject(propertyStorage);
+            if (storage is not null) Marshal.ReleaseComObject(storage);
         }
     }
 
@@ -222,5 +290,64 @@ public class ThumbnailGenerator
         });
 
         return bitmap;
+    }
+
+    private static class NativeMethods
+    {
+        public const uint StgmRead = 0x00000000;
+        public const uint StgmShareExclusive = 0x00000010;
+        public const uint StgmShareDenyWrite = 0x00000020;
+        public const uint PropertySpecificationId = 1;
+        public static ReadOnlySpan<byte> PngSignature => [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+        [DllImport("ole32.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+        public static extern void StgOpenStorage(
+            string name,
+            IntPtr priority,
+            uint mode,
+            IntPtr exclude,
+            uint reserved,
+            [MarshalAs(UnmanagedType.Interface)] out IPropertySetStorage storage);
+
+        [DllImport("ole32.dll")]
+        public static extern int PropVariantClear(ref PropVariant value);
+
+        [ComImport, Guid("0000013A-0000-0000-C000-000000000046"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface IPropertySetStorage
+        {
+            void Create(ref Guid formatId, IntPtr classId, uint flags, uint mode, out IntPtr propertyStorage);
+            void Open(ref Guid formatId, uint mode, out IPropertyStorage propertyStorage);
+        }
+
+        [ComImport, Guid("00000138-0000-0000-C000-000000000046"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface IPropertyStorage
+        {
+            void ReadMultiple(
+                uint count,
+                [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] PropSpec[] specifications,
+                [In, Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] PropVariant[] values);
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct PropSpec
+        {
+            public uint Kind;
+            public IntPtr PropertyId;
+        }
+
+        [StructLayout(LayoutKind.Explicit, Size = 24)]
+        public struct PropVariant
+        {
+            [FieldOffset(0)] public ushort VariantType;
+            [FieldOffset(8)] public IntPtr Pointer;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct ClipData
+        {
+            public uint Size;
+            public int Format;
+            public IntPtr Data;
+        }
     }
 }

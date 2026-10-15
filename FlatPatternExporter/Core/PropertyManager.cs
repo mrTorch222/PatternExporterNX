@@ -11,6 +11,12 @@ namespace FlatPatternExporter.Core;
 public class PropertyManager(Document document)
 {
     private readonly Document _document = document ?? throw new ArgumentNullException(nameof(document));
+    // Each lookup is a cross-process COM call, so resolved objects are reused for the lifetime of the manager
+    private readonly Dictionary<string, PropertySet?> _propertySets = [];
+    private PropertySets? _documentPropertySets;
+    private SheetMetalComponentDefinition? _sheetMetalDefinition;
+    // Values read by GetMappedProperties (null when the read failed); their names also tell missing properties apart
+    private readonly Dictionary<string, Dictionary<string, object?>?> _propertySetValues = [];
     public static readonly string SheetMetalSubType = "{9C464203-9BAE-11D3-8BAD-0060B0CE6BB4}";
 
     /// <summary>
@@ -50,16 +56,38 @@ public class PropertyManager(Document document)
     {
         var (setName, inventorName) = GetInventorMapping(ourName);
 
+        // A property missing from an already read set is known without a failing COM call
+        if (_propertySetValues.GetValueOrDefault(setName) is { } setValues && !setValues.ContainsKey(inventorName))
+            return null;
+
         try
         {
-            var propSet = _document.PropertySets[setName];
-            return propSet[inventorName];
+            return GetPropertySet(setName)?[inventorName];
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Property access error '{ourName}': {ex.Message}");
             return null;
         }
+    }
+
+    private PropertySet? GetPropertySet(string setName)
+    {
+        if (_propertySets.TryGetValue(setName, out var cached))
+            return cached;
+
+        PropertySet? propertySet = null;
+
+        try
+        {
+            propertySet = (_documentPropertySets ??= _document.PropertySets)[setName];
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Property set access error '{setName}': {ex.Message}");
+        }
+
+        return _propertySets[setName] = propertySet;
     }
 
     /// <summary>
@@ -70,51 +98,90 @@ public class PropertyManager(Document document)
     public string GetMappedProperty(string ourName, bool getExpression = false)
     {
         var prop = GetPropertyObject(ourName);
-        if (prop == null)
-        {
-            // If property not found, check for substitution value
-            if (!getExpression && PropertyMetadataRegistry.PropertySubstitutions.TryGetValue(ourName, out var substitution))
-            {
-                return substitution;
-            }
-            return "";
-        }
 
-        string result;
         if (getExpression)
+            return prop?.Expression ?? "";
+
+        return FormatMappedValue(ourName, prop?.Value);
+    }
+
+    /// <summary>
+    /// Gets values of several properties by internal names with a single call per property set.
+    /// </summary>
+    public Dictionary<string, string> GetMappedProperties(IEnumerable<string> ourNames)
+    {
+        var result = new Dictionary<string, string>();
+
+        foreach (var group in ourNames.Select(name => (Name: name, Mapping: GetInventorMapping(name))).GroupBy(x => x.Mapping.SetName))
         {
-            result = prop.Expression ?? "";
+            if (!_propertySetValues.TryGetValue(group.Key, out var setValues))
+                _propertySetValues[group.Key] = setValues = ReadPropertySetValues(group.Key);
+
+            foreach (var (name, mapping) in group)
+            {
+                result[name] = setValues != null
+                    ? FormatMappedValue(name, setValues.GetValueOrDefault(mapping.InventorName))
+                    : GetMappedProperty(name);
+            }
         }
-        else
+
+        return result;
+    }
+
+    private Dictionary<string, object?>? ReadPropertySetValues(string setName)
+    {
+        if (GetPropertySet(setName) is not { } propertySet)
+            return null;
+
+        try
         {
-            result = prop.Value?.ToString() ?? "";
+            // The call goes through IDispatch, which requires non-null out arguments
+            int[] ids = [];
+            string[] names = [];
+            object[] values = [];
+            propertySet.GetPropertyInfo(out ids, out names, out values);
 
-            // Get property metadata
-            PropertyMetadataRegistry.PropertyDefinition? definition = null;
-            if (PropertyMetadataRegistry.Properties.TryGetValue(ourName, out var def))
+            // Property names are case-insensitive in Inventor; an empty set returns a single null entry
+            var setValues = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < names.Length; i++)
             {
-                definition = def;
-            }
-            if (definition != null)
-            {
-                // Apply rounding for numeric values through centralized method
-                if (definition.RequiresRounding && double.TryParse(result, out var numericValue))
-                {
-                    result = PropertyMetadataRegistry.FormatValue(ourName, numericValue);
-                }
-
-                // Apply value mappings
-                if (definition.ValueMappings != null && definition.ValueMappings.TryGetValue(result, out var mappedValue))
-                {
-                    result = mappedValue;
-                }
+                if (names[i] != null)
+                    setValues[names[i]] = values[i];
             }
 
-            // Apply substitution value if result is empty
-            if (string.IsNullOrEmpty(result) && PropertyMetadataRegistry.PropertySubstitutions.TryGetValue(ourName, out var substitution))
+            return setValues;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Property set values read error '{setName}': {ex.Message}");
+            return null;
+        }
+    }
+
+    // A missing property is passed as null and ends up with the substitution value, like an empty one
+    private static string FormatMappedValue(string ourName, object? value)
+    {
+        var result = value?.ToString() ?? "";
+
+        if (PropertyMetadataRegistry.Properties.TryGetValue(ourName, out var definition))
+        {
+            // Apply rounding for numeric values through centralized method
+            if (definition.RequiresRounding && double.TryParse(result, out var numericValue))
             {
-                result = substitution;
+                result = PropertyMetadataRegistry.FormatValue(ourName, numericValue);
             }
+
+            // Apply value mappings
+            if (definition.ValueMappings != null && definition.ValueMappings.TryGetValue(result, out var mappedValue))
+            {
+                result = mappedValue;
+            }
+        }
+
+        // Apply substitution value if result is empty
+        if (string.IsNullOrEmpty(result) && PropertyMetadataRegistry.PropertySubstitutions.TryGetValue(ourName, out var substitution))
+        {
+            result = substitution;
         }
 
         return result;
@@ -125,10 +192,7 @@ public class PropertyManager(Document document)
     /// </summary>
     public bool IsMappedPropertyExpression(string ourName)
     {
-        var prop = GetPropertyObject(ourName);
-        if (prop == null) return false;
-
-        return !string.IsNullOrEmpty(prop.Expression) && prop.Expression.StartsWith('=');
+        return GetPropertyObject(ourName)?.Expression?.StartsWith('=') == true;
     }
 
     /// <summary>
@@ -142,6 +206,7 @@ public class PropertyManager(Document document)
         try
         {
             prop.Value = value;
+            _propertySetValues.Remove(GetInventorMapping(ourName).SetName);
         }
         catch (Exception ex)
         {
@@ -161,6 +226,7 @@ public class PropertyManager(Document document)
         try
         {
             prop.Expression = expression;
+            _propertySetValues.Remove(GetInventorMapping(ourName).SetName);
         }
         catch (Exception ex)
         {
@@ -170,38 +236,6 @@ public class PropertyManager(Document document)
     }
 
     // === Methods for working with non-iProperty properties ===
-
-    /// <summary>
-    /// Gets file name without extension
-    /// </summary>
-    public string GetFileName()
-    {
-        try
-        {
-            return System.IO.Path.GetFileNameWithoutExtension(_document.FullFileName);
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"File name retrieval error: {ex.Message}");
-            return "";
-        }
-    }
-
-    /// <summary>
-    /// Gets full file path
-    /// </summary>
-    public string GetFullFileName()
-    {
-        try
-        {
-            return _document.FullFileName;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Full file path retrieval error: {ex.Message}");
-            return "";
-        }
-    }
 
     /// <summary>
     /// Gets model state name
@@ -226,9 +260,8 @@ public class PropertyManager(Document document)
     {
         try
         {
-            if (_document is PartDocument partDoc && partDoc.SubType == SheetMetalSubType)
+            if (GetSheetMetalDefinition() is { } smCompDef)
             {
-                var smCompDef = (SheetMetalComponentDefinition)partDoc.ComponentDefinition;
                 var thicknessParam = smCompDef.Thickness;
                 var thicknessValue = (double)thicknessParam.Value * 10; // Convert to mm
                 // Use centralized formatting
@@ -250,18 +283,21 @@ public class PropertyManager(Document document)
     {
         try
         {
-            if (_document is PartDocument partDoc && partDoc.SubType == SheetMetalSubType)
-            {
-                var smCompDef = (SheetMetalComponentDefinition)partDoc.ComponentDefinition;
-                return smCompDef.HasFlatPattern;
-            }
-            return false;
+            return GetSheetMetalDefinition()?.HasFlatPattern ?? false;
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Flat pattern check error: {ex.Message}");
             return false;
         }
+    }
+
+    private SheetMetalComponentDefinition? GetSheetMetalDefinition()
+    {
+        if (_sheetMetalDefinition == null && _document is PartDocument partDoc && partDoc.SubType == SheetMetalSubType)
+            _sheetMetalDefinition = (SheetMetalComponentDefinition)partDoc.ComponentDefinition;
+
+        return _sheetMetalDefinition;
     }
 
     /// <summary>

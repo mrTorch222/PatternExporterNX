@@ -24,15 +24,25 @@ public class PartDataReader
         _dispatcher = dispatcher;
     }
 
-    public async Task<PartData> GetPartDataAsync(string partNumber, int quantity, int itemNumber, bool loadThumbnail = true)
+    public async Task<PartData> GetPartDataAsync(
+        string partNumber,
+        int quantity,
+        int itemNumber,
+        bool loadThumbnail = true,
+        IReadOnlySet<string>? displayedColumns = null)
     {
         var partDoc = _documentScanner.DocumentCache.GetCachedPartDocument(partNumber) ?? _inventorManager.OpenPartDocument(partNumber);
         if (partDoc == null) return null!;
 
-        return await GetPartDataAsync(partDoc, quantity, itemNumber, loadThumbnail);
+        return await GetPartDataAsync(partDoc, quantity, itemNumber, loadThumbnail, displayedColumns);
     }
 
-    public async Task<PartData> GetPartDataAsync(PartDocument partDoc, int quantity, int itemNumber, bool loadThumbnail = true)
+    public async Task<PartData> GetPartDataAsync(
+        PartDocument partDoc,
+        int quantity,
+        int itemNumber,
+        bool loadThumbnail = true,
+        IReadOnlySet<string>? displayedColumns = null)
     {
         var partData = new PartData
         {
@@ -42,13 +52,14 @@ public class PartDataReader
 
         var mgr = new PropertyManager((Document)partDoc);
 
-        ReadAllPropertiesFromPart(partDoc, partData, mgr);
+        ReadAllPropertiesFromPart(partDoc, partData, mgr, displayedColumns);
 
+        var userValues = mgr.GetMappedProperties(
+            PropertyMetadataRegistry.UserDefinedProperties.Select(property => property.InternalName));
         foreach (var userDefinedProperty in PropertyMetadataRegistry.UserDefinedProperties)
         {
-            var value = mgr.GetMappedProperty(userDefinedProperty.InternalName);
             var propertyName = userDefinedProperty.InventorPropertyName ?? "";
-            partData.UserDefinedProperties[propertyName] = value;
+            partData.UserDefinedProperties[propertyName] = userValues[userDefinedProperty.InternalName];
         }
 
         if (loadThumbnail)
@@ -61,10 +72,14 @@ public class PartDataReader
         return partData;
     }
 
-    private static void ReadAllPropertiesFromPart(PartDocument partDoc, PartData partData, PropertyManager mgr)
+    private static void ReadAllPropertiesFromPart(
+        PartDocument partDoc,
+        PartData partData,
+        PropertyManager mgr,
+        IReadOnlySet<string>? displayedColumns)
     {
-        partData.FileName = mgr.GetFileName();
-        partData.FullFileName = mgr.GetFullFileName();
+        partData.FileName = System.IO.Path.GetFileNameWithoutExtension(partDoc.FullFileName);
+        partData.FullFileName = partDoc.FullFileName;
         partData.ModelState = mgr.GetModelState();
         partData.HasFlatPattern = mgr.HasFlatPattern();
         partData.Thickness = mgr.GetThickness();
@@ -86,13 +101,15 @@ public class PartDataReader
             partData.BendsDownCount = bendMetrics.DownCount;
         }
 
-        SetExpressionStatesForAllProperties(partData, mgr);
+        if (displayedColumns is not null)
+            SetExpressionStatesForDisplayedProperties(partData, mgr, displayedColumns);
 
-        foreach (var property in PropertyMetadataRegistry.Properties.Values
-                     .Where(p => p.Type == PropertyMetadataRegistry.PropertyType.IProperty))
+        var values = mgr.GetMappedProperties(PropertyMetadataRegistry.Properties.Values
+            .Where(property => property.Type == PropertyMetadataRegistry.PropertyType.IProperty)
+            .Select(property => property.InternalName));
+        foreach (var (internalName, value) in values)
         {
-            var value = mgr.GetMappedProperty(property.InternalName);
-            var propInfo = typeof(PartData).GetProperty(property.InternalName);
+            var propInfo = typeof(PartData).GetProperty(internalName);
 
             if (propInfo != null && !string.IsNullOrEmpty(value))
             {
@@ -101,17 +118,21 @@ public class PartDataReader
         }
     }
 
-    private static void SetExpressionStatesForAllProperties(PartData partData, PropertyManager mgr)
+    private static void SetExpressionStatesForDisplayedProperties(
+        PartData partData,
+        PropertyManager mgr,
+        IReadOnlySet<string> displayedColumns)
     {
         partData.BeginExpressionBatch();
         try
         {
-            foreach (var property in PropertyMetadataRegistry.GetEditableProperties())
+            foreach (var property in PropertyMetadataRegistry.GetEditableProperties().Where(displayedColumns.Contains))
             {
                 var isExpression = mgr.IsMappedPropertyExpression(property);
                 partData.SetPropertyExpressionState(property, isExpression);
             }
-            foreach (var userProperty in PropertyMetadataRegistry.UserDefinedProperties)
+            foreach (var userProperty in PropertyMetadataRegistry.UserDefinedProperties
+                         .Where(property => displayedColumns.Contains(property.InternalName)))
             {
                 var isExpression = mgr.IsMappedPropertyExpression(userProperty.InternalName);
                 var propertyName = userProperty.InventorPropertyName ?? "";
@@ -129,9 +150,9 @@ public class PartDataReader
         if (partsData.Count == 0)
             return;
 
-        var isStandardProperty = PropertyMetadataRegistry.Properties.ContainsKey(propertyName);
+        var standardProperty = PropertyMetadataRegistry.Properties.GetValueOrDefault(propertyName);
 
-        if (isStandardProperty)
+        if (standardProperty is { IsEditable: false })
         {
             return;
         }
@@ -147,6 +168,12 @@ public class PartDataReader
             if (partDoc != null)
             {
                 var mgr = new PropertyManager((Document)partDoc);
+                if (standardProperty is not null)
+                {
+                    partData.SetPropertyExpressionState(propertyName, mgr.IsMappedPropertyExpression(propertyName));
+                    continue;
+                }
+
                 var value = mgr.GetMappedProperty(propertyName) ?? "";
                 partData.AddUserDefinedProperty(actualPropertyName, value);
 

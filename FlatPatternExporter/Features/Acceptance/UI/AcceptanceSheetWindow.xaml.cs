@@ -23,6 +23,9 @@ public partial class AcceptanceSheetWindow : Window, INotifyPropertyChanged
     private double _startPitch;
 
     public ObservableCollection<AcceptanceSheetItem> Items { get; }
+    public AcceptanceSheetSettings Settings { get; } = new();
+    public IReadOnlyList<AcceptancePaperSize> PaperSizeOptions { get; } = Enum.GetValues<AcceptancePaperSize>();
+    public IReadOnlyList<int> CardsPerRowOptions { get; } = [1, 2, 3];
     public AcceptanceSheetItem? SelectedItem { get => _selectedItem; private set { _selectedItem = value; OnPropertyChanged(); } }
     public bool IsRendering { get => _isRendering; private set { _isRendering = value; OnPropertyChanged(); OnPropertyChanged(nameof(CanExport)); } }
     public bool CanExport => Items.Count > 0 && !IsRendering;
@@ -31,6 +34,7 @@ public partial class AcceptanceSheetWindow : Window, INotifyPropertyChanged
     public AcceptanceSheetWindow(IEnumerable<AcceptanceSheetItem> items, InventorManager inventorManager)
     {
         Items = new ObservableCollection<AcceptanceSheetItem>(items);
+        AcceptanceViewStateStore.Restore(Items);
         _previewService = new AcceptancePreviewService(inventorManager);
         InitializeComponent();
         DataContext = this;
@@ -39,7 +43,7 @@ public partial class AcceptanceSheetWindow : Window, INotifyPropertyChanged
     private async void PartsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         SelectedItem = PartsList.SelectedItem as AcceptanceSheetItem;
-        if (SelectedItem?.Preview is null) await RenderSelectedAsync();
+        if (SelectedItem is { HasTransparentPreview: false }) await RenderSelectedAsync();
     }
 
     private async Task RenderSelectedAsync()
@@ -55,6 +59,9 @@ public partial class AcceptanceSheetWindow : Window, INotifyPropertyChanged
         try
         {
             IsRendering = true;
+            PartsList.IsEnabled = false;
+            PreviewSurface.IsEnabled = false;
+            CameraControls.IsEnabled = false;
             Status = _localization.GetString("Acceptance_RenderingPart", item.PartNumber);
             item.Preview = await _previewService.RenderAsync(item);
             item.HasTransparentPreview = true;
@@ -64,7 +71,13 @@ public partial class AcceptanceSheetWindow : Window, INotifyPropertyChanged
         {
             Status = _localization.GetString("Acceptance_RenderFailed", exception.Message);
         }
-        finally { IsRendering = false; }
+        finally
+        {
+            PartsList.IsEnabled = true;
+            PreviewSurface.IsEnabled = true;
+            CameraControls.IsEnabled = true;
+            IsRendering = false;
+        }
     }
 
     private void Preview_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -82,6 +95,7 @@ public partial class AcceptanceSheetWindow : Window, INotifyPropertyChanged
         var point = e.GetPosition(PreviewSurface);
         SelectedItem.Yaw = _startYaw + (point.X - _dragStart.Value.X) * 0.45;
         SelectedItem.Pitch = _startPitch - (point.Y - _dragStart.Value.Y) * 0.45;
+        SelectedItem.ViewPreset = AcceptanceViewPreset.Custom;
     }
 
     private async void Preview_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -97,7 +111,41 @@ public partial class AcceptanceSheetWindow : Window, INotifyPropertyChanged
         if (SelectedItem is null) return;
         SelectedItem.Yaw = 0;
         SelectedItem.Pitch = 0;
+        SelectedItem.ViewPreset = AcceptanceViewPreset.IsoTopRight;
         await RenderSelectedAsync();
+    }
+
+    private async void ViewPreset_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedItem is null || sender is not System.Windows.Controls.Button { Tag: string tag } ||
+            !Enum.TryParse<AcceptanceViewPreset>(tag, out var preset)) return;
+        SelectedItem.ViewPreset = preset;
+        SelectedItem.Yaw = 0;
+        SelectedItem.Pitch = 0;
+        await RenderSelectedAsync();
+    }
+
+    private void ApplyViewToAll_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedItem is null) return;
+        foreach (var item in Items.Where(item => !ReferenceEquals(item, SelectedItem)))
+        {
+            item.ViewPreset = SelectedItem.ViewPreset;
+            item.Yaw = SelectedItem.Yaw;
+            item.Pitch = SelectedItem.Pitch;
+            item.Perspective = SelectedItem.Perspective;
+            item.PerspectiveAngle = SelectedItem.PerspectiveAngle;
+            item.HasTransparentPreview = false;
+        }
+        Status = _localization.GetString("Acceptance_ViewApplied", Items.Count);
+    }
+
+    private void NextPart_Click(object sender, RoutedEventArgs e)
+    {
+        if (Items.Count == 0) return;
+        var next = Math.Min(PartsList.SelectedIndex + 1, Items.Count - 1);
+        PartsList.SelectedIndex = next;
+        PartsList.ScrollIntoView(PartsList.SelectedItem);
     }
 
     private async void CameraOption_Changed(object sender, RoutedEventArgs e)
@@ -136,7 +184,7 @@ public partial class AcceptanceSheetWindow : Window, INotifyPropertyChanged
         if (dialog.ShowDialog(this) != true) return;
         try
         {
-            AcceptanceSheetExcelExporter.Export(dialog.FileName, Items);
+            AcceptanceSheetExcelExporter.Export(dialog.FileName, Items, Settings);
             Status = _localization.GetString("Acceptance_Saved", dialog.FileName);
         }
         catch (Exception exception)
@@ -146,6 +194,12 @@ public partial class AcceptanceSheetWindow : Window, INotifyPropertyChanged
     }
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+    protected override void OnClosed(EventArgs e)
+    {
+        AcceptanceViewStateStore.Save(Items);
+        base.OnClosed(e);
+    }
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }

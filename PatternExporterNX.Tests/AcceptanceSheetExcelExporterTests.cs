@@ -38,6 +38,43 @@ public sealed class AcceptanceSheetExcelExporterTests
         }
     }
 
+    [Fact]
+    public void Export_AppliesThreeColumnA3LandscapeLayoutAndFieldVisibility()
+    {
+        var fileName = Path.Combine(Path.GetTempPath(), $"acceptance-layout-{Guid.NewGuid():N}.xlsx");
+        try
+        {
+            var items = Enumerable.Range(1, 4)
+                .Select(index => CreateItem($"P-{index:000}", $"Part {index}", index))
+                .ToList();
+            var settings = new AcceptanceSheetSettings
+            {
+                PaperSize = AcceptancePaperSize.A3,
+                Landscape = true,
+                CardsPerRow = 3,
+                ShowMaterial = false,
+                ShowDetails = false
+            };
+
+            AcceptanceSheetExcelExporter.Export(fileName, items, settings);
+
+            using var workbook = new XLWorkbook(fileName);
+            var sheet = workbook.Worksheet("Acceptance sheet");
+            Assert.Equal("P-001", sheet.Cell("D1").GetString());
+            Assert.Equal("P-002", sheet.Cell("J1").GetString());
+            Assert.Equal("P-003", sheet.Cell("P1").GetString());
+            Assert.Equal("P-004", sheet.Cell("D11").GetString());
+            Assert.Equal("", sheet.Cell("D4").GetString());
+            Assert.Equal("", sheet.Cell("D5").GetString());
+            Assert.Equal(XLPageOrientation.Landscape, sheet.PageSetup.PageOrientation);
+            Assert.Equal(XLPaperSize.A3Paper, sheet.PageSetup.PaperSize);
+        }
+        finally
+        {
+            if (File.Exists(fileName)) File.Delete(fileName);
+        }
+    }
+
     private static AcceptanceSheetItem CreateItem(string partNumber, string description, int quantity) => new()
     {
         PartNumber = partNumber,

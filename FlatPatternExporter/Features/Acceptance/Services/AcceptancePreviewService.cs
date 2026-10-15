@@ -1,4 +1,5 @@
 using System.IO;
+using System.Collections.Concurrent;
 using System.Windows.Media.Imaging;
 using FlatPatternExporter.Core;
 using FlatPatternExporter.Features.Acceptance.Models;
@@ -10,9 +11,20 @@ namespace FlatPatternExporter.Features.Acceptance.Services;
 
 public sealed class AcceptancePreviewService(InventorManager inventorManager)
 {
+    private readonly ConcurrentDictionary<string, BitmapImage> _cache = new(StringComparer.Ordinal);
+
     public Task<BitmapImage> RenderAsync(AcceptanceSheetItem item, int width = 900, int height = 650,
-        CancellationToken cancellationToken = default) =>
-        StaTaskRunner.RunAsync(() => Render(item, width, height), cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        var key = CreateCacheKey(item, width, height);
+        if (_cache.TryGetValue(key, out var cached)) return Task.FromResult(cached);
+        return StaTaskRunner.RunAsync(() =>
+        {
+            var bitmap = Render(item, width, height);
+            _cache[key] = bitmap;
+            return bitmap;
+        }, cancellationToken);
+    }
 
     private BitmapImage Render(AcceptanceSheetItem item, int width, int height)
     {
@@ -41,7 +53,7 @@ public sealed class AcceptancePreviewService(InventorManager inventorManager)
 
             var camera = app.TransientObjects.CreateCamera();
             camera.SceneObject = scene;
-            camera.ViewOrientationType = ViewOrientationTypeEnum.kIsoTopRightViewOrientation;
+            camera.ViewOrientationType = GetOrientation(item.ViewPreset);
             camera.Perspective = item.Perspective;
             camera.PerspectiveAngle = item.PerspectiveAngle * Math.PI / 180.0;
             camera.Fit();
@@ -58,6 +70,28 @@ public sealed class AcceptancePreviewService(InventorManager inventorManager)
             if (closeAfterRender) document.Close(true);
             try { IOFile.Delete(temporaryFile); } catch { }
         }
+    }
+
+    private static ViewOrientationTypeEnum GetOrientation(AcceptanceViewPreset preset) => preset switch
+    {
+        AcceptanceViewPreset.IsoTopLeft => ViewOrientationTypeEnum.kIsoTopLeftViewOrientation,
+        AcceptanceViewPreset.IsoBottomRight => ViewOrientationTypeEnum.kIsoBottomRightViewOrientation,
+        AcceptanceViewPreset.IsoBottomLeft => ViewOrientationTypeEnum.kIsoBottomLeftViewOrientation,
+        AcceptanceViewPreset.Front => ViewOrientationTypeEnum.kFrontViewOrientation,
+        AcceptanceViewPreset.Back => ViewOrientationTypeEnum.kBackViewOrientation,
+        AcceptanceViewPreset.Top => ViewOrientationTypeEnum.kTopViewOrientation,
+        AcceptanceViewPreset.Bottom => ViewOrientationTypeEnum.kBottomViewOrientation,
+        AcceptanceViewPreset.Right => ViewOrientationTypeEnum.kRightViewOrientation,
+        AcceptanceViewPreset.Left => ViewOrientationTypeEnum.kLeftViewOrientation,
+        _ => ViewOrientationTypeEnum.kIsoTopRightViewOrientation
+    };
+
+    private static string CreateCacheKey(AcceptanceSheetItem item, int width, int height)
+    {
+        var modified = System.IO.File.Exists(item.FullFileName)
+            ? System.IO.File.GetLastWriteTimeUtc(item.FullFileName).Ticks
+            : 0;
+        return FormattableString.Invariant($"{item.SourceKey}|{modified}|{item.ViewPreset}|{item.Yaw:F3}|{item.Pitch:F3}|{item.Perspective}|{item.PerspectiveAngle:F3}|{width}x{height}");
     }
 
     private static Document? FindOpenDocument(Inventor.Application app, string fileName, string modelState)

@@ -57,20 +57,39 @@
                 </Grid>
             </Border>
 
-            <WrapPanel Grid.Row="1" Margin="0,12,0,8" VerticalAlignment="Center">
-                <Button Content="{extensions:Localize Acceptance_ResetView}" Click="ResetView_Click" Margin="0,0,12,0"/>
-                <CheckBox Content="{extensions:Localize Acceptance_Perspective}" IsChecked="{Binding SelectedItem.Perspective}"
-                          Checked="CameraOption_Changed" Unchecked="CameraOption_Changed" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                <TextBlock Text="{extensions:Localize Acceptance_ViewAngle}" VerticalAlignment="Center"/>
-                <Slider Width="150" Minimum="10" Maximum="80" Value="{Binding SelectedItem.PerspectiveAngle}" Margin="8,0"
-                        IsSnapToTickEnabled="True" TickFrequency="1" PreviewMouseLeftButtonUp="AngleSlider_MouseLeftButtonUp"/>
-                <TextBlock Text="{Binding SelectedItem.PerspectiveAngle, StringFormat={}{0:F0}°}" VerticalAlignment="Center" Width="42"/>
-            </WrapPanel>
+            <StackPanel x:Name="CameraControls" Grid.Row="1" Margin="0,12,0,8">
+                <WrapPanel VerticalAlignment="Center" Margin="0,0,0,8">
+                    <Button Content="{extensions:Localize Acceptance_Iso}" Tag="IsoTopRight" Click="ViewPreset_Click" Margin="0,0,6,0"/>
+                    <Button Content="{extensions:Localize Acceptance_Front}" Tag="Front" Click="ViewPreset_Click" Margin="0,0,6,0"/>
+                    <Button Content="{extensions:Localize Acceptance_Top}" Tag="Top" Click="ViewPreset_Click" Margin="0,0,6,0"/>
+                    <Button Content="{extensions:Localize Acceptance_Right}" Tag="Right" Click="ViewPreset_Click" Margin="0,0,12,0"/>
+                    <Button Content="{extensions:Localize Acceptance_ResetView}" Click="ResetView_Click" Margin="0,0,12,0"/>
+                    <Button Content="{extensions:Localize Acceptance_ApplyViewToAll}" Click="ApplyViewToAll_Click"/>
+                </WrapPanel>
+                <WrapPanel VerticalAlignment="Center" Margin="0,0,0,8">
+                    <CheckBox Content="{extensions:Localize Acceptance_Perspective}" IsChecked="{Binding SelectedItem.Perspective}"
+                              Checked="CameraOption_Changed" Unchecked="CameraOption_Changed" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <TextBlock Text="{extensions:Localize Acceptance_ViewAngle}" VerticalAlignment="Center"/>
+                    <Slider Width="150" Minimum="10" Maximum="80" Value="{Binding SelectedItem.PerspectiveAngle}" Margin="8,0"
+                            IsSnapToTickEnabled="True" TickFrequency="1" PreviewMouseLeftButtonUp="AngleSlider_MouseLeftButtonUp"/>
+                    <TextBlock Text="{Binding SelectedItem.PerspectiveAngle, StringFormat={}{0:F0}°}" VerticalAlignment="Center" Width="42"/>
+                    <Button Content="{extensions:Localize Acceptance_NextPart}" Click="NextPart_Click" Margin="12,0,0,0"/>
+                </WrapPanel>
+                <WrapPanel VerticalAlignment="Center">
+                    <TextBlock Text="{extensions:Localize Acceptance_Paper}" VerticalAlignment="Center"/>
+                    <ComboBox ItemsSource="{Binding PaperSizeOptions}" SelectedItem="{Binding Settings.PaperSize}" Width="65" Margin="6,0,12,0"/>
+                    <CheckBox Content="{extensions:Localize Acceptance_Landscape}" IsChecked="{Binding Settings.Landscape}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <TextBlock Text="{extensions:Localize Acceptance_CardsPerRow}" VerticalAlignment="Center"/>
+                    <ComboBox ItemsSource="{Binding CardsPerRowOptions}" SelectedItem="{Binding Settings.CardsPerRow}" Width="50" Margin="6,0,12,0"/>
+                    <CheckBox Content="{extensions:Localize Acceptance_ShowMaterial}" IsChecked="{Binding Settings.ShowMaterial}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <CheckBox Content="{extensions:Localize Acceptance_ShowDetails}" IsChecked="{Binding Settings.ShowDetails}" VerticalAlignment="Center"/>
+                </WrapPanel>
+            </StackPanel>
 
             <DockPanel Grid.Row="2">
                 <TextBlock Text="{Binding Status}" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="{extensions:Localize Acceptance_RefreshAll}" Click="RefreshAll_Click" Margin="0,0,8,0"/>
+                    <Button Content="{extensions:Localize Acceptance_RefreshAll}" Click="RefreshAll_Click" IsEnabled="{Binding CanExport}" Margin="0,0,8,0"/>
                     <Button Content="{extensions:Localize Acceptance_Export}" Click="Export_Click" IsEnabled="{Binding CanExport}" Margin="0,0,8,0"/>
                     <Button Content="{extensions:Localize Button_Close}" Click="Close_Click"/>
                 </StackPanel>

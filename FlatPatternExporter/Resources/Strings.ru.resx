@@ -2077,4 +2077,16 @@
   <data name="Acceptance_RenderRequired" xml:space="preserve"><value>Экспорт остановлен: не удалось построить прозрачное превью для одной или нескольких деталей.</value></data>
   <data name="Acceptance_Set" xml:space="preserve"><value>Комплект:</value></data>
   <data name="Acceptance_Available" xml:space="preserve"><value>Наличие:</value></data>
+  <data name="Acceptance_Iso" xml:space="preserve"><value>Изометрия</value></data>
+  <data name="Acceptance_Front" xml:space="preserve"><value>Спереди</value></data>
+  <data name="Acceptance_Top" xml:space="preserve"><value>Сверху</value></data>
+  <data name="Acceptance_Right" xml:space="preserve"><value>Справа</value></data>
+  <data name="Acceptance_ApplyViewToAll" xml:space="preserve"><value>Применить вид ко всем</value></data>
+  <data name="Acceptance_NextPart" xml:space="preserve"><value>Следующая деталь</value></data>
+  <data name="Acceptance_Paper" xml:space="preserve"><value>Бумага:</value></data>
+  <data name="Acceptance_Landscape" xml:space="preserve"><value>Альбомная</value></data>
+  <data name="Acceptance_CardsPerRow" xml:space="preserve"><value>Карточек в строке:</value></data>
+  <data name="Acceptance_ShowMaterial" xml:space="preserve"><value>Материал</value></data>
+  <data name="Acceptance_ShowDetails" xml:space="preserve"><value>Характеристики</value></data>
+  <data name="Acceptance_ViewApplied" xml:space="preserve"><value>Настройки вида применены к деталям: {0}.</value></data>
 </root>

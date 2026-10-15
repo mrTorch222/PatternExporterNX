@@ -8,26 +8,28 @@ namespace FlatPatternExporter.Features.Acceptance.Services;
 
 public static class AcceptanceSheetExcelExporter
 {
-    public static void Export(string fileName, IReadOnlyList<AcceptanceSheetItem> items)
+    public static void Export(string fileName, IReadOnlyList<AcceptanceSheetItem> items, AcceptanceSheetSettings? settings = null)
     {
+        settings ??= new AcceptanceSheetSettings();
         using var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add("Acceptance sheet");
-        sheet.PageSetup.PageOrientation = XLPageOrientation.Portrait;
-        sheet.PageSetup.PaperSize = XLPaperSize.A4Paper;
+        sheet.PageSetup.PageOrientation = settings.Landscape ? XLPageOrientation.Landscape : XLPageOrientation.Portrait;
+        sheet.PageSetup.PaperSize = settings.PaperSize == AcceptancePaperSize.A3 ? XLPaperSize.A3Paper : XLPaperSize.A4Paper;
         sheet.PageSetup.PagesWide = 1;
         sheet.PageSetup.PagesTall = 0;
         sheet.PageSetup.Margins.SetLeft(0.2).SetRight(0.2).SetTop(0.25).SetBottom(0.25);
         sheet.ShowGridLines = false;
 
-        for (var column = 1; column <= 12; column++) sheet.Column(column).Width = column is 1 or 7 ? 2 : 10;
-        for (var index = 0; index < items.Count; index++) AddCard(sheet, items[index], index);
+        for (var column = 1; column <= settings.CardsPerRow * 6; column++)
+            sheet.Column(column).Width = (column - 1) % 6 == 0 ? 2 : 10;
+        for (var index = 0; index < items.Count; index++) AddCard(sheet, items[index], index, settings);
         workbook.SaveAs(fileName);
     }
 
-    private static void AddCard(IXLWorksheet sheet, AcceptanceSheetItem item, int index)
+    private static void AddCard(IXLWorksheet sheet, AcceptanceSheetItem item, int index, AcceptanceSheetSettings settings)
     {
-        var left = index % 2 == 0 ? 1 : 7;
-        var top = 1 + index / 2 * 10;
+        var left = 1 + index % settings.CardsPerRow * 6;
+        var top = 1 + index / settings.CardsPerRow * 10;
         var range = sheet.Range(top, left, top + 8, left + 5);
         range.Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
         range.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
@@ -36,8 +38,8 @@ public static class AcceptanceSheetExcelExporter
         sheet.Range(top, left, top + 8, left + 2).Merge();
         sheet.Range(top, left + 3, top, left + 5).Merge().Value = item.PartNumber;
         sheet.Range(top + 1, left + 3, top + 2, left + 5).Merge().Value = item.Description;
-        sheet.Range(top + 3, left + 3, top + 3, left + 5).Merge().Value = item.Material;
-        sheet.Range(top + 4, left + 3, top + 4, left + 5).Merge().Value = item.Details;
+        sheet.Range(top + 3, left + 3, top + 3, left + 5).Merge().Value = settings.ShowMaterial ? item.Material : "";
+        sheet.Range(top + 4, left + 3, top + 4, left + 5).Merge().Value = settings.ShowDetails ? item.Details : "";
         sheet.Range(top + 5, left + 3, top + 5, left + 4).Merge().Value = LocalizationManager.Instance.GetString("Acceptance_Set");
         sheet.Cell(top + 5, left + 5).Value = LocalizationManager.Instance.GetString("Acceptance_Available");
         sheet.Range(top + 6, left + 3, top + 8, left + 4).Merge().Value = item.Quantity;

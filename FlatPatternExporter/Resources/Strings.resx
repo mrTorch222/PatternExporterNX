@@ -2077,4 +2077,16 @@ Possible solutions:
   <data name="Acceptance_RenderRequired" xml:space="preserve"><value>Export stopped: one or more transparent previews could not be rendered.</value></data>
   <data name="Acceptance_Set" xml:space="preserve"><value>Set:</value></data>
   <data name="Acceptance_Available" xml:space="preserve"><value>Available:</value></data>
+  <data name="Acceptance_Iso" xml:space="preserve"><value>Isometric</value></data>
+  <data name="Acceptance_Front" xml:space="preserve"><value>Front</value></data>
+  <data name="Acceptance_Top" xml:space="preserve"><value>Top</value></data>
+  <data name="Acceptance_Right" xml:space="preserve"><value>Right</value></data>
+  <data name="Acceptance_ApplyViewToAll" xml:space="preserve"><value>Apply view to all</value></data>
+  <data name="Acceptance_NextPart" xml:space="preserve"><value>Next part</value></data>
+  <data name="Acceptance_Paper" xml:space="preserve"><value>Paper:</value></data>
+  <data name="Acceptance_Landscape" xml:space="preserve"><value>Landscape</value></data>
+  <data name="Acceptance_CardsPerRow" xml:space="preserve"><value>Cards per row:</value></data>
+  <data name="Acceptance_ShowMaterial" xml:space="preserve"><value>Material</value></data>
+  <data name="Acceptance_ShowDetails" xml:space="preserve"><value>Details</value></data>
+  <data name="Acceptance_ViewApplied" xml:space="preserve"><value>View settings applied to {0} parts.</value></data>
 </root>

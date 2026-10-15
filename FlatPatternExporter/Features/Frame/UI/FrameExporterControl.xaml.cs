@@ -10,6 +10,8 @@ using System.Windows.Media;
 using FlatPatternExporter.Core;
 using FlatPatternExporter.Enums;
 using FlatPatternExporter.Features.Frame.Core;
+using FlatPatternExporter.Features.Acceptance.Models;
+using FlatPatternExporter.Features.Acceptance.UI;
 using FlatPatternExporter.Features.Frame.Models;
 using FlatPatternExporter.Features.Frame.Services;
 using FlatPatternExporter.Models;
@@ -79,6 +81,28 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     }
 
     public void CancelActiveOperation() => _operationCancellation?.Cancel();
+
+    private void AcceptanceSheetButton_Click(object sender, RoutedEventArgs e)
+    {
+        var items = _membersView.Cast<FrameMemberData>()
+            .Select(member => new AcceptanceSheetItem
+            {
+                SourceKey = $"{member.FullFileName}|{member.ModelState}",
+                FullFileName = member.FullFileName,
+                ModelState = member.ModelState,
+                PartNumber = member.PartNumber,
+                Description = member.Description,
+                Material = member.Material,
+                Details = member.LengthMm is null ? member.StockNumber : $"{member.StockNumber}  L={member.LengthMm:F1} mm".Trim(),
+                Quantity = member.Quantity
+            })
+            .ToList();
+        if (items.Count == 0) return;
+        new AcceptanceSheetWindow(items, _inventorManager)
+        {
+            Owner = Window.GetWindow(this)
+        }.ShowDialog();
+    }
 
     public void ApplySettings(FrameExportSettings? settings)
     {
@@ -1062,6 +1086,7 @@ public partial class FrameExporterControl : System.Windows.Controls.UserControl
     {
         ScanFrameButton.IsEnabled = !_isBusy;
         Export3dButton.IsEnabled = !_isBusy && _members.Count > 0;
+        FrameAcceptanceSheetButton.IsEnabled = !_isBusy && _members.Count > 0;
         ExportBomButton.IsEnabled = !_isBusy && _members.Count > 0;
         ClearFrameButton.IsEnabled = !_isBusy;
         CancelFrameButton.Visibility = _isBusy ? Visibility.Visible : Visibility.Collapsed;

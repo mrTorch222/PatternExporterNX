@@ -2059,4 +2059,22 @@ Possible solutions:
   <data name="BendAnnotation_Enable" xml:space="preserve"><value>Add bend annotations to DXF</value></data>
   <data name="ProcessingStatus_Failed" xml:space="preserve"><value>Failed</value></data>
   <data name="Frame_OrganizeByStockNumber" xml:space="preserve"><value>Organize by profile type</value></data>
+  <data name="Acceptance_Button" xml:space="preserve"><value>Acceptance sheet</value></data>
+  <data name="Acceptance_Title" xml:space="preserve"><value>Acceptance sheet preparation</value></data>
+  <data name="Acceptance_Parts" xml:space="preserve"><value>Parts</value></data>
+  <data name="Acceptance_DragHint" xml:space="preserve"><value>Drag to rotate the selected part</value></data>
+  <data name="Acceptance_Rendering" xml:space="preserve"><value>Rendering…</value></data>
+  <data name="Acceptance_ResetView" xml:space="preserve"><value>Reset view</value></data>
+  <data name="Acceptance_Perspective" xml:space="preserve"><value>Perspective</value></data>
+  <data name="Acceptance_ViewAngle" xml:space="preserve"><value>Field of view</value></data>
+  <data name="Acceptance_RefreshAll" xml:space="preserve"><value>Render all</value></data>
+  <data name="Acceptance_Export" xml:space="preserve"><value>Export XLSX</value></data>
+  <data name="Acceptance_RenderingPart" xml:space="preserve"><value>Rendering {0}…</value></data>
+  <data name="Acceptance_Ready" xml:space="preserve"><value>Ready</value></data>
+  <data name="Acceptance_RenderFailed" xml:space="preserve"><value>Could not render preview: {0}</value></data>
+  <data name="Acceptance_Saved" xml:space="preserve"><value>Acceptance sheet saved: {0}</value></data>
+  <data name="Acceptance_ExportFailed" xml:space="preserve"><value>Could not export acceptance sheet: {0}</value></data>
+  <data name="Acceptance_RenderRequired" xml:space="preserve"><value>Export stopped: one or more transparent previews could not be rendered.</value></data>
+  <data name="Acceptance_Set" xml:space="preserve"><value>Set:</value></data>
+  <data name="Acceptance_Available" xml:space="preserve"><value>Available:</value></data>
 </root>

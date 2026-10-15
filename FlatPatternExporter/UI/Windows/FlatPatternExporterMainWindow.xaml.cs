@@ -15,6 +15,8 @@ using System.Windows.Threading;
 using FlatPatternExporter.Core;
 using FlatPatternExporter.Enums;
 using FlatPatternExporter.Features;
+using FlatPatternExporter.Features.Acceptance.Models;
+using FlatPatternExporter.Features.Acceptance.UI;
 using FlatPatternExporter.Models;
 using FlatPatternExporter.Services;
 using FlatPatternExporter.UI.Controls;
@@ -1346,6 +1348,7 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
         ScanButton.IsEnabled = state.ScanEnabled;
         ExportButton.IsEnabled = state.ExportEnabled;
         ExportToExcelButton.IsEnabled = state.ExportEnabled;
+        AcceptanceSheetButton.IsEnabled = state.ExportEnabled;
         ClearButton.IsEnabled = state.ClearEnabled;
         ScanButton.Content = state.ScanButtonText;
         ExportButton.Content = state.ExportButtonText;
@@ -1665,6 +1668,26 @@ public partial class FlatPatternExporterMainWindow : Window, INotifyPropertyChan
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
+    }
+
+    private void AcceptanceSheetButton_Click(object sender, RoutedEventArgs e)
+    {
+        var items = _partsDataView.View.Cast<PartData>()
+            .Select(part => new AcceptanceSheetItem
+            {
+                SourceKey = $"{part.FullFileName}|{part.ModelState}",
+                FullFileName = part.FullFileName,
+                ModelState = part.ModelState,
+                PartNumber = part.PartNumber,
+                Description = part.Description,
+                Material = part.Material,
+                Details = string.IsNullOrWhiteSpace(part.Thickness) ? "" : $"{part.Thickness} mm",
+                Quantity = part.Quantity,
+                Preview = part.Preview
+            })
+            .ToList();
+        if (items.Count == 0) return;
+        new AcceptanceSheetWindow(items, _inventorManager) { Owner = this }.ShowDialog();
     }
 
     private void MainWindow_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)

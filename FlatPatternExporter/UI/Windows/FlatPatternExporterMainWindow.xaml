@@ -73,6 +73,8 @@
                 <Button x:Name="ScanButton" Content="{extensions:Localize Button_Scan}" Click="ScanButton_Click" Margin="{StaticResource RightStandardMarginThickness}" Style="{StaticResource LargeSquareProgressButtonStyle}" Tag="{Binding ScanProgressValue, RelativeSource={RelativeSource AncestorType=Window}}" ToolTip="{extensions:Localize ToolTip_ScanButton}" RenderTransformOrigin="0,0"/>
                 <Button x:Name="ClearButton" Content="{extensions:Localize Button_Clear}" Click="ClearList_Click" IsEnabled="True" Margin="{StaticResource RightStandardMarginThickness}" Style="{StaticResource LargeSquareButtonStyle}" ToolTip="{extensions:Localize ToolTip_ClearButton}"/>
                 <Button x:Name="ExportButton" Content="{extensions:Localize Button_Export}" Click="ExportButton_Click" IsEnabled="False" Style="{StaticResource LargeSquareProgressButtonStyle}" Tag="{Binding ExportProgressValue, RelativeSource={RelativeSource AncestorType=Window}}" ToolTipService.ShowOnDisabled="True" ToolTip="{extensions:Localize ToolTip_ExportButton}" Margin="{StaticResource RightStandardMarginThickness}"/>
+                <Button x:Name="AcceptanceSheetButton" Content="{extensions:Localize Acceptance_Button}" Click="AcceptanceSheetButton_Click"
+                        IsEnabled="False" Style="{StaticResource LargeSquareButtonStyle}" Margin="{StaticResource RightStandardMarginThickness}"/>
 
 
                 <Border Margin="{StaticResource RightStandardMarginThickness}" HorizontalAlignment="Left" VerticalAlignment="Top" Width="350"

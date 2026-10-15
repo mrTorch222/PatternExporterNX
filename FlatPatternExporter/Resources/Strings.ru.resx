@@ -2059,4 +2059,22 @@
   <data name="BendAnnotation_Enable" xml:space="preserve"><value>Добавлять надписи гибов в DXF</value></data>
   <data name="ProcessingStatus_Failed" xml:space="preserve"><value>Ошибка</value></data>
   <data name="Frame_OrganizeByStockNumber" xml:space="preserve"><value>Организовать по типу сортамента</value></data>
+  <data name="Acceptance_Button" xml:space="preserve"><value>Лист приёмки</value></data>
+  <data name="Acceptance_Title" xml:space="preserve"><value>Подготовка листа приёмки</value></data>
+  <data name="Acceptance_Parts" xml:space="preserve"><value>Детали</value></data>
+  <data name="Acceptance_DragHint" xml:space="preserve"><value>Тяните мышью, чтобы повернуть выбранную деталь</value></data>
+  <data name="Acceptance_Rendering" xml:space="preserve"><value>Построение вида…</value></data>
+  <data name="Acceptance_ResetView" xml:space="preserve"><value>Сбросить вид</value></data>
+  <data name="Acceptance_Perspective" xml:space="preserve"><value>Перспектива</value></data>
+  <data name="Acceptance_ViewAngle" xml:space="preserve"><value>Угол обзора</value></data>
+  <data name="Acceptance_RefreshAll" xml:space="preserve"><value>Построить все</value></data>
+  <data name="Acceptance_Export" xml:space="preserve"><value>Экспорт XLSX</value></data>
+  <data name="Acceptance_RenderingPart" xml:space="preserve"><value>Построение вида {0}…</value></data>
+  <data name="Acceptance_Ready" xml:space="preserve"><value>Готово</value></data>
+  <data name="Acceptance_RenderFailed" xml:space="preserve"><value>Не удалось построить превью: {0}</value></data>
+  <data name="Acceptance_Saved" xml:space="preserve"><value>Лист приёмки сохранён: {0}</value></data>
+  <data name="Acceptance_ExportFailed" xml:space="preserve"><value>Не удалось экспортировать лист приёмки: {0}</value></data>
+  <data name="Acceptance_RenderRequired" xml:space="preserve"><value>Экспорт остановлен: не удалось построить прозрачное превью для одной или нескольких деталей.</value></data>
+  <data name="Acceptance_Set" xml:space="preserve"><value>Комплект:</value></data>
+  <data name="Acceptance_Available" xml:space="preserve"><value>Наличие:</value></data>
 </root>

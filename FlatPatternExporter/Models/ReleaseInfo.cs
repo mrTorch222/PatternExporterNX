@@ -1,4 +1,4 @@
-namespace FlatPatternExporter.Models;
+﻿namespace FlatPatternExporter.Models;
 
 public class ReleaseInfo
 {
@@ -18,4 +18,5 @@ public class ReleaseAsset
     public string Name { get; set; } = string.Empty;
     public string DownloadUrl { get; set; } = string.Empty;
     public long Size { get; set; }
+    public string Digest { get; set; } = string.Empty;
 }

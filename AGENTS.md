@@ -7,7 +7,7 @@ PatternExporterNX — независимый форк `isinicyn/FlatPatternExpor
 - Общайся с пользователем на русском языке.
 - Разработка и окончательная проверка выполняются на Windows 10/11 x64 в Visual Studio Code.
 - Целевая CAD-система: Autodesk Inventor 2027.
-- Основной проект: C# 12, WPF, .NET 8.0, `win-x64`.
+- Основной проект: C# 12, WPF, .NET 10.0, `win-x64`.
 - Это отдельное WPF-приложение, подключающееся к уже запущенному Inventor через COM API. Не превращай его в Inventor Add-In и не добавляй `.addin`-манифест без отдельного запроса.
 - Соблюдай `.editorconfig`: C# и XAML — UTF-8 с BOM и CRLF; Markdown — UTF-8 без BOM. В проекте есть кириллица.
 - Перед изменениями полностью прочитай `CLAUDE.md`, `README.md`, `.editorconfig`, `LICENSE.txt` и релевантные исходники.
@@ -47,7 +47,7 @@ PatternExporterNX — независимый форк `isinicyn/FlatPatternExpor
 
 ## Обновление Inventor API до 2027
 
-- Сохрани `TargetFramework` `net8.0-windows...`, C# 12 и `win-x64`: Inventor 2027 бинарно совместим с существующими .NET 8 интеграциями.
+- Сохрани `TargetFramework` `net10.0-windows10.0.26100.0`, C# 12 и `win-x64`: Проекты собираются закрепленным SDK из `global.json`.
 - Обнови ссылку `Autodesk.Inventor.Interop.dll` с Inventor 2026 на Inventor 2027.
 - Не копируй и не публикуй Autodesk Interop DLL вместе с приложением, если это не разрешено Autodesk; предпочтительно выставить `Private=false`.
 - Убери жестко прошитый путь из единственного места сборки: введи MSBuild-свойство вроде `InventorInstallDir`, значение по умолчанию для Inventor 2027 и понятную ошибку сборки, если interop не найден.

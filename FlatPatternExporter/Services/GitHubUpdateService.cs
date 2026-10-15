@@ -75,7 +75,8 @@ public class GitHubUpdateService
                 {
                     Name = a.Name ?? string.Empty,
                     DownloadUrl = a.BrowserDownloadUrl ?? string.Empty,
-                    Size = a.Size
+                    Size = a.Size,
+                    Digest = a.Digest ?? string.Empty
                 }).ToList() ?? []
             };
         }
@@ -171,5 +172,8 @@ public class GitHubUpdateService
 
         [JsonPropertyName("size")]
         public long Size { get; set; }
+
+        [JsonPropertyName("digest")]
+        public string? Digest { get; set; }
     }
 }

@@ -47,6 +47,7 @@ if "%profile%"=="deploy" (
     echo [DEPLOY] Publishing for installer...
     echo.
     call :PublishMainApp DeployProfile deploy
+    if errorlevel 1 goto :eof
     call :CopyToReleaseFolder deploy Deploy
 )
 
@@ -55,6 +56,7 @@ if "%profile%"=="portable" (
     echo [PORTABLE] Publishing portable version...
     echo.
     call :PublishMainApp PortableProfile portable
+    if errorlevel 1 goto :eof
     call :CopyToReleaseFolder portable Portable
 )
 
@@ -63,7 +65,12 @@ if "%profile%"=="framework" (
     echo [FRAMEWORK] Publishing framework-dependent version...
     echo.
     call :PublishMainApp FrameworkDependentProfile framework-dependent
+    if errorlevel 1 goto :eof
     call :CopyToReleaseFolder framework-dependent FrameworkDependent
+)
+
+if "%profile%"=="updater" (
+    call :PublishUpdaterPortable
 )
 
 goto :eof
@@ -155,21 +162,34 @@ goto :eof
 :PublishMainApp
 set profileName=%1
 set outputFolder=%2
+set VERSION_PREFIX=
+set COMMIT_COUNT=
+set BUILD_VERSION=
 
 echo Publishing main application...
 
-:: Publish and extract version from output stream (suppress output)
-for /f "delims=" %%i in ('dotnet publish "FlatPatternExporter\FlatPatternExporter.csproj" --configuration Release /p:PublishProfile^=%profileName% 2^>^&1 ^| findstr /C:"File Version:"') do (
-    for /f "tokens=3" %%v in ("%%i") do set BUILD_VERSION=%%v
-)
-
-if defined BUILD_VERSION (
-    echo [VERSION] Detected version: %BUILD_VERSION%
-    echo [SUCCESS] Main application published
-) else (
-    echo [ERROR] Main application publishing failed - version not detected
+dotnet publish "FlatPatternExporter\FlatPatternExporter.csproj" --configuration Release /p:PublishProfile=%profileName% >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] Main application publishing failed
     exit /b 1
 )
+
+for /f "tokens=3 delims=<>" %%i in ('findstr /C:"<VersionPrefix>" FlatPatternExporter\FlatPatternExporter.csproj') do set VERSION_PREFIX=%%i
+for /f "tokens=*" %%i in ('git rev-list --count HEAD') do set COMMIT_COUNT=%%i
+
+if not defined VERSION_PREFIX (
+    echo [ERROR] VersionPrefix was not found in FlatPatternExporter.csproj
+    exit /b 1
+)
+
+if not defined COMMIT_COUNT (
+    echo [ERROR] Git revision count could not be determined
+    exit /b 1
+)
+
+set BUILD_VERSION=%VERSION_PREFIX%.%COMMIT_COUNT%
+echo [VERSION] Detected version: %BUILD_VERSION%
+echo [SUCCESS] Main application published
 
 goto :eof
 

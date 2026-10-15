@@ -45,53 +45,36 @@ if exist "Release\" (
     exit /b 1
 )
 
-:: Count zip files
-set ZIP_COUNT=0
-for %%f in (Release\*.zip) do set /a ZIP_COUNT+=1
+set MAIN_ARCHIVE_COUNT=0
+for %%f in (Release\PatternExporterNX-v%VERSION%-x64-*.zip) do (
+    if exist "%%f" set /a MAIN_ARCHIVE_COUNT+=1
+)
 
-if %ZIP_COUNT% equ 0 (
-    echo [ERROR] No .zip archives found in Release\ directory.
-    echo Please run publish.bat to create release archives.
+if %MAIN_ARCHIVE_COUNT% equ 0 (
+    echo [ERROR] No main application archive found for v%VERSION%.
+    echo Run publish.bat with the required application profile first.
     pause
     exit /b 1
 )
 
-echo [INFO] Found %ZIP_COUNT% archive(s^) in Release\ directory
+if not exist "Release\PatternExporterNX.Updater-v%VERSION%-x64.zip" (
+    echo [ERROR] Updater archive is missing for v%VERSION%.
+    echo Run: publish.bat updater
+    pause
+    exit /b 1
+)
+
+set /a ZIP_COUNT=MAIN_ARCHIVE_COUNT+1
+
+echo [INFO] Found %ZIP_COUNT% archive(s^) for v%VERSION%
 echo.
 
 :: List archives
 echo Archives to upload:
-for %%f in (Release\*.zip) do (
+for %%f in (Release\PatternExporterNX-v%VERSION%-x64-*.zip Release\PatternExporterNX.Updater-v%VERSION%-x64.zip) do (
     echo   - %%~nxf
 )
 echo.
-
-:: Verify archive version matches calculated version
-echo [INFO] Verifying archive versions...
-set ARCHIVE_VERSION_MISMATCH=0
-for %%f in (Release\PatternExporterNX-v*.zip) do (
-    set ARCHIVE_NAME=%%~nf
-    for /f "tokens=2 delims=-" %%v in ("!ARCHIVE_NAME!") do (
-        set ARCHIVE_VERSION=%%v
-        if not "!ARCHIVE_VERSION!"=="v%VERSION%" (
-            echo [WARNING] Archive version mismatch: %%~nxf has !ARCHIVE_VERSION!, expected v%VERSION%
-            set ARCHIVE_VERSION_MISMATCH=1
-        )
-    )
-    goto :version_check_done
-)
-:version_check_done
-
-if %ARCHIVE_VERSION_MISMATCH% equ 1 (
-    echo.
-    echo [ERROR] Archive version mismatch detected!
-    echo Expected version: v%VERSION%
-    echo.
-    echo This usually means archives were built with a different commit count.
-    echo Please run publish.bat again to rebuild archives with the current version.
-    pause
-    exit /b 1
-)
 echo [SUCCESS] Archive versions match: v%VERSION%
 echo.
 
@@ -234,7 +217,7 @@ echo - **FrameworkDependent** - Requires .NET 10.0 Runtime
 echo - **Updater** - For automatic updates
 ) > "%NOTES_FILE%"
 
-gh release create v%VERSION% --draft --title "v%VERSION%" --notes-file "%NOTES_FILE%" Release\*.zip
+gh release create v%VERSION% --draft --title "v%VERSION%" --notes-file "%NOTES_FILE%" Release\PatternExporterNX-v%VERSION%-x64-*.zip Release\PatternExporterNX.Updater-v%VERSION%-x64.zip
 
 :: Clean up temporary file
 del "%NOTES_FILE%" 2>nul

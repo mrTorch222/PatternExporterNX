@@ -16,5 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../FlatPatternExporter/FlatPatternExporter.csproj" />
+    <ProjectReference Include="../FlatPatternExporter.Updater/FlatPatternExporter.Updater.csproj" />
   </ItemGroup>
 </Project>

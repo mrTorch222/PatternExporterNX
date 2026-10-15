@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using FlatPatternExporter.Enums;
 using FlatPatternExporter.Models;
 using FlatPatternExporter.Utilities;
@@ -71,6 +70,8 @@ public class UpdateManager
 
     public async Task<string?> DownloadUpdateAsync(ReleaseInfo release, IProgress<double>? progress = null)
     {
+        var tempPath = Path.Combine(Path.GetTempPath(), $"PatternExporterNX_Update_{Guid.NewGuid():N}");
+
         try
         {
             var buildType = BuildTypeDetector.DetectBuildType();
@@ -91,19 +92,6 @@ public class UpdateManager
                 throw new FileNotFoundException($"Required archive not found in release: {missingAsset}");
             }
 
-            var tempPath = Path.Combine(Path.GetTempPath(), "PatternExporterNX_Update");
-
-            if (Directory.Exists(tempPath))
-            {
-                try
-                {
-                    Directory.Delete(tempPath, recursive: true);
-                }
-                catch
-                {
-                }
-            }
-
             Directory.CreateDirectory(tempPath);
 
             var updaterZipPath = Path.Combine(tempPath, updaterAssetName);
@@ -118,6 +106,8 @@ public class UpdateManager
                 return null;
             }
 
+            ReleaseAssetValidator.Validate(updaterZipPath, updaterAsset);
+
             var mainAppProgress = new Progress<double>(p => progress?.Report(30 + p * 0.7));
             success = await _githubService.DownloadReleaseAssetAsync(mainAppAsset.DownloadUrl, mainAppZipPath, mainAppProgress);
 
@@ -127,11 +117,13 @@ public class UpdateManager
                 return null;
             }
 
+            ReleaseAssetValidator.Validate(mainAppZipPath, mainAppAsset);
+
             var updaterExtractPath = Path.Combine(tempPath, "updater");
             var mainAppExtractPath = Path.Combine(tempPath, "app");
 
-            await Task.Run(() => ZipFile.ExtractToDirectory(updaterZipPath, updaterExtractPath));
-            await Task.Run(() => ZipFile.ExtractToDirectory(mainAppZipPath, mainAppExtractPath));
+            await Task.Run(() => SafeArchiveExtractor.ExtractZip(updaterZipPath, updaterExtractPath));
+            await Task.Run(() => SafeArchiveExtractor.ExtractZip(mainAppZipPath, mainAppExtractPath));
 
             File.Delete(updaterZipPath);
             File.Delete(mainAppZipPath);
@@ -141,7 +133,6 @@ public class UpdateManager
         }
         catch
         {
-            var tempPath = Path.Combine(Path.GetTempPath(), "PatternExporterNX_Update");
             CleanupTempDirectory(tempPath);
             return null;
         }
@@ -185,4 +176,5 @@ public class UpdateManager
             }
         }
     }
+
 }
